@@ -1,0 +1,11 @@
+site_name: napari-LF
+site_description: A temporary plugin, with npe2, to use with napari in the process of developing a light field imaging plugin
+site_author: Geneva Schlafly
+
+theme: readthedocs
+
+
+repo_url: https://github.com/PolarizedLightFieldMicroscopy/napari-LF
+
+pages:
+- Home: index.md
