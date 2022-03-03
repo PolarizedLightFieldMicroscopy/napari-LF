@@ -14,6 +14,9 @@ contributions:
     - id: napari-LF.make_sample_data
       python_name: napari_lf._sample_data:make_sample_data
       title: Load sample data from napari LF 
+    - id: napari-LF.make_lfqwidget
+      python_name: napari_lf._widgetLF:LFQWidget
+      title: LF-Analyze QWidget
     - id: napari-LF.make_qwidget
       python_name: napari_lf._widget:ExampleQWidget
       title: Make example QWidget
@@ -39,6 +42,8 @@ contributions:
       display_name: napari LF
       key: unique_id.1 
   widgets:
+    - command: napari-LF.make_lfqwidget
+      display_name: LF QWidget
     - command: napari-LF.make_qwidget
       display_name: Example QWidget
     - command: napari-LF.make_magic_widget
