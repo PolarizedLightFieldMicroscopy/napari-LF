@@ -43,11 +43,7 @@ contributions:
       key: unique_id.1 
   widgets:
     - command: napari-LF.make_lfqwidget
-<<<<<<< Updated upstream
-      display_name: LF QWidget
-=======
       display_name: LF-Analyze QWidget
->>>>>>> Stashed changes
     - command: napari-LF.make_qwidget
       display_name: Example QWidget
     - command: napari-LF.make_magic_widget
