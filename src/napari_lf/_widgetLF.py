@@ -1,6 +1,10 @@
 import os, sys
 import napari
+<<<<<<< Updated upstream
 from magicgui.widgets import MainWindow, Container, FileEdit, Label, LineEdit, FloatSpinBox, PushButton, CheckBox, SpinBox
+=======
+from magicgui.widgets import Container, FileEdit, Label, LineEdit, FloatSpinBox, PushButton, CheckBox, SpinBox
+>>>>>>> Stashed changes
 from qtpy.QtWidgets import QWidget, QHBoxLayout
 
 args_cal_std = [
@@ -182,6 +186,7 @@ def run_lfdeconvolve(args):
 widget_main = Container(name='LFAnalyze', annotation=None, label='LFAnalyze', tooltip=None, visible=None, enabled=True, gui_only=False, backend_kwargs={}, layout='vertical', widgets=(widget_lfa, widget_inputs, widget_outputs, widget_params, btn_cal, btn_rec, btn_dec), labels=True)
 
 # Method 1: As Napari plugin
+<<<<<<< Updated upstream
 class LFQWidget(QWidget):
     # your QWidget.__init__ can optionally request the napari viewer instance
     # in one of two ways:
@@ -193,11 +198,35 @@ class LFQWidget(QWidget):
 
         self.setLayout(QHBoxLayout())
         self.layout().addWidget(widget_main)
+=======
+class LFQWidget:
+	def __init__(self, napari_viewer):
+		super().__init__()
+		self.viewer = napari_viewer
+		self.viewer.window.add_dock_widget(widget_main)
+		
+# class LFQWidget(QWidget):
+	# your QWidget.__init__ can optionally request the napari viewer instance
+	# in one of two ways:
+	# 1. use a parameter called `napari_viewer`, as done here
+	# 2. use a type annotation of 'napari.viewer.Viewer' for any parameter
+	# def __init__(self, napari_viewer):
+		# super().__init__()
+		# self.viewer = napari_viewer
+		# self.setLayout(QHBoxLayout())
+		# self.layout().addWidget(widget_main)
+>>>>>>> Stashed changes
 
 # Method 2: As stand-alone application
 # widget_main.show(run=True)
 
 # Method 3: As Napari viewer
+<<<<<<< Updated upstream
 viewer = napari.Viewer()
 viewer.window.add_dock_widget(widget_main)
 napari.run()
+=======
+# viewer = napari.Viewer()
+# viewer.window.add_dock_widget(widget_main)
+# napari.run()
+>>>>>>> Stashed changes
