@@ -1,6 +1,6 @@
 import numpy as np
 
-from lflib.lightfield import LightField
+from napari_lf.lfa.lflib.lightfield import LightField
 from scipy.sparse.linalg import LinearOperator
 
 #------------------------------------------------------------------------------------

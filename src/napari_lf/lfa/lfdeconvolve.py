@@ -1,9 +1,9 @@
-# lflib imports
-import lflib
-from lflib.imageio import load_image, save_image
-from lflib.lightfield import LightField
-from lflib.calibration import LightFieldCalibration
-from lflib.util import ensure_path
+# napari_lf.lfa.lflib imports
+import napari_lf.lfa.lflib
+from napari_lf.lfa.lflib.imageio import load_image, save_image
+from napari_lf.lfa.lflib.lightfield import LightField
+from napari_lf.lfa.lflib.calibration import LightFieldCalibration
+from napari_lf.lfa.lflib.util import ensure_path
 
 # major libraries
 import numpy as np
@@ -144,7 +144,7 @@ def do_deconvolve(args):
     print('\t--> %s opened.  Pixel values range: [%d, %d]' % (filename, int(im.min()), int(im.max())))
 
     # Perform dark frame subtraction
-    from lflib.lfexceptions import ZeroImageException
+    from napari_lf.lfa.lflib.lfexceptions import ZeroImageException
     try:
         im = lfcal.subtract_dark_frame(im)
         print('\t    Dark frame subtracted.  Pixel values range: [%f, %f]' % (im.min(), im.max()))
@@ -165,7 +165,7 @@ def do_deconvolve(args):
         db = lfcal.rayspread_db
 
     # Initialize the volume as a plain focal stack.  We normalize by the weights as well.
-    from lflib.volume import LightFieldProjection
+    from napari_lf.lfa.lflib.volume import LightFieldProjection
     lfproj = LightFieldProjection(lfcal.rayspread_db, lfcal.psf_db,
                                   disable_gpu = args.disable_gpu, gpu_id = args.gpu_id, platform_id = args.platform_id, use_sing_prec=args.use_sing_prec)
 
@@ -198,7 +198,7 @@ def do_deconvolve(args):
     # We take the resulting vector 'x' and transform it back into a
     # volume below.
     #
-    from lflib.linear_operators import LightFieldOperator
+    from napari_lf.lfa.lflib.linear_operators import LightFieldOperator
     nrays = db.ns*db.nu*db.nt*db.nv
     nvoxels = db.nx*db.ny*db.nz
     A_lfop = LightFieldOperator(lfproj, db, args.use_sing_prec)
@@ -241,7 +241,7 @@ def do_deconvolve(args):
         x_vec = np.reshape(vol, np.prod(vol.shape)).astype(np.float32)
 
     elif args.solver == 'amp':
-        from lflib.solvers.amp import amp_reconstruction
+        from napari_lf.lfa.lflib.solvers.amp import amp_reconstruction
         if args.conv_thresh == 0.0: args.conv_thresh = 1e-10
         args.alpha = 1.0
         vol, multiscale_coefs = amp_reconstruction(lfcal, lf, args.alpha,
@@ -257,7 +257,7 @@ def do_deconvolve(args):
 
     elif args.solver == 'admm_huber':
         print("WARNING: ADMM Huber solver is experimental!")
-        from lflib.solvers.admm import admm_huber_reconstruction
+        from napari_lf.lfa.lflib.solvers.admm import admm_huber_reconstruction
         if args.conv_thresh == 0: convergence_threshold = 1e-4
         vol = admm_huber_reconstruction(lfcal, lf, args.alpha,
                                         args.conv_thresh, args.max_iter,
@@ -268,7 +268,7 @@ def do_deconvolve(args):
 
     elif args.solver == 'admm_tv':
         print("WARNING: ADMM Total Variation solver is experimental!")
-        from lflib.solvers.admm import admm_total_variation_reconstruction
+        from napari_lf.lfa.lflib.solvers.admm import admm_total_variation_reconstruction
         if args.conv_thresh == 0: convergence_threshold = 1e-4
         vol = admm_total_variation_reconstruction(lfcal, lf, args.alpha,
                                                   args.conv_thresh, args.max_iter,
@@ -279,7 +279,7 @@ def do_deconvolve(args):
         x_vec = np.reshape(vol, np.prod(vol.shape))
 
     elif args.solver == 'cg':
-        from lflib.solvers.conjugate_gradient import conjugate_gradient_reconstruction
+        from napari_lf.lfa.lflib.solvers.conjugate_gradient import conjugate_gradient_reconstruction
         if args.conv_thresh == 0: convergence_threshold = 1e-9
         vol = conjugate_gradient_reconstruction(lfcal, lf,
                                                 args.conv_thresh, args.max_iter,
@@ -289,7 +289,7 @@ def do_deconvolve(args):
         x_vec = np.reshape(vol, np.prod(vol.shape))
 
     elif args.solver == 'rl':
-        from lflib.solvers.richardson_lucy import richardson_lucy_reconstruction
+        from napari_lf.lfa.lflib.solvers.richardson_lucy import richardson_lucy_reconstruction
         if args.conv_thresh == 0: args.conv_thresh = 1e-6
         x_vec = richardson_lucy_reconstruction(A_operator, b_vec,
                                                Rtol = args.conv_thresh,
@@ -298,7 +298,7 @@ def do_deconvolve(args):
                                                sigmaSq = args.readnoise_variance)
 
     elif args.solver == 'mrnsd':
-        from lflib.solvers.mrnsd import wmrnsd_reconstruction
+        from napari_lf.lfa.lflib.solvers.mrnsd import wmrnsd_reconstruction
         if args.conv_thresh == 0: convergence_threshold = 1e-6
         x_vec = wmrnsd_reconstruction(A_operator, b_vec,
                                       Rtol = convergence_threshold,
@@ -307,14 +307,14 @@ def do_deconvolve(args):
                                       sigmaSq = args.readnoise_variance)
 
     elif args.solver == 'lsqr':
-        from lflib.solvers.lsqr import lsqr_reconstruction
+        from napari_lf.lfa.lflib.solvers.lsqr import lsqr_reconstruction
         if args.conv_thresh == 0: convergence_threshold = 1e-9
         x_vec = lsqr_reconstruction(A_operator, b_vec,
                                     args.conv_thresh, args.max_iter,
                                     args.regularization_lambda)
 
     elif args.solver == 'sirt':
-        from lflib.solvers.sirt import sirt_reconstruction
+        from napari_lf.lfa.lflib.solvers.sirt import sirt_reconstruction
         if args.conv_thresh == 0: convergence_threshold = 5e-5
         (x_vec, residuals) = sirt_reconstruction(A_operator, b_vec,
                                                  args.alpha, args.conv_thresh, args.max_iter)
@@ -352,7 +352,7 @@ def do_deconvolve(args):
 
     # (optionally) remove grid artifacts
     if args.remove_grid:
-        from lflib.postfilter import remove_light_field_grid
+        from napari_lf.lfa.lflib.postfilter import remove_light_field_grid
         if lfcal.psf_db is not None:
             print('\t--> Removing grid artifacts in light field image using spectral median filter.')
             vol = remove_light_field_grid(vol, lfcal.psf_db.supersample_factor)
@@ -405,7 +405,7 @@ def do_deconvolve(args):
 #----------------------------------------------------------------------------------
 # if __name__ == "__main__":
 def main(args=None):
-    print('LFdeconvolve v%s' % (lflib.version))
+    print('LFdeconvolve v%s' % (napari_lf.lfa.lflib.version))
 
     parser = argparse.ArgumentParser()
     parser.add_argument('input_file',

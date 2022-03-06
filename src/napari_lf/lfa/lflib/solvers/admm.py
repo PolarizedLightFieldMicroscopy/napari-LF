@@ -3,9 +3,9 @@ import time
 
 from scipy.sparse.linalg.interface import LinearOperator
 
-from lflib.lightfield import LightField
-from lflib.imageio import save_image
-from lflib.linear_operators import LightFieldOperator, AugmentedLightFieldOperator
+from napari_lf.lfa.lflib.lightfield import LightField
+from napari_lf.lfa.lflib.imageio import save_image
+from napari_lf.lfa.lflib.linear_operators import LightFieldOperator, AugmentedLightFieldOperator
 
 # ----------------------------------------------------------------------------------------
 #                               ADMM ITERATIVE SOLVERS
@@ -117,7 +117,7 @@ def admm_total_variation_reconstruction(lfcal, lightfield, alpha,
     tau_incr = 2.0
     tau_decr = 2.0
 
-    from lflib.volume import LightFieldProjection
+    from napari_lf.lfa.lflib.volume import LightFieldProjection
     lfproj = LightFieldProjection(lfcal.rayspread_db, lfcal.psf_db, disable_gpu = disable_gpu, gpu_id = gpu_id)
     nu = db.nu
     nv = db.nv
@@ -148,7 +148,7 @@ def admm_total_variation_reconstruction(lfcal, lightfield, alpha,
                        dtype='float')
 
     print('Calling ADMM/LSMR total variation solver...')
-    from lflib.lsmr import lsmr
+    from napari_lf.lfa.lflib.lsmr import lsmr
 
     z = np.zeros(3*(nvoxels), dtype=np.float32)
     u = np.zeros(3*(nvoxels), dtype=np.float32)
@@ -252,7 +252,7 @@ def admm_huber_reconstruction(lfcal, lightfield, alpha,
     tau_incr = 2.0
     tau_decr = 2.0
 
-    from lflib.volume import LightFieldProjection
+    from napari_lf.lfa.lflib.volume import LightFieldProjection
     lfproj = LightFieldProjection(lfcal.rayspread_db, lfcal.psf_db, disable_gpu = disable_gpu, gpu_id = gpu_id)
     nu = db.nu
     nv = db.nv
@@ -272,7 +272,7 @@ def admm_huber_reconstruction(lfcal, lightfield, alpha,
                        dtype='float')
 
     print('Calling ADMM/LSQR huber/l1 solver...')
-    from lflib.lsmr import lsmr
+    from napari_lf.lfa.lflib.lsmr import lsmr
 
     z = np.zeros((nrays), dtype=np.float32)
     u = np.zeros((nrays), dtype=np.float32)

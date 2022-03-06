@@ -10,7 +10,7 @@
 # image, otherwise this value is computed for you based on the input
 # imagery and the warp file.
 
-from lflib.imageio import load_image, save_image
+from napari_lf.lfa.lflib.imageio import load_image, save_image
 import sys, os
 import numpy as np
 
@@ -54,7 +54,7 @@ def main(args=None, values=None):
             output_filename = options.output_filename
 
         # Load the calibration data
-        from lflib.calibration import LightFieldCalibration
+        from napari_lf.lfa.lflib.calibration import LightFieldCalibration
         lfcal = LightFieldCalibration.load(calibration_file)
 
         # Rectify the image
@@ -69,7 +69,7 @@ def main(args=None, values=None):
 
 
         # Optionally reformat the image so that sub-aperturs are tiled, rather than lenslet images.
-        from lflib.lightfield import LightField
+        from napari_lf.lfa.lflib.lightfield import LightField
         if (options.subaperture):
             im = rectified_lf.asimage(LightField.TILED_SUBAPERTURE)
             print('\t--> Saving ', output_filename, 'as tiled sub-aperture image.')

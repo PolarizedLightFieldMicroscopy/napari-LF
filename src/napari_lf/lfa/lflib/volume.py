@@ -1,15 +1,15 @@
 import sys, os
 import numpy as np
-from lflib.lightfield import LightField
-from lflib.imageio import save_image
+from napari_lf.lfa.lflib.lightfield import LightField
+from napari_lf.lfa.lflib.imageio import save_image
 from scipy.ndimage import filters
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 try:
     import pyopencl as cl
     import pyopencl.array as cl_array
-    LFLIB_HAVE_OPENCL = True
+    lflib_HAVE_OPENCL = True
 except ImportError:
-    LFLIB_HAVE_OPENCL = False
+    lflib_HAVE_OPENCL = False
 # Utility function
 extract = lambda x, y: dict(list(zip(x, list(map(y.get, x)))))
 
@@ -295,7 +295,7 @@ class LightFieldProjection(object):
         self.premultiplier = None
         self.postmultiplier = None
         
-        if LFLIB_HAVE_OPENCL and not disable_gpu:
+        if lflib_HAVE_OPENCL and not disable_gpu:
             # Set up OpenCL
             platform = cl.get_platforms()[platform_id]
             print(75*"=")

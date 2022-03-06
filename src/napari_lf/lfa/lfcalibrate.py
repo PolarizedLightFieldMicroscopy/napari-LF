@@ -8,7 +8,7 @@
 # microscope), but can be used to update old calibration files from
 # early experiments as well.
 import sys, os
-from lflib.imageio import load_image, save_image
+from napari_lf.lfa.lflib.imageio import load_image, save_image
 import numpy as np
 import glob
 
@@ -28,8 +28,8 @@ def avg_images(image_files):
     return np.round(im/len(image_files)).astype(im_type)
 
 def main(args=None, values=None):
-    import lflib
-    print('LFcalibrate v%s' % (lflib.version))
+    import napari_lf.lfa.lflib
+    print('LFcalibrate v%s' % (napari_lf.lfa.lflib.version))
 
     # Parse command line options
     from optparse import OptionParser
@@ -185,13 +185,13 @@ def main(args=None, values=None):
         save_image(options.radiometry_frame_file, avg_radiometry_frame)
 
     # Create a new calibration object
-    from lflib.calibration import LightFieldCalibration
+    from napari_lf.lfa.lflib.calibration import LightFieldCalibration
 
 
     # FOR DEBUGGING: Load a previous calibration
     #lfcal = LightFieldCalibration.load(output_filename)
 
-    from lflib.calibration.imaging import CalibrationAlignmentMethods
+    from napari_lf.lfa.lflib.calibration.imaging import CalibrationAlignmentMethods
     if options.affine_alignment:
         calibration_method = CalibrationAlignmentMethods.CALIBRATION_AFFINE_ALIGNMENT
     elif options.isometry_alignment:
@@ -225,14 +225,14 @@ def main(args=None, values=None):
 
     # Optionally, create a rectified sub-aperture image
     if (options.pinhole_filename):
-        from lflib.lightfield import LightField
+        from napari_lf.lfa.lflib.lightfield import LightField
         im = load_image(calibration_filename, dtype=np.float32, normalize = False)
         lf = lfcal.rectify_lf(im).asimage(LightField.TILED_SUBAPERTURE)
         save_image(options.pinhole_filename, lf/lf.max() * 65535, dtype=np.uint16)
 
     # Optionally, create a rectified lenslet image
     if (options.lenslet_filename):
-        from lflib.lightfield import LightField
+        from napari_lf.lfa.lflib.lightfield import LightField
         im = load_image(calibration_filename, dtype=np.float32, normalize = False)
         lf = lfcal.rectify_lf(im).asimage(LightField.TILED_LENSLET)
         save_image(options.lenslet_filename, lf/lf.max() * 65535, dtype=np.uint16)
@@ -256,7 +256,7 @@ def main(args=None, values=None):
     # coefficient directly... we should veil this in some layer of
     # abstraction soon!
     print('-> Calibrating radiometry using ', options.radiometry_frame_file)
-    from lflib.lfexceptions import ZeroImageException
+    from napari_lf.lfa.lflib.lfexceptions import ZeroImageException
     try:
         lfcal.calibrate_radiometry(calibration_filename,
                 radiometry_frame_file = options.radiometry_frame_file,
