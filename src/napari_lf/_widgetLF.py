@@ -283,7 +283,8 @@ class LFQWidget(QWidget):
 		self.um_per_slice.value = float(self.new_args_cal[24])
 		self.supersample.value = int(self.new_args_cal[26])
 		
-		if self.new_args_cal[29] == '--use-single-precision' or self.new_args_decon[7] == '--use-single-precision':
+		self.use_single_prec.value = False
+		if (len(self.new_args_cal) >= 30 and self.new_args_cal[29] == '--use-single-precision') or (len(self.new_args_decon) >= 8 and self.new_args_decon[7] == '--use-single-precision'):
 			self.use_single_prec.value = True
 
 # Method 2: As stand-alone application
