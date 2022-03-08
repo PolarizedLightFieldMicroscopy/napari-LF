@@ -1,14 +1,14 @@
-import os, sys, json, time
+import os, sys, json
 from pathlib import Path
 import napari
 from napari.qt.threading import thread_worker
-from qtpy.QtWidgets import QWidget, QHBoxLayout, QPushButton, QCheckBox
+from qtpy.QtWidgets import QWidget, QHBoxLayout, QScrollArea
 from magicgui.widgets import Container, FileEdit, Label, LineEdit, FloatSpinBox, PushButton, CheckBox, SpinBox, Slider
 from napari_lf.lfa import lfcalibrate, lfdeconvolve, lfrectify
-from magicgui import magicgui
 
 # Method 1: As Napari plugin
-class LFQWidget:
+class LFQWidget(QWidget):
+		
 	def __init__(self, napari_viewer):
 		super().__init__()
 		self.viewer = napari_viewer
@@ -72,7 +72,7 @@ class LFQWidget:
 		self.currentdir = os.path.dirname(os.path.realpath(__file__))
 		self.folder_lfa = FileEdit(value=self.currentdir, label='LF Analyze Folder', mode='d', enabled=False)
 		self.widget_lfa = Container(name='LF Analyze', widgets=[self.folder_lfa])
-
+		
 		#INPUTS
 		# label_input = Label(value='Inputs')
 		self.folder_path1 = FileEdit(value='', label='Input Image Folder', mode='d')
@@ -112,9 +112,11 @@ class LFQWidget:
 		self.btn_cal = PushButton(name='Calibrate', annotation=None, label='Calibrate')
 		self.btn_rec = PushButton(name='Rectify', annotation=None, label='Rectify')
 		self.btn_dec = PushButton(name='Deconvolve', annotation=None, label='Deconvolve')
+		
+		self.widget_btns = Container(name='Execute', widgets=[self.btn_cal, self.btn_rec, self.btn_dec, self.status])
 
 		#APP
-		self.widget_main = Container(name='LFAnalyze', annotation=None, label='LFAnalyze', tooltip=None, visible=None, enabled=True, gui_only=False, backend_kwargs={}, layout='vertical', widgets=(self.widget_lfa, self.widget_inputs, self.widget_outputs, self.widget_params, self.btn_cal, self.btn_rec, self.btn_dec, self.status), labels=True)
+		self.widget_main = Container(name='LFAnalyze', annotation=None, label='LFAnalyze', tooltip=None, visible=None, enabled=True, gui_only=False, backend_kwargs={}, layout='vertical', widgets=(self.widget_inputs, self.widget_outputs, self.widget_params, self.widget_btns), labels=True)
 		
 		@self.folder_path1.changed.connect
 		def folder_path1_call():
@@ -154,16 +156,26 @@ class LFQWidget:
 			worker = self.run_lfdeconvolve(self.new_args_decon)
 			worker.returned.connect(set_status)
 			worker.start()
-			
-		self.viewer.window.add_dock_widget(self.widget_main, name='LFAnalyze')
+		
+		#Layout
+		layout = QHBoxLayout()
+		self.setLayout(layout)
+		
+		self.scroll = QScrollArea()
+		 #Scroll Area Properties
+		self.scroll.setWidgetResizable(True)
+		self.scroll.setWidget(self.widget_main.native)
+		self.layout().addWidget(self.scroll)
+		
+		# self.layout().addWidget(self.widget_main.native)
 			
 	def display_proc_image(self):
-			self.viewer.open(self.new_args_decon[4], stack=True)
+		self.viewer.open(self.new_args_decon[4], stack=True)
 		
 	def combine_args(self):
-		self.new_args_decon = self.args_decon_std
-		self.new_args_cal = self.args_cal_std
-		self.new_args_rec = self.args_rec_std
+		self.new_args_decon = self.args_decon_std[0:7]
+		self.new_args_cal = self.args_cal_std[0:29]
+		self.new_args_rec = self.args_rec_std[0:5]
 		
 		self.new_args_decon[0] = os.path.join(self.folder_path1.value, self.img_lf.value)
 		self.new_args_decon[2] = os.path.join(self.folder_path1.value, self.db_lfc.value)
@@ -202,6 +214,7 @@ class LFQWidget:
 		# sys.path.append(os.path.join(folder_lfa.value, 'lflib'))
 		sys.path.insert(0, self.folder_lfa.value)
 		sys.path.insert(0, os.path.join(self.folder_lfa.value, 'lflib'))
+		# from napari_lf.lfa import lfcalibrate, lfdeconvolve, lfrectify
 		
 	@thread_worker
 	def run_lfcalibrate(self, args):
@@ -270,6 +283,8 @@ class LFQWidget:
 		self.um_per_slice.value = float(self.new_args_cal[24])
 		self.supersample.value = int(self.new_args_cal[26])
 		
+		if self.new_args_cal[29] == '--use-single-precision' or self.new_args_decon[7] == '--use-single-precision':
+			self.use_single_prec.value = True
 
 # Method 2: As stand-alone application
 # widget_main.show(run=True)

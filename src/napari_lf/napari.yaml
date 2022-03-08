@@ -16,7 +16,7 @@ contributions:
       title: Load sample data from napari LF 
     - id: napari-LF.make_lfqwidget
       python_name: napari_lf._widgetLF:LFQWidget
-      title: LF-Analyze QWidget
+      title: LF-Analyze
     - id: napari-LF.make_qwidget
       python_name: napari_lf._widget:ExampleQWidget
       title: Make example QWidget
@@ -43,11 +43,11 @@ contributions:
       key: unique_id.1 
   widgets:
     - command: napari-LF.make_lfqwidget
-      display_name: LF-Analyze QWidget
+      display_name: LF-Analyze
     - command: napari-LF.make_qwidget
       display_name: Example QWidget
-    - command: napari-LF.make_magic_widget
-      display_name: Example Magic Widget
-    - command: napari-LF.make_func_widget
-      autogenerate: true
-      display_name: Example Function Widget 
+    # - command: napari-LF.make_magic_widget
+      # display_name: Example Magic Widget
+    # - command: napari-LF.make_func_widget
+      # autogenerate: true
+      # display_name: Example Function Widget 
