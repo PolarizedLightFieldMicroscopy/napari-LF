@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF/branch/main/graph/badge.svg)](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-LF)](https://napari-hub.org/plugins/napari-LF)
 
-A temporary plugin, with npe2, to use with napari in the process of developing a light field imaging plugin
+A plugin to use with napari in the process of developing a light field imaging plugin
 
 ----------------------------------
 
@@ -28,12 +28,13 @@ Create a virtual environment from the command line for napari with the python li
     conda create --name napari-lf python==3.9
     conda activate napari-lf
     conda install h5py
+    conda install -c conda-forge pyopencl
     pip install opencv-contrib-python
     pip install "napari[all]"
 
 Then, install the light field plugin. Below are two methods of installing:
 
-Method 1: Install latest development version from the command line.
+Method 1: Install the latest development version from the command line.
 
     pip install git+https://github.com/PolarizedLightFieldMicroscopy/napari-LF.git
 
@@ -57,11 +58,11 @@ Lastly, to access the plugin, open napari from the command line.
 
 From the menu, select **Plugins > napari-LF > LF-Analyze**.
 
----
+------
 At a future time, you can install `napari-LF` via [pip]:
 
     pip install napari-LF
----
+------
 
 ## Contributing
 
