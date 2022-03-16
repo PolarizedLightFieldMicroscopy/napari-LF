@@ -1,5 +1,8 @@
 include LICENSE
 include README.md
 
+recursive-include src/napari_lf/resources *.*
+recursive-include src/napari_lf/examples *.*
+
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
