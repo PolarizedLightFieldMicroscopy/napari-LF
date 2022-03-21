@@ -210,8 +210,6 @@ class LFQWidget(QWidget):
 						else:
 							current_val = None
 							
-						print(prop, current_val)
-							
 						if dict["type"] == "bool":
 							if dict["default"] == True or current_val == True:
 								self.new_args_cal.append(prop)
