@@ -1,5 +1,5 @@
-from napari_lf.lfa.lflib.calibration.grid import build_grid
-from napari_lf.lfa.lflib.calibration.ransac import ransac
+from lflib.calibration.grid import build_grid
+from lflib.calibration.ransac import ransac
 import numpy as np
 import scipy.ndimage
 
@@ -207,7 +207,7 @@ def geometric_calibration(calibration_image, pixel_size, lenslet_pitch, alignmen
     # We are ready to solve for the best fit.  We'll use linear
     # least squares and a cubic or affine warp.
     try:
-        from napari_lf.lfa.lflib.calibration.models import AffineWarp, CubicWarp, IsometryWarp
+        from lflib.calibration.models import AffineWarp, CubicWarp, IsometryWarp
         
         if alignment_method == CalibrationAlignmentMethods.CALIBRATION_AFFINE_ALIGNMENT:
             print('\t--> Computing Affine Warp')

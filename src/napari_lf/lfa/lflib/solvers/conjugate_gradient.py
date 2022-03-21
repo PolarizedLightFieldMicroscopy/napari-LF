@@ -3,8 +3,8 @@ import time
 
 from scipy.sparse.linalg.interface import LinearOperator
 
-from napari_lf.lfa.lflib.lightfield import LightField
-from napari_lf.lfa.lflib.linear_operators import LightFieldOperator
+from lflib.lightfield import LightField
+from lflib.linear_operators import LightFieldOperator
 
 #------------------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ def conjugate_gradient_reconstruction(lfcal, lightfield,
     else:
         db = lfcal.rayspread_db
 
-    from napari_lf.lfa.lflib.volume import LightFieldProjection
+    from lflib.volume import LightFieldProjection
     lfproj = LightFieldProjection(lfcal.rayspread_db, lfcal.psf_db, disable_gpu = disable_gpu, gpu_id = gpu_id)
     lfproj.set_premultiplier(lfcal.radiometric_correction)
 
@@ -72,8 +72,8 @@ def conjugate_gradient_reconstruction(lfcal, lightfield,
 
     # Conjugate gradient requires a square A matrix, so we solve the
     # normal equations below, rather than the original problem Ax = b.
-    from napari_lf.lfa.lflib.linear_operators import LightFieldOperator
-    from napari_lf.lfa.lflib.linear_operators import NormalEquationLightFieldOperator
+    from lflib.linear_operators import LightFieldOperator
+    from lflib.linear_operators import NormalEquationLightFieldOperator
 
     # This reweighting factor should account for the non-stationary
     # variance of the shot-noise dominated data.

@@ -8,16 +8,21 @@ from magicgui.widgets import Container, FileEdit, Label, LineEdit, FloatSpinBox,
 
 try:
 	from napari_lf import _widgetLF_gui as LFgui
-	from napari_lf.lfa import lfcalibrate, lfdeconvolve, lfrectify
-	from napari_lf.lfa import lflib
-	from napari_lf import _widgetLF_gui as LFgui
+	from napari_lf import _widgetLF_vals as LFvals
 except:
 	import _widgetLF_gui as LFgui
-	# from lfa import lfcalibrate, lfdeconvolve, lfrectify
-	# from lfa import lflib
+	import _widgetLF_vals as LFvals
+	
+try:
+	from napari_lf.lfa import lfcalibrate, lfdeconvolve, lfrectify
+	from napari_lf.lfa import lflib
+except:
+	from lfa import lfcalibrate, lfdeconvolve, lfrectify
+	from lfa import lflib
 
 METHODS = ['PLUGIN','NAPARI','APP']
 METHOD = METHODS[0]
+SETTINGS_FILENAME = "settings.ini"
 
 # Method 1: As Napari plugin
 class LFQWidget(QWidget):
@@ -35,11 +40,15 @@ class LFQWidget(QWidget):
 		self.lflib_ver = ''
 		self.lflib_ext = False
 		self.currentdir = os.path.dirname(os.path.realpath(__file__))
+		self.gui = None
+		#Get and Set Prefs
+		self.load_plugin_prefs()
 		self.gui = LFgui.LFQWidgetGui()
+		self.thread_worker = None
 		
-		@self.gui.folder_lfa.changed.connect
+		@self.gui.gui_elms["misc"]["lib_folder"].changed.connect
 		def folder_lfa_call():
-			vals = load_lf(self.gui.folder_lfa.value)
+			vals = load_lf(self.gui.gui_elms["misc"]["lib_folder"].value)
 			if vals[0]:
 				self.lflib_ext = True
 				self.lfcalibrate = vals[1]['lfcalibrate']
@@ -47,20 +56,20 @@ class LFQWidget(QWidget):
 				self.lfrectify = vals[1]['lfrectify']
 				self.lflib = vals[1]['lflib']
 				self.lflib_ver = self.lflib.version
-				self.gui.folder_lfa_label.value = self.lflib_ver
-				print('LFA loaded from:', self.gui.folder_lfa.value, '| LF LIB Ver:', self.lflib_ver)
+				self.gui.gui_elms["misc"]["lib_ver_label"].value = self.lflib_ver
+				# print('LFA loaded from:', self.gui.gui_elms["misc"]["lib_folder"].value, '| LF LIB Ver:', self.lflib_ver)
 			else:
-				print('LFA could not be loaded from:', self.gui.folder_lfa.value)
-				self.gui.folder_lfa_label.value = 'Error!'
+				# print('LFA could not be loaded from:', self.gui.gui_elms["misc"]["lib_folder"].value)
+				self.gui.gui_elms["misc"]["lib_ver_label"].value = 'Error!'
 				
-		@self.gui.img_folder.changed.connect
-		def folder_path1_call():
+		@self.gui.gui_elms["main"]["img_folder"].changed.connect
+		def img_folder_call():
 			bool = self.read_meta()
 			if bool:
 				self.refresh_fields()
 				
 		def set_status(vals):
-			self.gui.status.value = vals[0]
+			self.gui.set_btns_and_status(True, ':STATUS: ' + vals[0])
 			
 			if vals[1] == 'dec':
 				self.display_proc_image()
@@ -77,27 +86,33 @@ class LFQWidget(QWidget):
 			
 		@self.gui.btn_cal.changed.connect
 		def btn_cal_call():
-			self.gui.set_status_busy()
+			self.gui.set_btns_and_status(False, ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
 			self.combine_args()
-			worker = self.run_lfcalibrate(self.new_args_cal)  # create "worker" object
-			worker.returned.connect(set_status)  # connect callback functions
-			worker.start()
+			# https://napari.org/api/napari.qt.threading.html
+			self.thread_worker = self.run_lfcalibrate(self.new_args_cal)  # create "worker" object
+			self.thread_worker.returned.connect(set_status)  # connect callback functions
+			self.thread_worker.start()
 			
 		@self.gui.btn_rec.changed.connect
 		def btn_rec_call():
-			self.gui.set_status_busy()
+			self.gui.set_btns_and_status(False, ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
 			self.combine_args()
-			worker = self.run_lfrectify(self.new_args_rec)
-			worker.returned.connect(set_status)
-			worker.start()
+			self.thread_worker = self.run_lfrectify(self.new_args_rec)
+			self.thread_worker.returned.connect(set_status)
+			self.thread_worker.start()
 			
 		@self.gui.btn_dec.changed.connect
 		def btn_dec_call():
-			self.gui.set_status_busy()
+			self.gui.set_btns_and_status(False, ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
 			self.combine_args()
-			worker = self.run_lfdeconvolve(self.new_args_decon)
-			worker.returned.connect(set_status)
-			worker.start()
+			self.thread_worker = self.run_lfdeconvolve(self.new_args_decon)
+			self.thread_worker.returned.connect(set_status)
+			self.thread_worker.start()
+			
+		@self.gui.btn_stop.changed.connect
+		def btn_stop_call():
+			self.thread_worker.quit()
+			self.gui.set_btns_and_status(True, ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_idle'])
 			
 		#Get and Set Prefs
 		self.load_plugin_prefs()
@@ -110,7 +125,7 @@ class LFQWidget(QWidget):
 		 #Scroll Area Properties
 		self.scroll.setWidgetResizable(True)
 		self.scroll.setWidget(self.gui.widget_main.native)
-		self.layout().addWidget(self.gui.widget_logo_info.native)
+		# self.layout().addWidget(self.gui.widget_logo_info.native)
 		self.layout().addWidget(self.gui.widget_main_comps.native)
 		self.layout().addWidget(self.scroll)
 		self.setMinimumSize(400,600)
@@ -124,11 +139,12 @@ class LFQWidget(QWidget):
 				self.lfrectify = lfrectify
 				self.lflib = lflib
 				self.lflib_ver = lflib.version
-				self.gui.folder_lfa_label.value = self.lflib_ver
-				print('LFA loaded from:', self.gui.folder_lfa.value, '| LF LIB Ver:', self.lflib_ver)
-			except:
-				print('LFA could not be loaded from:', self.gui.folder_lfa.value)
-				self.gui.folder_lfa_label.value = 'Error!'
+				self.gui.gui_elms["misc"]["lib_ver_label"].value = self.lflib_ver
+				# print('LFA loaded from:', self.gui.gui_elms["misc"]["lib_folder"].value, '| LF LIB Ver:', self.lflib_ver)
+			except Exception as e:
+				print(e)
+				print('LFA could not be loaded from:', self.gui.gui_elms["misc"]["lib_folder"].value)
+				self.gui.gui_elms["misc"]["lib_ver_label"].value = 'Error!'
 		
 	def closeEvent(self, event):
 		self.save_plugin_prefs()
@@ -137,18 +153,33 @@ class LFQWidget(QWidget):
 		self.save_plugin_prefs()
 
 	def display_proc_image(self):
-		proc_img = str(os.path.join(str(self.gui.img_folder.value), self.gui.lf_vals["deconvolve"]["output_filename"]["value"]))
-		if self.method == METHODS[0]:
-			self.viewer.open(proc_img, stack=True)
-		elif self.method == METHODS[1]:
-			self.viewer.open(proc_img, stack=True)
+		proc_img = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.lf_vals["deconvolve"]["output_filename"]["value"]))
+		
+		if self.gui.gui_elms["misc"]["use_ext_viewer"].value == True:
+			if self.gui.gui_elms["misc"]["ext_viewer_sel"].value == "System":
+				self.openImage(proc_img)
+			else:
+				self.openImageExtViewer(proc_img)
 		else:
-			self.openImage(proc_img)
+			if self.method == METHODS[0]:
+				self.viewer.open(proc_img, stack=True)
+			elif self.method == METHODS[1]:
+				self.viewer.open(proc_img, stack=True)
+			else:
+				if self.gui.gui_elms["misc"]["ext_viewer_sel"].value == "System":
+					self.openImage(proc_img)
+				else:
+					self.openImageExtViewer(proc_img)
 
 	def openImage(self, path):
 		import subprocess
 		imageViewerFromCommandLine = {'linux':'xdg-open','win32':'explorer','darwin':'open'}[sys.platform]
 		subprocess.Popen([imageViewerFromCommandLine, path])
+		
+	def openImageExtViewer(self, path):
+		import subprocess
+		imageViewerFromCommandLine = "{viewer} {cmd} {file_path}".format(viewer=self.gui.gui_elms["misc"]["ext_viewer"].value, cmd="-file-name", file_path=path)
+		subprocess.Popen(imageViewerFromCommandLine)
 		
 	def combine_args(self):		
 		self.new_args_cal = []
@@ -162,40 +193,43 @@ class LFQWidget(QWidget):
 			dict = self.gui.lf_vals["calibrate"][key]
 			current_val = dict["value"]
 			if "img_folder_file" in dict and dict["img_folder_file"] == True:
-				current_val = str(os.path.join(str(self.gui.img_folder.value), current_val))
+				current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
 			else:
 				current_val = str(current_val)
 			self.new_args_cal.append(current_val)
 			
-			for key in self.gui.lf_vals["calibrate"]:
-				dict = self.gui.lf_vals["calibrate"][key]
-				if "exclude_from_args" in dict and dict["exclude_from_args"] == True:
-					pass
-				else:
-					prop = dict["prop"]
-					if ("cat" in dict and dict["cat"] == "required") or (dict["value"] != dict["default"]):
-						current_val = dict["value"]
+			for section in ["calibrate", "hw"]:
+				for key in self.gui.lf_vals[section]:
+					dict = self.gui.lf_vals[section][key]
+					if "exclude_from_args" in dict and dict["exclude_from_args"] == True:
+						pass
 					else:
-						current_val = None
-						
-					if dict["type"] == "bool":
-						if dict["default"] == True or current_val == True:
-							self.new_args_cal.append(prop)
-					else:
-						if current_val != None:
-							self.new_args_cal.append(prop)
-							if dict["type"] != "bool":
-								if "img_folder_file" in dict and dict["img_folder_file"] == True:
-									current_val = str(os.path.join(str(self.gui.img_folder.value), current_val))
-								else:
-									current_val = str(current_val)
-							self.new_args_cal.append(current_val)
+						prop = dict["prop"]
+						if ("cat" in dict and dict["cat"] == "required") or (dict["value"] != dict["default"]):
+							current_val = dict["value"]
+						else:
+							current_val = None
+							
+						print(prop, current_val)
+							
+						if dict["type"] == "bool":
+							if dict["default"] == True or current_val == True:
+								self.new_args_cal.append(prop)
+						else:
+							if current_val != None:
+								self.new_args_cal.append(prop)
+								if dict["type"] != "bool":
+									if "img_folder_file" in dict and dict["img_folder_file"] == True:
+										current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
+									else:
+										current_val = str(current_val)
+								self.new_args_cal.append(current_val)
 
 			key = "input_file"
 			dict = self.gui.lf_vals["deconvolve"][key]
 			current_val = dict["value"]
 			if "img_folder_file" in dict and dict["img_folder_file"] == True:
-				current_val = str(os.path.join(str(self.gui.img_folder.value), current_val))
+				current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
 			else:
 				current_val = str(current_val)
 			self.new_args_rec.append(current_val)
@@ -218,7 +252,7 @@ class LFQWidget(QWidget):
 							self.new_args_rec.append(prop)
 							if dict["type"] != "bool":
 								if "img_folder_file" in dict and dict["img_folder_file"] == True:
-									current_val = str(os.path.join(str(self.gui.img_folder.value), current_val))
+									current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
 								else:
 									current_val = str(current_val)
 							self.new_args_rec.append(current_val)
@@ -227,97 +261,123 @@ class LFQWidget(QWidget):
 			dict = self.gui.lf_vals["deconvolve"][key]
 			current_val = dict["value"]
 			if "img_folder_file" in dict and dict["img_folder_file"] == True:
-				current_val = str(os.path.join(str(self.gui.img_folder.value), current_val))
+				current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
 			else:
 				current_val = str(current_val)
 			self.new_args_decon.append(current_val)
-			for key in self.gui.lf_vals["deconvolve"]:
-				dict = self.gui.lf_vals["deconvolve"][key]
-				if "exclude_from_args" in dict and dict["exclude_from_args"] == True:
-					pass
-				else:
-					prop = dict["prop"]
-					if ("cat" in dict and dict["cat"] == "required") or (dict["value"] != dict["default"]):
-						current_val = dict["value"]
+			
+			for section in ["deconvolve", "hw"]:
+				for key in self.gui.lf_vals[section]:
+					dict = self.gui.lf_vals[section][key]
+					if "exclude_from_args" in dict and dict["exclude_from_args"] == True:
+						pass
 					else:
-						current_val = None
-						
-					if dict["type"] == "bool":
-						if dict["default"] == True or current_val == True:
+						prop = dict["prop"]
+						if ("cat" in dict and dict["cat"] == "required") or (dict["value"] != dict["default"]):
+							current_val = dict["value"]
+						else:
+							current_val = None
+							
+						if current_val == None:
+							pass
+						elif dict["type"] == "bool":
+							if dict["default"] == True or current_val == True:
+								self.new_args_decon.append(prop)
+						else:
+							if "img_folder_file" in dict and dict["img_folder_file"] == True:
+								current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
+							else:
+								current_val = str(current_val)
 							self.new_args_decon.append(prop)
-					else:
-						if current_val != None:
-							self.new_args_decon.append(prop)
-							if dict["type"] != "bool":
-								if "img_folder_file" in dict and dict["img_folder_file"] == True:
-									current_val = str(os.path.join(str(self.gui.img_folder.value), current_val))
-								else:
-									current_val = str(current_val)
 							self.new_args_decon.append(current_val)
-					
+
 		except Exception as e:
 			print(key)
 			raise(e)
 			
 		self.write_meta()
 
-	@thread_worker
+	@thread_worker(progress={'total': 0})
 	def run_lfcalibrate(self, args):
 		# currentdir = os.path.dirname(os.path.realpath(__file__))
 		# grandparentdir = os.path.dirname(os.path.dirname(currentdir))
-		# sys.path.append(folder_lfa.value)
+		# sys.path.append(gui_elms["misc"]["lib_folder"].value)
 		# from lfcalibrate import main
 		try:
 			print(args)
 			self.lfcalibrate.main(args)
-			return ('== IDLE ==', 'cal', '')
+			return (LFvals.PLUGIN_ARGS['main']['status']['value_idle'], 'cal', '')
 		except Exception as err:
-			return ('== ERROR ==', 'cal', err)
+			return (LFvals.PLUGIN_ARGS['main']['status']['value_error'], 'cal', err)
 			
-	@thread_worker
+	@thread_worker(progress={'total': 0})
 	def run_lfrectify(self, args):
 		# currentdir = os.path.dirname(os.path.realpath(__file__))
 		# grandparentdir = os.path.dirname(os.path.dirname(currentdir))
-		# sys.path.append(folder_lfa.value)
+		# sys.path.append(gui_elms["misc"]["lib_folder"].value)
 		# from lfrectify import main
 		try:
 			print(args)
 			self.lfrectify.main(args)
-			return ('== IDLE ==', 'rec', '')
+			return (LFvals.PLUGIN_ARGS['main']['status']['value_idle'], 'rec', '')
 		except Exception as err:
-			return ('== ERROR ==', 'rec', err)
+			return (LFvals.PLUGIN_ARGS['main']['status']['value_error'], 'rec', err)
 		
-	@thread_worker
+	@thread_worker(progress={'total': 0})
 	def run_lfdeconvolve(self, args):
 		# currentdir = os.path.dirname(os.path.realpath(__file__))
 		# grandparentdir = os.path.dirname(os.path.dirname(currentdir))
-		# sys.path.append(folder_lfa.value)
+		# sys.path.append(gui_elms["misc"]["lib_folder"].value)
 		# from lfdeconvolve import main
 		try:
 			print(args)
 			self.lfdeconvolve.main(args)		
-			return ('== IDLE ==', 'dec', '')
+			return (LFvals.PLUGIN_ARGS['main']['status']['value_idle'], 'dec', '')
 		except Exception as err:
-			return ('== ERROR ==', 'dec', err)
+			return (LFvals.PLUGIN_ARGS['main']['status']['value_error'], 'dec', err)
 				
 	def write_meta(self):
-		data = {'new_args_cal':self.new_args_cal, 'new_args_decon':self.new_args_decon, 'new_args_rec':self.new_args_rec}
-		with open(os.path.join(self.gui.img_folder.value, self.gui.meta_txt.value), 'w') as outfile:
-			json.dump(data, outfile)
+		try:
+			meta_data = {}
+			section = "main"
+			meta_data[section] = {}
+			prop = "comments"
+			meta_data[section][prop] = str(self.gui.gui_elms[section][prop].value)
+			
+			for section in ['calibrate','rectify','deconvolve','hw']:
+				meta_data[section] = {}
+				for prop in LFvals.PLUGIN_ARGS[section]:
+					if "exclude_from_metadata" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_metadata"] == True:
+						pass
+					else:
+						if LFvals.PLUGIN_ARGS[section][prop]["type"] in ["file","folder","str"]:
+							meta_data[section][prop] = str(self.gui.gui_elms[section][prop].value)
+						else:
+							meta_data[section][prop] = self.gui.gui_elms[section][prop].value
+			
+			metadata_file_path = Path(self.gui.gui_elms["main"]["img_folder"].value, self.gui.gui_elms["main"]["metadata_file"].value)
+			with open(metadata_file_path, "w") as f:
+				json.dump(meta_data, f, indent=4)
+		except Exception as e:
+			print(e)
 			
 	def read_meta(self):
-		path = Path(os.path.join(self.gui.img_folder.value, self.gui.meta_txt.value))
-		if path.is_file():
-			with open(os.path.join(self.gui.img_folder.value, self.gui.meta_txt.value)) as json_file:
-				data = json.load(json_file)
-				self.new_args_cal = (data['new_args_cal'])
-				# print(self.new_args_cal)
-				self.new_args_decon = (data['new_args_decon'])
-				# print(self.new_args_decon)
-				self.new_args_rec = (data['new_args_rec'])
-				# print(self.new_args_rec)
-			return True
-		else:
+		try:
+			path = Path(os.path.join(self.gui.gui_elms["main"]["img_folder"].value, self.gui.gui_elms["main"]["metadata_file"].value))
+			if path.is_file():
+				with open(os.path.join(self.gui.gui_elms["main"]["img_folder"].value, self.gui.gui_elms["main"]["metadata_file"].value)) as json_file:
+					meta_data = json.load(json_file)
+					
+				for section in meta_data:
+					for prop in meta_data[section]:
+						if prop in self.gui.gui_elms[section] and prop in meta_data[section]:
+							self.gui.gui_elms[section][prop].value = meta_data[section][prop]
+					
+				return True
+			else:
+				return False
+		except Exception as e:
+			print(e)
 			return False
 
 	def refresh_fields(self):
@@ -330,27 +390,41 @@ class LFQWidget(QWidget):
 		self.viewer = viewer
 		
 	def save_plugin_prefs(self):
-		self.settings['gpu_id'] = self.gui.gpu_combobox.native.currentIndex()
-		self.settings['use_single_prec'] = self.gui.use_single_prec.value
-		self.settings['lib_folder'] = str(self.gui.folder_lfa.value)
-		self.settings['img_folder'] = str(self.gui.img_folder.value)
+		self.settings = {}
+		for section in LFvals.PLUGIN_ARGS:
+			self.settings[section] = {}
+			for prop in LFvals.PLUGIN_ARGS[section]:
+				if "exclude_from_settings" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_settings"] == True:
+					pass
+				else:
+					if LFvals.PLUGIN_ARGS[section][prop]["type"] in ["file","folder","str"]:
+						self.settings[section][prop] = str(self.gui.gui_elms[section][prop].value)
+					else:
+						self.settings[section][prop] = self.gui.gui_elms[section][prop].value
 		
-		settings_file_path = Path(os.path.join(self.currentdir, 'settings.json'))
+		settings_file_path = Path(os.path.join(self.currentdir, SETTINGS_FILENAME))
 		with open(settings_file_path, "w") as f:
 			json.dump(self.settings, f, indent=4)
 
 	def load_plugin_prefs(self):
-		settings_file_path = Path(os.path.join(self.currentdir, 'settings.json'))
-		if settings_file_path.is_file() is False:
-			self.save_plugin_prefs()
-		else:
-			with open(settings_file_path, "r") as f:
-				self.settings = json.load(f)
-				
-			self.gui.gpu_combobox.native.setCurrentIndex(self.settings['gpu_id'])
-			self.gui.use_single_prec.value = self.settings['use_single_prec']
-			self.gui.folder_lfa.value = str(self.settings['lib_folder'])
-			self.gui.img_folder.value = str(self.settings['img_folder'])
+		try:
+			settings_file_path = Path(os.path.join(self.currentdir, SETTINGS_FILENAME))
+			if settings_file_path.is_file() is False:
+				self.save_plugin_prefs()
+			else:
+				with open(settings_file_path, "r") as f:
+					self.settings = json.load(f)
+					
+				for section in LFvals.PLUGIN_ARGS:
+					for prop in LFvals.PLUGIN_ARGS[section]:
+						if prop in LFvals.PLUGIN_ARGS[section] and prop in self.settings[section]:
+							LFvals.PLUGIN_ARGS[section][prop]["value"] = self.settings[section][prop]
+						if self.gui is not None and prop in self.gui.gui_elms[section] and prop in self.settings[section]:
+							self.gui.gui_elms[section][prop].value = self.settings[section][prop]
+			
+		except Exception as e:
+			print(e)
+			self.settings = {}
 	
 def show_Error(err):
 	print(repr(err))

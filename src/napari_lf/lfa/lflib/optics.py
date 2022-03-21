@@ -1,5 +1,5 @@
 import numpy as np
-from napari_lf.lfa.lflib.lightfield import LightField
+from lflib.lightfield import LightField
 
 
 #----------------------------------------------------------------------------------
@@ -399,9 +399,9 @@ def compute_psf_imap(in_tuple):
     #psf_filename = 'psf_%d__%d_%d.tif' % (z_idx,x_idx,y_idx)
     #print 'SAVING ', psf_filename
     # invpsf_filename = 'invpsf_%d__%d_%d.tif' % (z,x,y)
-    #from napari_lf.lfa.lflib.imageio import save_image
+    #from lflib.imageio import save_image
     #save_image(psf_filename, psf)
-    # from napari_lf.lfa.lflib.lightfield import lenslet2subaperture
+    # from lflib.lightfield import lenslet2subaperture
     # save_image(invpsf_filename,
     #            lenslet2subaperture(psf, lenslet_array.nu, lenslet_array.nv,
     #                                num_lenslets_in_aperture, num_lenslets_in_aperture))
@@ -559,7 +559,7 @@ class LensletArray(LfSensor):
                              useful in super-resolved deconvolution.
         voxels_as_points   - If True, treat each voxel as an ideal point source.
                              This turns of numerical integration that gives the
-                             voxel spatial extent (which can be important for anti-aliasing.
+                             voxel spatial extent, which can be important for anti-aliasing.
         """
         import time
         tic = time.time()
