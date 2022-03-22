@@ -1,8 +1,8 @@
 import math, datetime
 import numpy as np
-from napari_lf.lfa.lflib.lfexceptions import ZeroImageException
-from napari_lf.lfa.lflib.lightfield import LightField
-from napari_lf.lfa.lflib.calibration.imaging import CalibrationAlignmentMethods
+from lflib.lfexceptions import ZeroImageException
+from lflib.lightfield import LightField
+from lflib.calibration.imaging import CalibrationAlignmentMethods
 
 class LightFieldCalibration(object):
 
@@ -194,8 +194,8 @@ class LightFieldCalibration(object):
             # generic manner.  For now we directly store affine
             # coefficients.
             if not instance.skip_alignment:
-                from napari_lf.lfa.lflib.calibration import models
-                from napari_lf.lfa.lflib.calibration.imaging import CalibrationAlignmentMethods
+                from lflib.calibration import models
+                from lflib.calibration.imaging import CalibrationAlignmentMethods
                 if instance.alignment_method == CalibrationAlignmentMethods.CALIBRATION_AFFINE_ALIGNMENT:
                     instance.geometric_calibration_model = models.AffineWarp()
                     instance.radiometric_calibration_model = models.AffineWarp()
@@ -241,7 +241,7 @@ class LightFieldCalibration(object):
             instance.um_per_z_slice = rayspread_group.attrs['um_per_z_slice']
             instance.z_center       = rayspread_group.attrs['z_center']
 
-            from napari_lf.lfa.lflib.optics import LensletArray
+            from lflib.optics import LensletArray
             instance.lenslet_array = LensletArray(instance.nu, instance.nv, instance.ns, instance.nt,
                                                   instance.ulens_pitch, instance.pixel_size,
                                                   instance.ulens_focal_length, instance.ulens_focal_distance,
@@ -378,15 +378,14 @@ class LightFieldCalibration(object):
     # ----------------------- GEOMETRY --------------------------------
     
     def calibrate_geometry(self, calibration_image_file, skip_alignment = False,
-                           skip_subpixel_alignment = False,
-                           debug_mode = False, chief_ray_image = False,
+                           skip_subpixel_alignment = False, chief_ray_image = False,
                            radiometry_file = None, align_radiometry = False,
                            crop_center_lenslets = False, lenslet_detect_thres=0.3):
         '''
         Run the light field imaging geometric calibration routine.
         '''
         
-        from napari_lf.lfa.lflib.imageio import load_image
+        from lflib.imageio import load_image
         self.calibration_image_filename = calibration_image_file
         calibration_image = load_image(calibration_image_file, dtype=np.float32, normalize = True)
 
@@ -414,7 +413,7 @@ class LightFieldCalibration(object):
         else:
             print('Performing geometric calibration with: ', calibration_image_file)
 
-            from napari_lf.lfa.lflib.calibration.imaging import geometric_calibration
+            from lflib.calibration.imaging import geometric_calibration
             try: 
                 (self.geometric_calibration_model,
                  self.geometric_calibration_residuals) = geometric_calibration(calibration_image,
@@ -422,10 +421,9 @@ class LightFieldCalibration(object):
                                                                                self.alignment_method,
                                                                                chief_ray_image,
                                                                                crop_center_lenslets)
-            except RuntimeError as e:
-                print(e)
-                print('\nPlease check your calibration parameters and try again.')
-                raise SystemExit
+            except RuntimeError:
+                print("Please check your calibration parameters and try again.")
+                raise
             
             if radiometry_file is not None and align_radiometry == True:
                 print('Performing a separate geometric calibration on radiometry frame:', radiometry_file)
@@ -451,10 +449,9 @@ class LightFieldCalibration(object):
                                                                                      self.alignment_method,
                                                                           False, # No chief ray calibration
                                                                                      crop_center_lenslets)
-                except RuntimeError as e:
-                    print(e)
-                    print('\nPlease check your calibration parameters and try again.')
-                    raise SystemExit
+                except RuntimeError:
+                    print("Please check your calibration parameters and try again.")
+                    raise
 
             else:
                 self.radiometric_calibration_model = self.geometric_calibration_model
@@ -546,7 +543,7 @@ class LightFieldCalibration(object):
     
     def calibrate_radiometry(self, calibration_image_file, radiometry_frame_file = None, dark_frame_file = None):
         
-        from napari_lf.lfa.lflib.imageio import load_image, save_image
+        from lflib.imageio import load_image, save_image
         
         if radiometry_frame_file is not None:
             im = load_image(radiometry_frame_file, dtype=np.float32, normalize = False)
@@ -589,9 +586,9 @@ class LightFieldCalibration(object):
         else:
             rectified_lf = LightField(im, self.nu, self.nv, self.ns, self.nt,
                                       representation = LightField.TILED_LENSLET)
-        from napari_lf.lfa.lflib.imageio import save_image
+        from lflib.imageio import save_image
 
-        from napari_lf.lfa.lflib.volume import LightFieldProjection
+        from lflib.volume import LightFieldProjection
         # Possibly add parameter disable_gpu=True into the line below
         lfproj = LightFieldProjection(self.rayspread_db, self.psf_db, gpu_id = self.options.gpu_id, platform_id=self.options.platform_id, use_sing_prec=self.options.use_sing_prec)
         if self.psf_db:
@@ -612,8 +609,7 @@ class LightFieldCalibration(object):
                 aperture_avg[v, u] = subimage.mean()
 
         if aperture_avg.max() == 0:
-            print('ERROR: radiometry calibration failed.  No non-zero pixels found in the calibrated radiometry image!')
-            exit(1)
+            raise Exception("ERROR: radiometry calibration failed.  No non-zero pixels found in the calibrated radiometry image!")
 
         # OLD RADIOMETRY (still used in ray optics model... though deprecated and we should remove!)
         # aperture_avg /= aperture_avg.max() # Make sure radiometry is scaled <= 1.0
@@ -656,7 +652,7 @@ class LightFieldCalibration(object):
     
     def generate_raydb(self, num_slices, um_per_slice, supersample_factor = 1, z_center = 0.0,
                        num_threads = 1, voxels_as_points = False):
-        from napari_lf.lfa.lflib.optics import LensletArray
+        from lflib.optics import LensletArray
 
         self.lenslet_array = LensletArray(self.nu, self.nv, self.ns, self.nt,
                                           self.ulens_pitch, self.pixel_size,

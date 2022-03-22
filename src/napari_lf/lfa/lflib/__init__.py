@@ -1,4 +1,4 @@
-""" Master files for napari_lf.lfa.lflib """
+""" Master files for lflib """
 
-# Current napari_lf.lfa.lflib version string
+# Current lflib version string
 version = '1.0a'

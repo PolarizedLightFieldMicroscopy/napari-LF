@@ -15,8 +15,7 @@ def build_grid(putative_centers, expected_lenslet_size, adjacency_tolerance, b_e
     ROTATION_SAMPLE_SIZE = 400
     if b_estimate_rotation:
         if len(putative_centers) < ROTATION_SAMPLE_SIZE:
-            print("ERROR: there are not enough lenslet centers to perform calibration.  Check you calibration image and try again.")
-            raise SystemExit
+            raise Exception("ERROR: there are not enough lenslet centers to perform calibration.  Check you calibration image and try again.")
         rand_indicies = np.random.choice(len(putative_centers), size=ROTATION_SAMPLE_SIZE, replace=False)
         rand_centers = putative_centers[rand_indicies, :]
         rotation_samples = []

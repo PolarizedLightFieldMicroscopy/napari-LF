@@ -2,8 +2,8 @@ import numpy as np
 
 from scipy.sparse.linalg.interface import LinearOperator
 
-from napari_lf.lfa.lflib.lightfield import LightField
-from napari_lf.lfa.lflib.linear_operators import LightFieldOperator
+from lflib.lightfield import LightField
+from lflib.linear_operators import LightFieldOperator
 
 # ----------------------------------------------------------------------------------------
 #                APPROXIMATE MESSAGE PASSING (AMP) ITERATIVE SOLVER
@@ -32,7 +32,7 @@ def amp_reconstruction(lfcal, lightfield,
 
     # import wavelet functions if needed 
     if multiscale_smoothing:
-        from napari_lf.lfa.lflib.multiscale3d import ( multiscale_transform_3D, inverse_multiscale_transform_3D, 
+        from lflib.multiscale3d import ( multiscale_transform_3D, inverse_multiscale_transform_3D, 
                                          multiscale_coefficient_update, multiscale_threshold, 
                                          multiscale_coefficient_mean, generalized_anscombe,
                                          output_multiscale_coefs, anscombe, inverse_anscombe )
@@ -44,7 +44,7 @@ def amp_reconstruction(lfcal, lightfield,
         db = lfcal.rayspread_db
         
     # get lightfield projection operator
-    from napari_lf.lfa.lflib.volume import LightFieldProjection
+    from lflib.volume import LightFieldProjection
     lfproj = LightFieldProjection(lfcal.rayspread_db, lfcal.psf_db, disable_gpu = disable_gpu, 
                                   gpu_id = gpu_id)
     lfproj.set_premultiplier(lfcal.radiometric_correction)
@@ -83,7 +83,7 @@ def amp_reconstruction(lfcal, lightfield,
         gain = 1.0
         mu = 0.0
         sigma = 10.0
-        from napari_lf.lfa.lflib.multiscale3d import generalized_anscombe, anscombe, inverse_anscombe
+        from lflib.multiscale3d import generalized_anscombe, anscombe, inverse_anscombe
 #        b = generalized_anscombe(b, mu, sigma, gain)
         b = anscombe(b)
         print("Range b:", np.min(b), np.max(b))
@@ -165,7 +165,7 @@ def amp_reconstruction(lfcal, lightfield,
             else:
                 inv_3d = np.asarray(inverse_multiscale_transform_3D(x,vol_inds=vol_inds,
                                                                     transform_type=transform_type))
-                inv_3d = inv_3d.transpose((1,0,2)).flatten() # reshape for napari_lf.lfa.lflib 
+                inv_3d = inv_3d.transpose((1,0,2)).flatten() # reshape for lflib 
                 print("Range inv_3d:", np.min(inv_3d), np.max(inv_3d))
 #                inv_3d[inv_3d < 0.0]=0.0 # impose nonnegativity
 #                print "Max inv_3d:", np.max(inv_3d)
@@ -210,7 +210,7 @@ def amp_reconstruction(lfcal, lightfield,
             tic = time.time()
 
             # These are the multiscale coefficient errors. There is some reshaping that 
-            # must go on to pass the volumes between napari_lf.lfa.lflib (column-major (y,x,z)) and 
+            # must go on to pass the volumes between lflib (column-major (y,x,z)) and 
             # R (row-major (x,y,z) if an R method is used. 
             if transform_type == "pyramidal_median":
                 error_backprojected, vol_inds = multiscale_transform_3D(error_backprojected, 
