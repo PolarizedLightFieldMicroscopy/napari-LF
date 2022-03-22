@@ -8,9 +8,10 @@
 # microscope), but can be used to update old calibration files from
 # early experiments as well.
 import sys, os
-from napari_lf.lfa.lflib.imageio import load_image, save_image
 import numpy as np
 import glob
+from lflib.imageio import load_image, save_image
+from lflib.lfexceptions import ParameterError
 
 def avg_images(image_files):
     """
@@ -28,8 +29,8 @@ def avg_images(image_files):
     return np.round(im/len(image_files)).astype(im_type)
 
 def main(args=None, values=None):
-    import napari_lf.lfa.lflib
-    print('LFcalibrate v%s' % (napari_lf.lfa.lflib.version))
+    import lflib
+    print('LFcalibrate v%s' % (lflib.version))
 
     # Parse command line options
     from optparse import OptionParser
@@ -129,9 +130,6 @@ def main(args=None, values=None):
                       help="After calibrating, save the rectified light field as a rectified sub-aperture image.")
     parser.add_option("", "--lenslet", dest="lenslet_filename", default=None,
                       help="After calibrating, save the rectified light field as a rectified lenslet image.")
-    parser.add_option('-d', "--debug",
-                      action="store_true", dest="debug", default=False,
-                      help="Save debug images.")
 
     # Added parameters to change main into a function.
     (options, args) = parser.parse_args(args=args, values=values)
@@ -145,14 +143,19 @@ def main(args=None, values=None):
     if options.ulens_focal_distance is None:
         options.ulens_focal_distance = options.ulens_focal_length
 
+    # Check if the input paremeters are valid.
+    from lflib.lfexceptions import ParameterError, ParameterExistsError
     if not options.synthetic_lf and len(args) != 1:
-        print('You must supply exactly one calibration image.\n')
-        sys.exit(1)
+        raise ParameterError("Please supply exactly one calibration image.")
+
     calibration_filename = args[0]
 
-    if options.pixel_size is None or options.ulens_pitch is None:
-        print('Please supply necessary pixel per lenslet information via the \'--pitch\' and \'--pixel-size\' options.')
-        sys.exit(1)
+    # Check if necessary pixel per lenslet information is supplied.
+    if options.pixel_size is None:
+        raise ParameterExistsError(options.pixel_size, "Please supply the pixel size.")
+    
+    if options.ulens_pitch is None:
+        raise ParameterExistsError(options.ulens_pitch, "Please supply the microlens pitch.")
 
     if options.synthetic_lf:
         ns = options.ns
@@ -185,13 +188,13 @@ def main(args=None, values=None):
         save_image(options.radiometry_frame_file, avg_radiometry_frame)
 
     # Create a new calibration object
-    from napari_lf.lfa.lflib.calibration import LightFieldCalibration
+    from lflib.calibration import LightFieldCalibration
 
 
     # FOR DEBUGGING: Load a previous calibration
     #lfcal = LightFieldCalibration.load(output_filename)
 
-    from napari_lf.lfa.lflib.calibration.imaging import CalibrationAlignmentMethods
+    from lflib.calibration.imaging import CalibrationAlignmentMethods
     if options.affine_alignment:
         calibration_method = CalibrationAlignmentMethods.CALIBRATION_AFFINE_ALIGNMENT
     elif options.isometry_alignment:
@@ -214,10 +217,8 @@ def main(args=None, values=None):
     lfcal.calibrate_geometry(calibration_filename,
                              skip_alignment = options.skip_alignment,
                              skip_subpixel_alignment = options.skip_subpixel_alignment,
-                             debug_mode = options.debug,
                              chief_ray_image = options.chief_ray_image,
                              radiometry_file = options.radiometry_frame_file,
-
                              align_radiometry = options.align_radiometry,
                              crop_center_lenslets = options.crop_center_lenslets)
     print(('   Calibrated light field has [ %d x %d ] ray samples and [ %d x %d ] spatial samples.' %
@@ -225,14 +226,14 @@ def main(args=None, values=None):
 
     # Optionally, create a rectified sub-aperture image
     if (options.pinhole_filename):
-        from napari_lf.lfa.lflib.lightfield import LightField
+        from lflib.lightfield import LightField
         im = load_image(calibration_filename, dtype=np.float32, normalize = False)
         lf = lfcal.rectify_lf(im).asimage(LightField.TILED_SUBAPERTURE)
         save_image(options.pinhole_filename, lf/lf.max() * 65535, dtype=np.uint16)
 
     # Optionally, create a rectified lenslet image
     if (options.lenslet_filename):
-        from napari_lf.lfa.lflib.lightfield import LightField
+        from lflib.lightfield import LightField
         im = load_image(calibration_filename, dtype=np.float32, normalize = False)
         lf = lfcal.rectify_lf(im).asimage(LightField.TILED_LENSLET)
         save_image(options.lenslet_filename, lf/lf.max() * 65535, dtype=np.uint16)
@@ -256,7 +257,7 @@ def main(args=None, values=None):
     # coefficient directly... we should veil this in some layer of
     # abstraction soon!
     print('-> Calibrating radiometry using ', options.radiometry_frame_file)
-    from napari_lf.lfa.lflib.lfexceptions import ZeroImageException
+    from lflib.lfexceptions import ZeroImageException
     try:
         lfcal.calibrate_radiometry(calibration_filename,
                 radiometry_frame_file = options.radiometry_frame_file,

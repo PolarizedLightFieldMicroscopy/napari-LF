@@ -1,15 +1,15 @@
 import sys, os
 import numpy as np
-from napari_lf.lfa.lflib.lightfield import LightField
-from napari_lf.lfa.lflib.imageio import save_image
+from lflib.lightfield import LightField
+from lflib.imageio import save_image
 from scipy.ndimage import filters
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 try:
     import pyopencl as cl
     import pyopencl.array as cl_array
-    lflib_HAVE_OPENCL = True
+    LFLIB_HAVE_OPENCL = True
 except ImportError:
-    lflib_HAVE_OPENCL = False
+    LFLIB_HAVE_OPENCL = False
 # Utility function
 extract = lambda x, y: dict(list(zip(x, list(map(y.get, x)))))
 
@@ -295,7 +295,7 @@ class LightFieldProjection(object):
         self.premultiplier = None
         self.postmultiplier = None
         
-        if lflib_HAVE_OPENCL and not disable_gpu:
+        if LFLIB_HAVE_OPENCL and not disable_gpu:
             # Set up OpenCL
             platform = cl.get_platforms()[platform_id]
             print(75*"=")
@@ -343,8 +343,7 @@ class LightFieldProjection(object):
 
         else:  # No OpenCL
             if self.psf_db is not None:
-                print("WARNING: your platform does not seem to support OpenCL.  There is no project/backproject implementations for wavespreads on the CPU.   Exiting.")
-                raise SystemExit
+                raise Exception("WARNING: your platform does not seem to support OpenCL.  There is no project/backproject implementations for wavespreads on the CPU.   Exiting.")
             else:
                 print("WARNING: your platform does not seem to support OpenCL.  Using SIRT CPU implementation.")
                 self.backproject = self.backproject_cpu
