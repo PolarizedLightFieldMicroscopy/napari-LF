@@ -20,9 +20,7 @@ except:
 	from lfa import lfcalibrate, lfdeconvolve, lfrectify
 	from lfa import lflib
 
-METHODS = ['PLUGIN','NAPARI','APP']
-METHOD = METHODS[0]
-SETTINGS_FILENAME = "settings.ini"
+METHOD = LFvals.METHODS[0]
 
 # Method 1: As Napari plugin
 class LFQWidget(QWidget):
@@ -42,9 +40,32 @@ class LFQWidget(QWidget):
 		self.currentdir = os.path.dirname(os.path.realpath(__file__))
 		self.gui = None
 		#Get and Set Prefs
-		self.load_plugin_prefs()
+		self.load_plugin_prefs(pre_init=True)
 		self.gui = LFgui.LFQWidgetGui()
+		self.gui.method = self.method
 		self.thread_worker = None
+		
+		@self.gui.btn_open_img.changed.connect
+		def img_list_open():
+			img_selected = str(self.gui.gui_elms["main"]["img_list"].value)
+			img_folder = str(self.gui.gui_elms["main"]["img_folder"].value)
+			img_file_path = os.path.join(img_folder, img_selected)
+			
+			if self.gui.gui_elms["misc"]["use_ext_viewer"].value == True:
+				if self.gui.gui_elms["misc"]["ext_viewer_sel"].value == "System":
+					self.openImage(img_file_path)
+				else:
+					self.openImageExtViewer(img_file_path)
+			else:
+				if self.method == LFvals.METHODS[0]:
+					self.viewer.open(img_file_path, stack=True)
+				elif self.method == LFvals.METHODS[1]:
+					self.viewer.open(img_file_path, stack=True)
+				else:
+					if self.gui.gui_elms["misc"]["ext_viewer_sel"].value == "System":
+						self.openImage(img_file_path)
+					else:
+						self.openImageExtViewer(img_file_path)
 		
 		@self.gui.gui_elms["misc"]["lib_folder"].changed.connect
 		def folder_lfa_call():
@@ -67,9 +88,10 @@ class LFQWidget(QWidget):
 			bool = self.read_meta()
 			if bool:
 				self.refresh_fields()
+			self.gui.image_folder_changes()
 				
 		def set_status(vals):
-			self.gui.set_btns_and_status(True, ':STATUS: ' + vals[0])
+			self.gui.set_btns_and_status(True, vals[0])
 			
 			if vals[1] == 'dec':
 				self.display_proc_image()
@@ -83,10 +105,12 @@ class LFQWidget(QWidget):
 				msg.setInformativeText(repr(err))
 				msg.setWindowTitle("Error")
 				msg.exec_()
+				
+			self.gui.image_folder_changes()
 			
 		@self.gui.btn_cal.changed.connect
 		def btn_cal_call():
-			self.gui.set_btns_and_status(False, ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
+			self.gui.set_btns_and_status(False, LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
 			self.combine_args()
 			# https://napari.org/api/napari.qt.threading.html
 			self.thread_worker = self.run_lfcalibrate(self.new_args_cal)  # create "worker" object
@@ -95,7 +119,7 @@ class LFQWidget(QWidget):
 			
 		@self.gui.btn_rec.changed.connect
 		def btn_rec_call():
-			self.gui.set_btns_and_status(False, ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
+			self.gui.set_btns_and_status(False, LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
 			self.combine_args()
 			self.thread_worker = self.run_lfrectify(self.new_args_rec)
 			self.thread_worker.returned.connect(set_status)
@@ -103,7 +127,7 @@ class LFQWidget(QWidget):
 			
 		@self.gui.btn_dec.changed.connect
 		def btn_dec_call():
-			self.gui.set_btns_and_status(False, ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
+			self.gui.set_btns_and_status(False, LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
 			self.combine_args()
 			self.thread_worker = self.run_lfdeconvolve(self.new_args_decon)
 			self.thread_worker.returned.connect(set_status)
@@ -112,9 +136,10 @@ class LFQWidget(QWidget):
 		@self.gui.btn_stop.changed.connect
 		def btn_stop_call():
 			self.thread_worker.quit()
-			self.gui.set_btns_and_status(True, ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_idle'])
+			self.gui.set_btns_and_status(True, LFvals.PLUGIN_ARGS['main']['status']['value_idle'])
 			
 		#Get and Set Prefs
+		self.gui.populate_img_list()
 		self.load_plugin_prefs()
 		
 		#Layout
@@ -132,7 +157,7 @@ class LFQWidget(QWidget):
 		self.set_lfa_libs()
 		
 	def set_lfa_libs(self):
-		if self.method == METHODS[0]:
+		if self.method == LFvals.METHODS[0]:
 			try:
 				self.lfcalibrate = lfcalibrate
 				self.lfdeconvolve = lfdeconvolve
@@ -161,9 +186,9 @@ class LFQWidget(QWidget):
 			else:
 				self.openImageExtViewer(proc_img)
 		else:
-			if self.method == METHODS[0]:
+			if self.method == LFvals.METHODS[0]:
 				self.viewer.open(proc_img, stack=True)
-			elif self.method == METHODS[1]:
+			elif self.method == LFvals.METHODS[1]:
 				self.viewer.open(proc_img, stack=True)
 			else:
 				if self.gui.gui_elms["misc"]["ext_viewer_sel"].value == "System":
@@ -172,14 +197,10 @@ class LFQWidget(QWidget):
 					self.openImageExtViewer(proc_img)
 
 	def openImage(self, path):
-		import subprocess
-		imageViewerFromCommandLine = {'linux':'xdg-open','win32':'explorer','darwin':'open'}[sys.platform]
-		subprocess.Popen([imageViewerFromCommandLine, path])
+		self.gui.openImage(path)
 		
 	def openImageExtViewer(self, path):
-		import subprocess
-		imageViewerFromCommandLine = "{viewer} {cmd} {file_path}".format(viewer=self.gui.gui_elms["misc"]["ext_viewer"].value, cmd="-file-name", file_path=path)
-		subprocess.Popen(imageViewerFromCommandLine)
+		self.gui.openImageExtViewer(path)
 		
 	def combine_args(self):		
 		self.new_args_cal = []
@@ -369,7 +390,10 @@ class LFQWidget(QWidget):
 				for section in meta_data:
 					for prop in meta_data[section]:
 						if prop in self.gui.gui_elms[section] and prop in meta_data[section]:
-							self.gui.gui_elms[section][prop].value = meta_data[section][prop]
+							try:
+								self.gui.gui_elms[section][prop].value = meta_data[section][prop]
+							except Exception as e:
+								print(e)
 					
 				return True
 			else:
@@ -400,13 +424,13 @@ class LFQWidget(QWidget):
 					else:
 						self.settings[section][prop] = self.gui.gui_elms[section][prop].value
 		
-		settings_file_path = Path(os.path.join(self.currentdir, SETTINGS_FILENAME))
+		settings_file_path = Path(os.path.join(self.currentdir, LFvals.SETTINGS_FILENAME))
 		with open(settings_file_path, "w") as f:
 			json.dump(self.settings, f, indent=4)
 
-	def load_plugin_prefs(self):
+	def load_plugin_prefs(self, pre_init=False):
 		try:
-			settings_file_path = Path(os.path.join(self.currentdir, SETTINGS_FILENAME))
+			settings_file_path = Path(os.path.join(self.currentdir, LFvals.SETTINGS_FILENAME))
 			if settings_file_path.is_file() is False:
 				self.save_plugin_prefs()
 			else:
@@ -415,10 +439,23 @@ class LFQWidget(QWidget):
 					
 				for section in LFvals.PLUGIN_ARGS:
 					for prop in LFvals.PLUGIN_ARGS[section]:
-						if prop in LFvals.PLUGIN_ARGS[section] and prop in self.settings[section]:
-							LFvals.PLUGIN_ARGS[section][prop]["value"] = self.settings[section][prop]
-						if self.gui is not None and prop in self.gui.gui_elms[section] and prop in self.settings[section]:
-							self.gui.gui_elms[section][prop].value = self.settings[section][prop]
+						try:
+							if prop in LFvals.PLUGIN_ARGS[section] and prop in self.settings[section]:
+								LFvals.PLUGIN_ARGS[section][prop]["value"] = self.settings[section][prop]
+							if pre_init == False and prop in self.gui.gui_elms[section] and prop in self.settings[section]:
+								try:
+									self.gui.gui_elms[section][prop].value = self.settings[section][prop]
+								except Exception as e:
+									print(e)
+									if self.gui.gui_elms[section][prop].widget_type == 'ComboBox':
+										self.gui.gui_elms[section][prop].value = self.gui.gui_elms[section][prop].choices[0]
+						except Exception as e:
+							print(e)
+				if pre_init == False:
+					bool = self.read_meta()
+					if bool:
+						self.refresh_fields()
+					self.gui.image_folder_changes()
 			
 		except Exception as e:
 			print(e)
@@ -447,14 +484,14 @@ def load_lf(folder_path):
 
 def main(method):
 	METHOD = method
-	if method == METHODS[1]: # Method 2: As Napari viewer	
+	if method == LFvals.METHODS[1]: # Method 2: As Napari viewer	
 		viewer = napari.Viewer()
 		widget = LFQWidget(QWidget())
 		widget.set_method(method)
 		widget.set_viewer(viewer)
 		viewer.window.add_dock_widget(widget)
 		napari.run()
-	elif method == METHODS[2]: # Method 3: As stand-alone application
+	elif method == LFvals.METHODS[2]: # Method 3: As stand-alone application
 		app = QApplication(sys.argv)
 		widget = LFQWidget(QWidget())
 		widget.setWindowTitle('LF Analyze')
@@ -464,4 +501,4 @@ def main(method):
 		sys.exit(app.exec_())
 
 if __name__ == "__main__":
-	main(METHODS[1])
+	main(LFvals.METHODS[1])

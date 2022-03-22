@@ -9,10 +9,14 @@ SOLVER_OPTIONS = {
 	'Approximate Message Passing (with optional multiscale denoising':'amp', 'Alternating Direction Method of Multipliers with Huber loss':'admm_huber','Alternating Direction Method of Multipliers with TV penalty':'admm_tv','Conjugate Gradient':'cg','Direct method with Cholesky factorization':'direct','Least Squares QR':'lsqr','K-space deconvolution':'kspace','Simultaneous Iterative Reconstruction Technique':'sirt','MRNSD':'mrnsd','Richardson-Lucy':'rl'
 }
 
+METHODS = ['PLUGIN','NAPARI','APP']
+SETTINGS_FILENAME = "settings.ini"
+
 # https://napari.org/magicgui/usage/widget_overview.html
 # https://napari.org/magicgui/api/_autosummary/magicgui.widgets.create_widget.html#magicgui.widgets.create_widget
 # PLUGIN_ARGS also creates GUI elements
 # Required properties are "type","label","default","help"
+# A type == sel must include "options" property
 # Based on "type" appropriate widgets will be created
 # Define additional widget attributes (eg. enabled, visible etc.) for further customization (refer widget overview link above)
 # For calibrate, rectify, deconvolve add property "cat":"required" to be included under Required tab, otherwise gui element will be under Optional tab
@@ -26,11 +30,14 @@ PLUGIN_ARGS = {
 		"img_folder":{
 			"label":"Input Image Folder","default":examples_folder,"help":"Select your dataset folder containing the raw light-field image(s).","type":"folder"
 		},
+		"img_list":{
+			"label":"Available Images","default":"","help":"List of available Images to view in the selected Image folder.","type":"sel","options":[""]
+		},
 		"metadata_file":{
-			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"file"
+			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"str"
 		},
 		"comments":{
-			"default":"","label":"Comments","help":"Comments from Acquisition and Processing","type":"str","widget_type":"TextEdit"
+			"default":"","label":"Comments","help":"Comments from Acquisition and Processing","type":"str","type":"text"
 		},
 		"status":{
 			"label":"STATUS:","value":"== IDLE ==","value_busy":"== BUSY ==","value_idle":"== IDLE ==","value_error":"== ERROR ==","type":"label","default":"== IDLE ==","exclude_from_settings":True
@@ -50,10 +57,10 @@ PLUGIN_ARGS = {
 			"label":"Use System/External Viewer","type":"bool","default":False,"help":"Use system/external viewer for displaying images instead."
 		},
 		"ext_viewer_sel":{
-			"label":"Select Viewer","type":"sel","default":"System","options":["System","External"],"help":"Chose your viewer."
+			"label":"Select Viewer","type":"sel","default":"System","options":["System","External"],"help":"Chose your viewer (System: OS default, External: User selects path below)."
 		},
 		"ext_viewer":{
-			"label":"External Viewer","type":"file","default":{'linux':'xdg-open','win32':os.environ["ProgramFiles"],'darwin':'open'}[sys.platform],"help":"Chose your external viewer."
+			"label":"External Viewer","type":"file","default":{'linux':'xdg-open','win32':os.environ["ProgramFiles"],'darwin':'open'}[sys.platform],"help":"Chose your external viewer (executable file)."
 		}
 	},
 	"hw":{
@@ -105,10 +112,10 @@ PLUGIN_ARGS = {
 			"prop":"--pixel-size","label":"Pixel Size (um)","dest":"pixel_size","type":"float","default":4.55,"help":"Specify the size of a pixel on the sensor taking magnification due to relay optics into account (in microns).","cat":"required","step":0.001,"group":"Optical parameters"
 		},	
 		"ulens_focal_length":{
-			"prop":"--focal-length","label":"Microlens Focal Length (um)","dest":"ulens_focal_length","type":"float","default":2433,"help":"Specify the microlens focal length (in microns).","cat":"required","max":5000,"group":"Optical parameters"
+			"prop":"--focal-length","label":"Microlens Focal Length (um)","dest":"ulens_focal_length","type":"float","default":2433,"step":1,"help":"Specify the microlens focal length (in microns).","cat":"required","max":5000,"group":"Optical parameters"
 		},
 		"ulens_focal_distance":{
-			"prop":"--ulens-focal-distance","label":"Microlens Focal Distance (um)","dest":"ulens_focal_distance","type":"float","default":2433,"help":"Specify the microlens focal distance (in microns). If you do not specify a value it is assumed that the focal distance is equal to the focal length.","max":5000,"group":"Optical parameters"
+			"prop":"--ulens-focal-distance","label":"Microlens Focal Distance (um)","dest":"ulens_focal_distance","type":"float","default":2433,"step":1,"help":"Specify the microlens focal distance (in microns). If you do not specify a value it is assumed that the focal distance is equal to the focal length.","max":5000,"group":"Optical parameters"
 		},
 		"objective_magnification":{
 			"prop":"--magnification","label":"Objective Magnification","dest":"objective_magnification","type":"int","default":20,"help":"Specify the objective magnification.","cat":"required","group":"Optical parameters"
@@ -117,10 +124,10 @@ PLUGIN_ARGS = {
 			"prop":"--na","label":"Objective NA","dest":"objective_na","type":"float","default":0.5,"help":"Specify the objective numerical aperture.","cat":"required","group":"Optical parameters"
 		},
 		"tubelens_focal_length":{
-			"prop":"--tubelens-focal-length","label":"Tunelens Focal Length (mm)","dest":"tubelens_focal_length","type":"float","default":180.0,"help":"Tube lens focal length (in millimeters).","cat":"required","group":"Optical parameters"
+			"prop":"--tubelens-focal-length","label":"Tunelens Focal Length (mm)","dest":"tubelens_focal_length","type":"float","default":180.0,"step":1,"help":"Tube lens focal length (in millimeters).","cat":"required","group":"Optical parameters"
 		},
 		"center_wavelength":{
-			"prop":"--wavelength","label":"Center Wavelength (nm)","dest":"center_wavelength","type":"float","default":510,"help":"Center wavelength of emission spectrum of the sample (nm).","cat":"required","group":"Optical parameters"
+			"prop":"--wavelength","label":"Center Wavelength (nm)","dest":"center_wavelength","type":"float","default":510,"step":1,"help":"Center wavelength of emission spectrum of the sample (nm).","cat":"required","group":"Optical parameters"
 		},
 		"medium_index":{
 			"prop":"--medium-index","label":"Medium Index","dest":"medium_index","type":"float","default":1.33,"help":"Set the index of refraction of the medium.","cat":"required","group":"Optical parameters"
@@ -139,7 +146,7 @@ PLUGIN_ARGS = {
 			"prop":"--num-slices","label":"Number of Slices","dest":"num_slices","type":"int","default":5,"help":"Set the number of slices to produce in the output stacks.","cat":"required","exclude_from_args":False,"group":"Volume parameters"
 		},
 		"um_per_slice":{
-			"prop":"--um-per-slice","label":"um per Slice","dest":"um_per_slice","type":"float","default":5.0,"help":"Set the thickness of each slice (in um).","cat":"required","exclude_from_args":False,"group":"Volume parameters"
+			"prop":"--um-per-slice","label":"um per Slice","dest":"um_per_slice","type":"float","default":5.0,"step":0.1,"help":"Set the thickness of each slice (in um).","cat":"required","exclude_from_args":False,"group":"Volume parameters"
 		},
 		"supersample":{
 			"prop":"--supersample","label":"Supersample","dest":"supersample","type":"int","default":4,"help":"Supersample the light field volume. This results in a higher resolution reconstruction up to a point and interpolation after that point.","cat":"required","exclude_from_args":False,"group":"Volume parameters"

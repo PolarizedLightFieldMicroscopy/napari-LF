@@ -1,4 +1,5 @@
-import os
+import os, sys, glob, ntpath, subprocess
+from pathlib import Path
 from qtpy.QtCore import Qt, QSize
 from qtpy.QtGui import QMovie
 from qtpy.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QFormLayout, QScrollArea, QMessageBox, QTabWidget, QGridLayout, QSizePolicy, QLabel, QFrame, QGroupBox
@@ -12,14 +13,11 @@ try:
 	import pyopencl as cl
 except Exception as e:
 	print(e)
-	
-# self.lf_vals["misc"]["group_params"]["value"] = True
 
 class LFQWidgetGui():
 		
 	def __init__(self):
 		super().__init__()
-		
 		self.currentdir = os.path.dirname(os.path.realpath(__file__))
 		self.lf_vals = LFvals.PLUGIN_ARGS
 		self.gui_elms = {}
@@ -32,17 +30,28 @@ class LFQWidgetGui():
 		self.logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		
 		self.info_label = Label(label=f'<h2><center>LF Analyze</a></center></h2>')
-		self.gui_elms["main"]["img_folder"] = FileEdit(value=LFvals.PLUGIN_ARGS['main']['img_folder']['default'], label=LFvals.PLUGIN_ARGS['main']['img_folder']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['img_folder']['help'], mode='d')
-		self.gui_elms["main"]["metadata_file"] = LineEdit(value=LFvals.PLUGIN_ARGS['main']['metadata_file']['default'], label=LFvals.PLUGIN_ARGS['main']['metadata_file']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['metadata_file']['help'])
-		self.gui_elms["main"]["comments"] = TextEdit(value=LFvals.PLUGIN_ARGS['main']['comments']['default'], label=LFvals.PLUGIN_ARGS['main']['comments']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['comments']['help'])
+		dict = LFvals.PLUGIN_ARGS["main"]["img_folder"]
+		self.gui_elms["main"]["img_folder"] = create_widget(dict)
+		
+		dict = LFvals.PLUGIN_ARGS["main"]["img_list"]
+		self.gui_elms["main"]["img_list"] = create_widget(dict)
+		
+		self.btn_open_img = PushButton(label='Open Image')
+		self.btn_open_img.max_width = 80
+		_cont_img_list_btn = Container(name='Image List Open', widgets=[self.gui_elms["main"]["img_list"], self.btn_open_img], layout='horizontal', labels=False)
+
+		dict = LFvals.PLUGIN_ARGS["main"]["metadata_file"]
+		self.gui_elms["main"]["metadata_file"] = create_widget(dict)
+		
+		dict = LFvals.PLUGIN_ARGS["main"]["comments"]
+		self.gui_elms["main"]["comments"] = create_widget(dict)
 		self.gui_elms["main"]["comments"].native.setMaximumHeight(50)
-		self.btn_cal = PushButton(name='Calibrate', label='Calibrate')
-		self.btn_rec = PushButton(name='Rectify', label='Rectify')
-		self.btn_dec = PushButton(name='Deconvolve', label='Deconvolve')
+		self.btn_cal = PushButton(label='Calibrate')
+		self.btn_rec = PushButton(label='Rectify')
+		self.btn_dec = PushButton(label='Deconvolve')
 		_cont_btn_left = Container(name='btn Left', widgets=[self.btn_cal, self.btn_rec, self.btn_dec], labels=False)
 		
-		self.btn_stop = PushButton(name='Stop', label='Stop')
-		self.btn_stop.height = 80
+		self.btn_stop = PushButton(label='Stop')
 		self.btn_stop.min_height = 80
 		
 		_cont_btn_right = Container(name='btn Right', widgets=[self.btn_stop], labels=False)		
@@ -54,10 +63,11 @@ class LFQWidgetGui():
 		
 		self.cont_btn_status_label = Label()
 		self.cont_btn_status_label.native.setStyleSheet("border:1px solid rgb(0, 255, 0);")
-		self.cont_btn_status_label.value = ':STATUS: '+LFvals.PLUGIN_ARGS['main']['status']['value_idle']
+		self.cont_btn_status_label.value = ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_idle']
 		
 		_QFormLayout.addRow(self.logo_label.native)
 		_QFormLayout.addRow(self.gui_elms["main"]["img_folder"].label, self.gui_elms["main"]["img_folder"].native)
+		_QFormLayout.addRow(_cont_img_list_btn.native)
 		_QFormLayout.addRow(self.gui_elms["main"]["metadata_file"].label, self.gui_elms["main"]["metadata_file"].native)
 		_QFormLayout.addRow(self.gui_elms["main"]["comments"].label, self.gui_elms["main"]["comments"].native)
 		
@@ -399,8 +409,8 @@ class LFQWidgetGui():
 		self.platforms_choices = self.get_PlatForms()
 		self.gui_elms["hw"]["platform_id"] = ComboBox(name='Select Platform', label='Select Platform', tooltip=LFvals.PLUGIN_ARGS['hw']['platform_id']['help'], choices=(self.platforms_choices))
 		# self.cpu_threads_combobox = ComboBox(label=LFvals.PLUGIN_ARGS['calibrate']['num_threads']['label'], tooltip=LFvals.PLUGIN_ARGS['calibrate']['num_threads']['help'], choices=(list(range(1,129))))
-		self.gui_elms["hw"]["disable_gpu"] = CheckBox(label=LFvals.PLUGIN_ARGS['hw']['disable_gpu']['label'], value=LFvals.PLUGIN_ARGS['hw']['disable_gpu']['default'])
-		self.gui_elms["hw"]["use_single_prec"] = CheckBox(label=LFvals.PLUGIN_ARGS['hw']['use_single_prec']['label'], value=LFvals.PLUGIN_ARGS['hw']['use_single_prec']['default'])
+		self.gui_elms["hw"]["disable_gpu"] = CheckBox(label=LFvals.PLUGIN_ARGS['hw']['disable_gpu']['label'], value=LFvals.PLUGIN_ARGS['hw']['disable_gpu']['default'], tooltip=LFvals.PLUGIN_ARGS['hw']['disable_gpu']['help'])
+		self.gui_elms["hw"]["use_single_prec"] = CheckBox(label=LFvals.PLUGIN_ARGS['hw']['use_single_prec']['label'], value=LFvals.PLUGIN_ARGS['hw']['use_single_prec']['default'], tooltip=LFvals.PLUGIN_ARGS['hw']['use_single_prec']['help'])
 		
 		for key in LFvals.PLUGIN_ARGS['hw']:
 			wid_elm = self.gui_elms["hw"][key]
@@ -595,19 +605,88 @@ class LFQWidgetGui():
 	def set_status_text(self, txt):
 		# self.status.value = txt
 		self.cont_btn_status_label.value = txt
+		self.cont_btn_status_label.native.update()
 		
 	def set_btns_and_status(self, btn_enab_bool, status_txt):
 		# self.status.value = LFvals.PLUGIN_ARGS['main']['status']['value_busy']
-		self.cont_btn_status_label.value = status_txt
+		self.cont_btn_status_label.value = ':STATUS: ' + status_txt
 		self.btn_cal.enabled = btn_enab_bool
 		self.btn_rec.enabled = btn_enab_bool
 		self.btn_dec.enabled = btn_enab_bool
+		
+		if status_txt == LFvals.PLUGIN_ARGS['main']['status']['value_error']:
+			self.cont_btn_status_label.native.setStyleSheet("border:1px solid rgb(255, 0, 0);")
+		elif status_txt == LFvals.PLUGIN_ARGS['main']['status']['value_busy']:
+			self.cont_btn_status_label.native.setStyleSheet("border:1px solid rgb(255, 255, 0);")
+		else:
+			self.cont_btn_status_label.native.setStyleSheet("border:1px solid rgb(0, 255, 0);")
+			
+		self.cont_btn_status_label.native.update()
 		
 		# load_gif = LFvals.loading_img
 		# mov = QMovie(load_gif)
 		# mov.setScaledSize(QSize(14, 14))
 		# self.status.native.setMovie(mov)
 		# mov.start()
+		
+	# ToDo - implement as directory change listener event
+	def image_folder_changes(self):
+		img_folder = str(self.gui_elms["main"]["img_folder"].value)
+		lfc_file = str(self.gui_elms["calibrate"]["output_filename"].value)
+		lfc_file_path = os.path.join(img_folder, lfc_file)
+		
+		path = Path(lfc_file_path)
+		if path.is_file():
+			self.btn_cal.label = 'Calibrate ✅'
+			self.btn_cal.native.setText('Calibrate ✅')
+		else:
+			self.btn_cal.label = 'Calibrate'
+			self.btn_cal.native.setText('Calibrate')
+			
+		rec_file = str(self.gui_elms["rectify"]["output_filename"].value)
+		rec_file_path = os.path.join(img_folder, rec_file)
+		path = Path(rec_file_path)
+		if path.is_file():
+			self.btn_rec.label = 'Rectify ✅'
+			self.btn_rec.native.setText('Rectify ✅')
+		else:
+			self.btn_rec.label = 'Rectify'
+			self.btn_rec.native.setText('Rectify')
+			
+		dec_file = str(self.gui_elms["deconvolve"]["output_filename"].value)
+		dec_file_path = os.path.join(img_folder, dec_file)
+		path = Path(dec_file_path)
+		if path.is_file():
+			self.btn_dec.label = 'Deconvolve ✅'
+			self.btn_dec.native.setText('Deconvolve ✅')
+		else:
+			self.btn_dec.label = 'Deconvolve'
+			self.btn_dec.native.setText('Deconvolve')
+			
+		self.btn_cal.native.update()
+		self.btn_rec.native.update()
+		self.btn_dec.native.update()
+		
+		self.populate_img_list()
+		
+	def populate_img_list(self):
+		img_folder = str(self.gui_elms["main"]["img_folder"].value)
+		img_files = []
+		for ext in ["tif","png","jpg","bmp","lfc"]:
+			files_search = "*.{file_ext}".format(file_ext=ext)
+			files = glob.glob(os.path.join(img_folder, files_search))
+			for file in files:
+				img_files.append(ntpath.basename(file))
+				
+		self.gui_elms["main"]["img_list"].choices = img_files
+		
+	def openImage(self, path):
+		imageViewerFromCommandLine = {'linux':'xdg-open','win32':'explorer','darwin':'open'}[sys.platform]
+		subprocess.Popen([imageViewerFromCommandLine, path])
+		
+	def openImageExtViewer(self, path):
+		imageViewerFromCommandLine = "{viewer} {cmd} {file_path}".format(viewer=self.gui_elms["misc"]["ext_viewer"].value, cmd="-file-name", file_path=path)
+		subprocess.Popen(imageViewerFromCommandLine)
 			
 	def get_GPU(self):
 		gpu_list = []
@@ -617,7 +696,6 @@ class LFQWidgetGui():
 		except:
 			pass
 		return gpu_list
-		
 		
 	def get_PlatForms(self):
 		platforms_list = []
@@ -633,9 +711,11 @@ def create_widget(props):
 	widget = None
 	try:
 		if "widget_type" in props:
-			widget = create_widget(widget_type=props['widget_type'])
+			widget = create_widget(widget_type=props['widget_type'], tooltip=props['help'])
 		elif props["type"] == "str":
 			widget = LineEdit(label=props['label'], tooltip=props['help'])
+		elif props["type"] == "text":
+			widget = TextEdit(label=props['label'], tooltip=props['help'])
 		elif props["type"] == "label":
 			widget = Label(label=props['label'], tooltip=props['help'])
 		elif props["type"] == "img_label":
@@ -645,13 +725,13 @@ def create_widget(props):
 		elif props["type"] == "int":
 			widget = SpinBox(label=props['label'], tooltip=props['help'], step=1)
 		elif props["type"] == "sel":
-			widget = ComboBox(label=props['label'], tooltip=props['help'], choices=(props["options"]))
+			widget = ComboBox(label=props['label'], tooltip=props['help'], value=props["options"][0], choices=(props["options"]))
 		elif props["type"] == "file":
 			widget = FileEdit(label=props['label'], mode='r', tooltip=props['help'], nullable=True)
 		elif props["type"] == "folder":
 			widget = FileEdit(label=props['label'], mode='d', tooltip=props['help'], nullable=True)
 		elif props["type"] == "bool":	
-			widget = CheckBox(label=props['label'])
+			widget = CheckBox(label=props['label'], tooltip=props['help'])
 		else:
 			pass
 			
