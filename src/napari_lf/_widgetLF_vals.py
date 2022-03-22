@@ -60,7 +60,7 @@ PLUGIN_ARGS = {
 			"label":"Select Viewer","type":"sel","default":"System","options":["System","External"],"help":"Chose your viewer (System: OS default, External: User selects path below)."
 		},
 		"ext_viewer":{
-			"label":"External Viewer","type":"file","default":{'linux':'xdg-open','win32':os.environ["ProgramFiles"],'darwin':'open'}[sys.platform],"help":"Chose your external viewer (executable file)."
+			"label":"External Viewer","type":"file","default":{'linux':'','win32':'','darwin':''}[sys.platform],"help":"Chose your external viewer (executable file)."
 		}
 	},
 	"hw":{
