@@ -1,4 +1,4 @@
-import os, sys, json
+import os, sys, traceback
 from pathlib import Path
 import napari
 from napari.qt.threading import thread_worker
@@ -27,7 +27,6 @@ class LFQWidget(QWidget):
 		
 	def __init__(self, napari_viewer):
 		super().__init__()
-		self.settings = {}
 		self.lfa_args = {}
 		self.viewer = napari_viewer
 		self.method = METHOD
@@ -40,8 +39,8 @@ class LFQWidget(QWidget):
 		self.currentdir = os.path.dirname(os.path.realpath(__file__))
 		self.gui = None
 		#Get and Set Prefs
-		self.load_plugin_prefs(pre_init=True)
 		self.gui = LFgui.LFQWidgetGui()
+		self.gui.load_plugin_prefs(pre_init=True)
 		self.gui.method = self.method
 		self.thread_worker = None
 		
@@ -85,9 +84,9 @@ class LFQWidget(QWidget):
 				
 		@self.gui.gui_elms["main"]["img_folder"].changed.connect
 		def img_folder_call():
-			bool = self.read_meta()
+			bool = self.gui.read_meta()
 			if bool:
-				self.refresh_fields()
+				self.refresh_vals()
 			self.gui.image_folder_changes()
 				
 		def set_status(vals):
@@ -140,7 +139,8 @@ class LFQWidget(QWidget):
 			
 		#Get and Set Prefs
 		self.gui.populate_img_list()
-		self.load_plugin_prefs()
+		self.gui.populate_cal_img_list()
+		self.gui.load_plugin_prefs()
 		
 		#Layout
 		layout = QVBoxLayout()
@@ -170,12 +170,13 @@ class LFQWidget(QWidget):
 				print(e)
 				print('LFA could not be loaded from:', self.gui.gui_elms["misc"]["lib_folder"].value)
 				self.gui.gui_elms["misc"]["lib_ver_label"].value = 'Error!'
+				print(traceback.format_exc())
 		
 	def closeEvent(self, event):
-		self.save_plugin_prefs()
+		self.gui.save_plugin_prefs()
 			
 	def hideEvent(self, event):
-		self.save_plugin_prefs()
+		self.gui.save_plugin_prefs()
 
 	def display_proc_image(self):
 		proc_img = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.lf_vals["deconvolve"]["output_filename"]["value"]))
@@ -312,9 +313,10 @@ class LFQWidget(QWidget):
 
 		except Exception as e:
 			print(key)
+			print(traceback.format_exc())
 			raise(e)
 			
-		self.write_meta()
+		self.gui.write_meta()
 
 	@thread_worker(progress={'total': 0})
 	def run_lfcalibrate(self, args):
@@ -354,113 +356,16 @@ class LFQWidget(QWidget):
 			return (LFvals.PLUGIN_ARGS['main']['status']['value_idle'], 'dec', '')
 		except Exception as err:
 			return (LFvals.PLUGIN_ARGS['main']['status']['value_error'], 'dec', err)
-				
-	def write_meta(self):
-		try:
-			meta_data = {}
-			section = "main"
-			meta_data[section] = {}
-			prop = "comments"
-			meta_data[section][prop] = str(self.gui.gui_elms[section][prop].value)
-			
-			for section in ['calibrate','rectify','deconvolve','hw']:
-				meta_data[section] = {}
-				for prop in LFvals.PLUGIN_ARGS[section]:
-					if "exclude_from_metadata" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_metadata"] == True:
-						pass
-					else:
-						if LFvals.PLUGIN_ARGS[section][prop]["type"] in ["file","folder","str"]:
-							meta_data[section][prop] = str(self.gui.gui_elms[section][prop].value)
-						else:
-							meta_data[section][prop] = self.gui.gui_elms[section][prop].value
-			
-			metadata_file_path = Path(self.gui.gui_elms["main"]["img_folder"].value, self.gui.gui_elms["main"]["metadata_file"].value)
-			with open(metadata_file_path, "w") as f:
-				json.dump(meta_data, f, indent=4)
-		except Exception as e:
-			print(e)
-			
-	def read_meta(self):
-		try:
-			path = Path(os.path.join(self.gui.gui_elms["main"]["img_folder"].value, self.gui.gui_elms["main"]["metadata_file"].value))
-			if path.is_file():
-				with open(os.path.join(self.gui.gui_elms["main"]["img_folder"].value, self.gui.gui_elms["main"]["metadata_file"].value)) as json_file:
-					meta_data = json.load(json_file)
-					
-				for section in meta_data:
-					for prop in meta_data[section]:
-						if prop in self.gui.gui_elms[section] and prop in meta_data[section]:
-							try:
-								self.gui.gui_elms[section][prop].value = meta_data[section][prop]
-							except Exception as e:
-								print(e)
-					
-				return True
-			else:
-				return False
-		except Exception as e:
-			print(e)
-			return False
 
-	def refresh_fields(self):
-		pass
+	def refresh_vals(self):
+		self.gui.refresh_vals()
 
 	def set_method(self, method):
 		self.method = method
 		
 	def set_viewer(self, viewer):
 		self.viewer = viewer
-		
-	def save_plugin_prefs(self):
-		self.settings = {}
-		for section in LFvals.PLUGIN_ARGS:
-			self.settings[section] = {}
-			for prop in LFvals.PLUGIN_ARGS[section]:
-				if "exclude_from_settings" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_settings"] == True:
-					pass
-				else:
-					if LFvals.PLUGIN_ARGS[section][prop]["type"] in ["file","folder","str"]:
-						self.settings[section][prop] = str(self.gui.gui_elms[section][prop].value)
-					else:
-						self.settings[section][prop] = self.gui.gui_elms[section][prop].value
-		
-		settings_file_path = Path(os.path.join(self.currentdir, LFvals.SETTINGS_FILENAME))
-		with open(settings_file_path, "w") as f:
-			json.dump(self.settings, f, indent=4)
 
-	def load_plugin_prefs(self, pre_init=False):
-		try:
-			settings_file_path = Path(os.path.join(self.currentdir, LFvals.SETTINGS_FILENAME))
-			if settings_file_path.is_file() is False:
-				self.save_plugin_prefs()
-			else:
-				with open(settings_file_path, "r") as f:
-					self.settings = json.load(f)
-					
-				for section in LFvals.PLUGIN_ARGS:
-					for prop in LFvals.PLUGIN_ARGS[section]:
-						try:
-							if prop in LFvals.PLUGIN_ARGS[section] and prop in self.settings[section]:
-								LFvals.PLUGIN_ARGS[section][prop]["value"] = self.settings[section][prop]
-							if pre_init == False and prop in self.gui.gui_elms[section] and prop in self.settings[section]:
-								try:
-									self.gui.gui_elms[section][prop].value = self.settings[section][prop]
-								except Exception as e:
-									print(e)
-									if self.gui.gui_elms[section][prop].widget_type == 'ComboBox':
-										self.gui.gui_elms[section][prop].value = self.gui.gui_elms[section][prop].choices[0]
-						except Exception as e:
-							print(e)
-				if pre_init == False:
-					bool = self.read_meta()
-					if bool:
-						self.refresh_fields()
-					self.gui.image_folder_changes()
-			
-		except Exception as e:
-			print(e)
-			self.settings = {}
-	
 def show_Error(err):
 	print(repr(err))
 	msg = QMessageBox()
@@ -480,6 +385,7 @@ def load_lf(folder_path):
 		return (True, {'lfcalibrate':lfcalibrate, 'lfdeconvolve':lfdeconvolve, 'lfrectify':lfrectify, 'lflib':lflib})			
 	except Exception as e:
 		print(e)
+		print(traceback.format_exc())
 		return (False, {})
 
 def main(method):
@@ -495,6 +401,7 @@ def main(method):
 		app = QApplication(sys.argv)
 		widget = LFQWidget(QWidget())
 		widget.setWindowTitle('LF Analyze')
+		widget.setWindowIcon(LFvals.q_icon_img)
 		widget.resize(500, 750)
 		widget.set_method(method)
 		widget.show()

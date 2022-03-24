@@ -1,13 +1,21 @@
 import os, sys
+from qtpy.QtGui import QIcon
+
 currentdir = os.path.dirname(os.path.realpath(__file__))
-logo_img = os.path.join(currentdir, 'resources\\lfa_logo_napari.png')
-loading_img = os.path.join(currentdir, 'resources\\loading.gif')
-examples_folder = os.path.join(currentdir, 'examples\\antleg')
+icon_img = os.path.join(currentdir, 'resources/icon.ico')
+logo_img = os.path.join(currentdir, 'resources/lfa_logo_napari.png')
+loading_img = os.path.join(currentdir, 'resources/loading.gif')
+examples_folder = os.path.join(currentdir, 'examples/antleg')
 lfa_folder = os.path.join(currentdir, 'lfa')
+
+q_icon_img = QIcon(icon_img)
 
 SOLVER_OPTIONS = {
 	'Approximate Message Passing (with optional multiscale denoising':'amp', 'Alternating Direction Method of Multipliers with Huber loss':'admm_huber','Alternating Direction Method of Multipliers with TV penalty':'admm_tv','Conjugate Gradient':'cg','Direct method with Cholesky factorization':'direct','Least Squares QR':'lsqr','K-space deconvolution':'kspace','Simultaneous Iterative Reconstruction Technique':'sirt','MRNSD':'mrnsd','Richardson-Lucy':'rl'
 }
+
+IMAGE_EXTS = ["tif","png","jpg","bmp"]
+HDF5_EXTS = ["hdf", "h4", "hdf4", "h5", "hdf5", "he2", "he5", "lfc"]
 
 METHODS = ['PLUGIN','NAPARI','APP']
 SETTINGS_FILENAME = "settings.ini"
@@ -39,6 +47,9 @@ PLUGIN_ARGS = {
 		"comments":{
 			"default":"","label":"Comments","help":"Comments from Acquisition and Processing","type":"str","type":"text"
 		},
+		"presets":{
+			"default":"","label":"Presets","help":"Save/Load parameters from presets.","type":"sel","options":[""]
+		},
 		"status":{
 			"label":"STATUS:","value":"== IDLE ==","value_busy":"== BUSY ==","value_idle":"== IDLE ==","value_error":"== ERROR ==","type":"label","default":"== IDLE ==","exclude_from_settings":True
 		}
@@ -51,7 +62,7 @@ PLUGIN_ARGS = {
 			"label":"LF Analyze Folder","default":lfa_folder,"help":"Select your LF Analyze Library folder.","type":"folder"
 		},
 		"group_params":{
-			"label":"Group Parameters","default":True,"help":"Group parameters into sections (requires restart).","type":"bool"
+			"label":"Group Parameters","default":True,"help":"Group parameters into sections (requires restart).","type":"bool","enabled":False
 		},
 		"use_ext_viewer":{
 			"label":"Use System/External Viewer","type":"bool","default":False,"help":"Use system/external viewer for displaying images instead."
@@ -60,7 +71,7 @@ PLUGIN_ARGS = {
 			"label":"Select Viewer","type":"sel","default":"System","options":["System","External"],"help":"Chose your viewer (System: OS default, External: User selects path below)."
 		},
 		"ext_viewer":{
-			"label":"External Viewer","type":"file","default":{'linux':'xdg-open','win32':os.environ["ProgramFiles"],'darwin':'open'}[sys.platform],"help":"Chose your external viewer (executable file)."
+			"label":"External Viewer","type":"file","default":{'linux':'xdg-open','win32':os.environ.get('ProgramFiles',''),'darwin':'open'}[sys.platform],"help":"Chose your external viewer (executable file)."
 		}
 	},
 	"hw":{
@@ -82,14 +93,20 @@ PLUGIN_ARGS = {
 	# ======= Calibrate =============
 	# ===============================
 		# Input/Output Files
+		"radiometry_frame_file":{
+			"prop":"--radiometry-frame","label":"Radiometry Image","dest":"radiometry_frame_file","type":"sel","default":"radiometry_frame.png","options":["radiometry_frame.png"],"help":"Specify a radiometry frame to use for radiometric correction. If no frame is specified, then no radiometric correction is carried out.","cat":"required","img_folder_file":True,"group":"Files"
+		},
+		"dark_frame_file":{
+			"prop":"--dark-frame","label":"Dark Frame Image","dest":"dark_frame_file","default":"dark_frame.tif","options":["dark_frame.tif"],"type":"sel","help":"Specify a dark frame image to subtract from the input light-field before processing (This makes radiometric calibration more accurate).","cat":"required","img_folder_file":True,"group":"Files"
+		},		
 		"output_filename":{
 			"prop_short":"-o","prop":"--output-filename","label":"Calibration File","default":"calibration.lfc","dest":"output_filename","help":"Specify the name of the calibration file.","type":"str","cat":"required","img_folder_file":True,"group":"Files"
 		},
-		"dark_frame_file":{
-			"prop":"--dark-frame","label":"Dark Frame Image","dest":"dark_frame_file","default":"dark_frame.tif","type":"str","help":"Specify a dark frame image to subtract from the input light-field before processing (This makes radiometric calibration more accurate).","cat":"required","img_folder_file":True,"group":"Files"
+		"calibration_files":{
+			"label":"Calibration File","default":"","dest":"calibration_files","help":"Inspect the selected calibration file.","type":"sel","options":[""],"cat":"inspect","group":"Inspector","exclude_from_settings":True,"exclude_from_args":True
 		},
-		"radiometry_frame_file":{
-			"prop":"--radiometry-frame","label":"Radiometry Image","dest":"radiometry_frame_file","type":"str","default":"radiometry_frame.png","help":"Specify a radiometry frame to use for radiometric correction. If no frame is specified, then no radiometric correction is carried out.","cat":"required","img_folder_file":True,"group":"Files"
+		"calibration_files_viewer":{
+			"label":"Calibration File Viewer","default":"","dest":"calibration_files_viewer","help":"Inspect the selected calibration file data in viewer. (Placeholder for a future HDF5 Viewer)","type":"text","cat":"inspect","group":"Inspector","exclude_from_settings":True,"exclude_from_args":True,"read_only":True,"no_label_layout_style":True
 		},
 		# Calibration routine parameters
 		"synthetic_lf":{
@@ -198,11 +215,11 @@ PLUGIN_ARGS = {
 	# ===============================
 	# ========== Rectify ============
 	# ===============================		
+		"calibration_file":{
+			"prop_short":"-c","prop":"--calibration-file","label":"Calibration File","dest":"calibration_file","type":"sel","default":"calibration.lfc","options":["calibration.lfc"],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
+		},
 		"output_filename":{
 			"prop_short":"-o","prop":"--output-file","label":"Rectified Image","dest":"output_filename","type":"str","default":"rectified.png","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
-		},
-		"calibration_file":{
-			"prop_short":"-c","prop":"--calibration-file","label":"Calibration File","dest":"calibration_file","type":"str","default":"calibration.lfc","help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
 		},
 		"subaperture":{
 			"prop_short":"-s","prop":"--subaperture","action":"store_true","label":"Subaperture","dest":"subaperture","type":"bool","default":False,"help":"Save out the light field image as tiled subapertures."
@@ -216,13 +233,13 @@ PLUGIN_ARGS = {
 	# ======= Deconvolve ============
 	# ===============================
 		"input_file":{
-			"prop":"input_file","label":"Light Field Image","dest":"input_file","type":"str","default":"light_field.png","help":"You must supply at least one light field image to deconvolve.","cat":"required","img_folder_file":True,"exclude_from_args":True,"group":"Files"
+			"prop":"input_file","label":"Light Field Image","dest":"input_file","type":"sel","default":"light_field.png","options":["light_field.png"],"help":"You must supply at least one light field image to deconvolve.","cat":"required","img_folder_file":True,"exclude_from_args":True,"group":"Files"
+		},
+		"calibration_file":{
+			"prop_short":"-c","prop":"--calibration-file","label":"Calibration File","dest":"calibration_file","type":"sel","default":"calibration.lfc","options":["calibration.lfc"],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
 		},
 		"output_filename":{
 			"prop_short":"-o","prop":"--output-file","label":"Output Image Stack","dest":"output_filename","type":"str","default":"output_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
-		},
-		"calibration_file":{
-			"prop_short":"-c","prop":"--calibration-file","label":"Calibration File","dest":"calibration_file","type":"str","default":"calibration.lfc","help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
 		},
 		"private_fn":{
 			"prop":"--private-key","label":"Private fn","dest":"private_fn","type":"file","default":os.path.join(os.path.dirname(os.path.abspath(__file__)), 'enlightenment_c3'),"help":"Specify the private key file for remote transfers."
