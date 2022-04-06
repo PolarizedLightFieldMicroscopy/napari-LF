@@ -72,6 +72,9 @@ PLUGIN_ARGS = {
 		},
 		"ext_viewer":{
 			"label":"External Viewer","type":"file","default":{'linux':'xdg-open','win32':os.environ.get('ProgramFiles',''),'darwin':'open'}[sys.platform],"help":"Chose your external viewer (executable file)."
+		},
+		"disable_mousewheel":{
+			"label":"Disable mousewheel on combobox and spinner widgets","type":"bool","default":False,"help":"Disable mousewheel on combobox and spinner widgets to avoid accidentally changing values."
 		}
 	},
 	"hw":{
@@ -132,7 +135,7 @@ PLUGIN_ARGS = {
 			"prop":"--focal-length","label":"Microlens Focal Length (um)","dest":"ulens_focal_length","type":"float","default":2433,"step":1,"help":"Specify the microlens focal length (in microns).","cat":"required","max":5000,"group":"Optical parameters"
 		},
 		"ulens_focal_distance":{
-			"prop":"--ulens-focal-distance","label":"Microlens Focal Distance (um)","dest":"ulens_focal_distance","type":"float","default":2433,"step":1,"help":"Specify the microlens focal distance (in microns). If you do not specify a value it is assumed that the focal distance is equal to the focal length.","max":5000,"group":"Optical parameters"
+			"prop":"--ulens-focal-distance","label":"Microlens Focal Distance (um)","dest":"ulens_focal_distance","type":"float","default":2433,"step":1,"help":"Specify the microlens focal distance (in microns). If you do not specify a value it is assumed that the focal distance is equal to the focal length.","max":5000,"group":"Optical parameters","bind":"ulens_focal_length"
 		},
 		"objective_magnification":{
 			"prop":"--magnification","label":"Objective Magnification","dest":"objective_magnification","type":"int","default":20,"help":"Specify the objective magnification.","cat":"required","group":"Optical parameters"
@@ -141,7 +144,7 @@ PLUGIN_ARGS = {
 			"prop":"--na","label":"Objective NA","dest":"objective_na","type":"float","default":0.5,"help":"Specify the objective numerical aperture.","cat":"required","group":"Optical parameters"
 		},
 		"tubelens_focal_length":{
-			"prop":"--tubelens-focal-length","label":"Tunelens Focal Length (mm)","dest":"tubelens_focal_length","type":"float","default":180.0,"step":1,"help":"Tube lens focal length (in millimeters).","cat":"required","group":"Optical parameters"
+			"prop":"--tubelens-focal-length","label":"Tubelens Focal Length (mm)","dest":"tubelens_focal_length","type":"float","default":180.0,"step":1,"help":"Tube lens focal length (in millimeters).","cat":"required","group":"Optical parameters"
 		},
 		"center_wavelength":{
 			"prop":"--wavelength","label":"Center Wavelength (nm)","dest":"center_wavelength","type":"float","default":510,"step":1,"help":"Center wavelength of emission spectrum of the sample (nm).","cat":"required","group":"Optical parameters"

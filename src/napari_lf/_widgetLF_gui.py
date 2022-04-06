@@ -1,8 +1,10 @@
-import os, sys, glob, ntpath, subprocess, traceback, json
+import os, sys, glob, ntpath, subprocess, traceback, json, time
 from pathlib import Path
+from qtpy import QtCore
 from qtpy.QtCore import Qt, QTimer
-from qtpy.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QFormLayout, QScrollArea, QMessageBox, QTabWidget, QGridLayout, QSizePolicy, QLabel, QFrame, QGroupBox, QInputDialog
-from magicgui.widgets import Container, FileEdit, Label, LineEdit, FloatSpinBox, PushButton, CheckBox, SpinBox, Slider, ComboBox, TextEdit
+from qtpy.QtWidgets import *
+from magicgui.widgets import *
+
 try:
 	from napari_lf import _widgetLF_vals as LFvals
 except:
@@ -22,6 +24,7 @@ class LFQWidgetGui():
 		self.lf_vals = LFvals.PLUGIN_ARGS
 		self.settings = {}
 		self.gui_elms = {}
+		
 		# == MAIN ==
 		self.gui_elms["main"] = {}
 		_widget_main = []
@@ -128,6 +131,7 @@ class LFQWidgetGui():
 		_widget_calibrate_opt = []
 		_widget_calibrate_ins = []
 		self.gui_elms["calibrate"] = {}
+		
 		for key in self.lf_vals["calibrate"]:
 			dict = self.lf_vals["calibrate"][key]
 			if "label" not in dict:
@@ -671,6 +675,11 @@ class LFQWidgetGui():
 		
 		self.container_lfa = _misc_widget
 		
+		# bind values between props
+		@self.gui_elms["calibrate"]["ulens_focal_length"].changed.connect
+		def copy_vals():
+			self.gui_elms["calibrate"]["ulens_focal_distance"].value = self.gui_elms["calibrate"]["ulens_focal_length"].value
+		
 		@self.btn_preset_load.changed.connect
 		def load_presets():
 			preset_sel = self.gui_elms["main"]["presets"].value
@@ -717,6 +726,7 @@ class LFQWidgetGui():
 			self.settings["preset_choices"][name] = preset_vals
 			self.save_plugin_prefs()
 			self.refresh_preset_choices()
+			self.gui_elms["main"]["presets"].value = name
 			
 		@self.btn_preset_delete.changed.connect
 		def delete_presets():
@@ -853,14 +863,23 @@ class LFQWidgetGui():
 		self.lfa_lib_tab.layout().addWidget(self.container_lfa)
 		self.qtab_widget.addTab(self.lfa_lib_tab, 'Misc')
 		
+		# self.calib_tab = QWidget()
+		# _calib_tab_layout = QVBoxLayout()
+		# _calib_tab_layout.setAlignment(Qt.AlignTop)
+		# self.calib_tab.setLayout(_calib_tab_layout)
+		# self.qtab_widget.addTab(self.calib_tab, 'Calibrate Grid')
+		# self.LFD_frame = QMainWindow()
+		# self.LFD_frame.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(0, 0, 255); border-width: 1px;")
+		# _calib_tab_layout.addWidget(self.LFD_frame)
+		
 		#APP
-		self.widget_main_comps = Container(widgets=(), labels=True)
-		self.widget_main_comps.native.layout().addWidget(self.cont_btn_status)
+		self.widget_main_top_comps = Container(widgets=(), labels=True)
+		self.widget_main_top_comps.native.layout().addWidget(self.cont_btn_status)
 		
 		self.gui_elms["main"]["comments"].parent.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
 		
-		self.widget_main = Container(widgets=(), labels=True)
-		self.widget_main.native.layout().addWidget(self.qtab_widget)
+		self.widget_main_bottom_comps = Container(widgets=(), labels=True)
+		self.widget_main_bottom_comps.native.layout().addWidget(self.qtab_widget)
 		
 		self.timer = QTimer()
 		self.timer.timeout.connect(self.verify_existing_files)
@@ -1048,6 +1067,25 @@ class LFQWidgetGui():
 		self.gui_elms["rectify"]["calibration_file"].choices = img_files
 		self.gui_elms["deconvolve"]["calibration_file"].choices = img_files
 		
+	def populate_img_list(self):
+		img_folder = str(self.gui_elms["main"]["img_folder"].value)
+		img_files = []
+		for ext in LFvals.IMAGE_EXTS:
+			files_search = "*.{file_ext}".format(file_ext=ext)
+			files = glob.glob(os.path.join(img_folder, files_search))
+			for file in files:
+				img_files.append(ntpath.basename(file))
+				
+		self.gui_elms["main"]["img_list"].choices = img_files
+		self.gui_elms["calibrate"]["radiometry_frame_file"].choices = img_files
+		self.gui_elms["calibrate"]["dark_frame_file"].choices = img_files
+		self.gui_elms["deconvolve"]["input_file"].choices = img_files
+		
+	def set_cal_img(self):
+		cal_file = self.gui_elms["calibrate"]["output_filename"].value
+		self.gui_elms["rectify"]["calibration_file"].value = cal_file
+		self.gui_elms["deconvolve"]["calibration_file"].value = cal_file
+		
 	def openImage(self, path):
 		imageViewerFromCommandLine = {'linux':'xdg-open','win32':'explorer','darwin':'open'}[sys.platform]
 		subprocess.Popen([imageViewerFromCommandLine, path])
@@ -1201,7 +1239,27 @@ class LFQWidgetGui():
 		if ok:
 			return (str(text))
 		return None
-	
+		
+	def dump_errors(self, currentdir, err, traceback=False):
+		t_stamp = time.strftime("%Y-%m-%d %H:%M:%S")
+		contents = t_stamp + '\t' + str(err)
+		err_file_name = time.strftime("%Y_%m_%d") + '.log'
+		
+		errorLogsDir = os.path.join(currentdir, 'errorLogs')
+		if Path(errorLogsDir).is_dir() == False:
+			os.mkdir(errorLogsDir)
+		
+		err_file_path = Path(os.path.join(errorLogsDir, err_file_name))
+		if Path(err_file_path).is_file():
+			with open(err_file_path, "r") as f:
+				contents = f.read()
+				if traceback:
+					contents = t_stamp + '\t' + str(err) + contents
+				else:
+					contents = t_stamp + '\t' + str(err) + '\n' + contents
+			
+		with open(err_file_path, "w") as f:
+			f.write(str(contents))
 
 def create_widget(props):
 	widget = None
@@ -1236,6 +1294,11 @@ def create_widget(props):
 				# widget.max = props["max"]
 			# if "step" in props:
 				# widget.step = props["step"]
+			
+			if widget.widget_type == "LineEdit":
+				widget.min_width = 100
+				widget.native.setStyleSheet("background-color:black;")
+				
 			for prop in props:
 				try:
 					getattr(widget, prop)
@@ -1244,6 +1307,7 @@ def create_widget(props):
 					pass
 				
 			widget.value = props["default"]
+			
 	except Exception as e:
 		print(props)
 		print(e)
