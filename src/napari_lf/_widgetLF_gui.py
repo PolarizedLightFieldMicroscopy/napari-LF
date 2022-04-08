@@ -906,7 +906,7 @@ class LFQWidgetGui():
 						widget_item = self.groupbox["calibrate"]["required"]["Files"].layout().itemAt(i, j-1)
 						widget = widget_item.widget()
 						widget.setText(self.gui_elms["calibrate"]["output_filename"].label + _alert_symbol)
-						widget.setToolTip("A filed named '{out_file}' already exists in this folder !\nYou can Continue but it will Overwrite the existing file.".format(out_file = self.gui_elms["calibrate"]["output_filename"].value))			
+						widget.setToolTip("A filed named '{out_file}' already exists in this folder!\nYou can continue but it will overwrite the existing file.".format(out_file = self.gui_elms["calibrate"]["output_filename"].value))			
 				else:
 					self.gui_elms["calibrate"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(0, 0, 0); border-width: 1px;")
 					if self.lf_vals["misc"]["group_params"]["value"] == True:
@@ -926,7 +926,7 @@ class LFQWidgetGui():
 						widget_item = self.groupbox["rectify"]["required"]["Files"].layout().itemAt(i, j-1)
 						widget = widget_item.widget()
 						widget.setText(self.gui_elms["rectify"]["output_filename"].label + _alert_symbol)
-						widget.setToolTip("A filed named '{out_file}' already exists in this folder !\nYou can Continue but it will Overwrite the existing file.".format(out_file = self.gui_elms["rectify"]["output_filename"].value))
+						widget.setToolTip("A filed named '{out_file}' already exists in this folder!\nYou can continue but it will overwrite the existing file.".format(out_file = self.gui_elms["rectify"]["output_filename"].value))
 				else:
 					self.gui_elms["rectify"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(0, 0, 0); border-width: 1px;")
 					if self.lf_vals["misc"]["group_params"]["value"] == True:
@@ -946,7 +946,7 @@ class LFQWidgetGui():
 						widget_item = self.groupbox["deconvolve"]["required"]["Files"].layout().itemAt(i, j-1)
 						widget = widget_item.widget()
 						widget.setText(self.gui_elms["deconvolve"]["output_filename"].label + _alert_symbol)
-						widget.setToolTip("A filed named '{out_file}' already exists in this folder !\nYou can Continue but it will Overwrite the existing file.".format(out_file = self.gui_elms["deconvolve"]["output_filename"].value))
+						widget.setToolTip("A filed named '{out_file}' already exists in this folder!\nYou can continue but it will overwrite the existing file.".format(out_file = self.gui_elms["deconvolve"]["output_filename"].value))
 				else:
 					self.gui_elms["deconvolve"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(0, 0, 0); border-width: 1px;")
 					if self.lf_vals["misc"]["group_params"]["value"] == True:
