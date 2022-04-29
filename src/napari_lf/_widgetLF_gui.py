@@ -1049,6 +1049,7 @@ class LFQWidgetGui():
 		self.gui_elms["main"]["img_list"].choices = img_files
 		self.gui_elms["calibrate"]["radiometry_frame_file"].choices = img_files
 		self.gui_elms["calibrate"]["dark_frame_file"].choices = img_files
+		self.gui_elms["rectify"]["input_file"].choices = img_files
 		self.gui_elms["deconvolve"]["input_file"].choices = img_files
 		
 	def populate_cal_img_list(self):
@@ -1079,6 +1080,7 @@ class LFQWidgetGui():
 		self.gui_elms["main"]["img_list"].choices = img_files
 		self.gui_elms["calibrate"]["radiometry_frame_file"].choices = img_files
 		self.gui_elms["calibrate"]["dark_frame_file"].choices = img_files
+		self.gui_elms["rectify"]["input_file"].choices = img_files
 		self.gui_elms["deconvolve"]["input_file"].choices = img_files
 		
 	def set_cal_img(self):

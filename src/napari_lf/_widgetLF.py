@@ -462,7 +462,7 @@ def load_lf(folder_path):
 
 def main(method):
 	METHOD = method
-	if method == LFvals.METHODS[1]: # Method 2: As Napari viewer	
+	if method == LFvals.METHODS[1]: # Method 2: As napari viewer	
 		viewer = napari.Viewer()
 		widget = LFQWidget(QWidget())
 		widget.set_method(method)

@@ -19,6 +19,9 @@ def main(args=None, values=None):
     from optparse import OptionParser
 
     parser = OptionParser()
+    # parser.add_option('input_file',
+    #                     help="You must supply at least one light field image "
+    #                     "to rectify.")
     parser.add_option("-p", "--output-pixels-per-lenslet", dest="output_pixels_per_lenslet",
                       help="Specify the number of pixels per lenslet in the output image.")
     parser.add_option("-o", "--output-file", dest="output_filename",
