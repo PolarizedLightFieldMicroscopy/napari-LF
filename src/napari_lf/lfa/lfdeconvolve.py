@@ -474,7 +474,6 @@ def main(args=None):
     parser.add_argument("-p", "--pinhole-file", dest="pinhole_filename", default=None,
                       help="After deconvolution, save out a deconvolved light field sub-aperture image.")
 
-    # Added parameter to change main into a function.
     args = parser.parse_args(args)
 
     # Use single precision if runing on a Mac OS

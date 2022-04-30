@@ -316,6 +316,7 @@ class LFQWidget(QWidget):
 				current_val = str(current_val)
 			self.new_args_rec.append(current_val)
 			for key in self.gui.lf_vals["rectify"]:
+				print(f"key:{key}")
 				dict = self.gui.lf_vals["rectify"][key]
 				if "exclude_from_args" in dict and dict["exclude_from_args"] == True:
 					pass
@@ -480,4 +481,4 @@ def main(method):
 		sys.exit(app.exec_())
 
 if __name__ == "__main__":
-	main(LFvals.METHODS[1])
+	main(LFvals.METHODS[2])

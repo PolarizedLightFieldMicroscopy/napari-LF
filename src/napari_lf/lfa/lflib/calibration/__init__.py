@@ -532,6 +532,9 @@ class LightFieldCalibration(object):
         if not self.has_dark_frame:
             return raw_image
         input_dtype = raw_image.dtype
+        print("DEBUG")
+        print(f"shape of raw image:{raw_image.shape}")
+        print(f"shape of dark frame:{self.dark_frame.shape}")
         output_im = raw_image.astype(np.float32) - self.dark_frame
 
         if output_im.max() <= 0.0:
