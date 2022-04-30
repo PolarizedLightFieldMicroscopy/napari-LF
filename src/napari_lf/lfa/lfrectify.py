@@ -61,15 +61,11 @@ def main(args=None, values=None):
     im = load_image(filename, normalize = False)
     input_dtype = im.dtype
 
-    print("DEBUG")
-    print(f"Shape of input image:{im.shape}")
-
     # Perform dark frame subtraction
     im = lfcal.subtract_dark_frame(im)
 
     # Rectify the image
     rectified_lf = lfcal.rectify_lf(im)
-
 
     # Optionally reformat the image so that sub-aperturs are tiled, rather than lenslet images.
     from lflib.lightfield import LightField

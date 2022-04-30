@@ -308,7 +308,7 @@ class LFQWidget(QWidget):
 								self.new_args_cal.append(current_val)
 
 			key = "input_file"
-			dict = self.gui.lf_vals["deconvolve"][key]
+			dict = self.gui.lf_vals["rectify"][key]
 			current_val = dict["value"]
 			if "img_folder_file" in dict and dict["img_folder_file"] == True:
 				current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))

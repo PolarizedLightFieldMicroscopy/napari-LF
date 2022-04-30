@@ -1068,21 +1068,6 @@ class LFQWidgetGui():
 		self.gui_elms["rectify"]["calibration_file"].choices = img_files
 		self.gui_elms["deconvolve"]["calibration_file"].choices = img_files
 		
-	def populate_img_list(self):
-		img_folder = str(self.gui_elms["main"]["img_folder"].value)
-		img_files = []
-		for ext in LFvals.IMAGE_EXTS:
-			files_search = "*.{file_ext}".format(file_ext=ext)
-			files = glob.glob(os.path.join(img_folder, files_search))
-			for file in files:
-				img_files.append(ntpath.basename(file))
-				
-		self.gui_elms["main"]["img_list"].choices = img_files
-		self.gui_elms["calibrate"]["radiometry_frame_file"].choices = img_files
-		self.gui_elms["calibrate"]["dark_frame_file"].choices = img_files
-		self.gui_elms["rectify"]["input_file"].choices = img_files
-		self.gui_elms["deconvolve"]["input_file"].choices = img_files
-		
 	def set_cal_img(self):
 		cal_file = self.gui_elms["calibrate"]["output_filename"].value
 		self.gui_elms["rectify"]["calibration_file"].value = cal_file
