@@ -42,7 +42,7 @@ PLUGIN_ARGS = {
 			"label":"Available Images","default":"","help":"List of available Images to view in the selected Image folder.","type":"sel","options":[""]
 		},
 		"metadata_file":{
-			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"str"
+			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"str","enabled":False
 		},
 		"comments":{
 			"default":"","label":"Comments","help":"Comments from Acquisition and Processing","type":"str","type":"text"
@@ -219,7 +219,7 @@ PLUGIN_ARGS = {
 	# ========== Rectify ============
 	# ===============================		
 		"input_file":{
-			"prop":"input_file","label":"Light Field Image","dest":"input_file","type":"sel","default":"light_field.png","options":["light_field.png"],"help":"Supply at least one light field image to rectify.","cat":"required","img_folder_file":True,"exclude_from_args":True,"group":"Files"
+			"prop_short":"-i","prop":"--input_file","label":"Light Field Image","dest":"input_file","type":"sel","default":"light_field.png","options":["light_field.png"],"help":"Supply at least one light field image to rectify.","cat":"required","img_folder_file":True,"group":"Files"
 		},
 		"calibration_file":{
 			"prop_short":"-c","prop":"--calibration-file","label":"Calibration File","dest":"calibration_file","type":"sel","default":"calibration.lfc","options":["calibration.lfc"],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"

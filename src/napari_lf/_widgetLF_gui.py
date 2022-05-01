@@ -1,6 +1,6 @@
 import os, sys, glob, ntpath, subprocess, traceback, json, time
 from pathlib import Path
-from qtpy import QtCore
+from qtpy import QtCore, QtGui
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import *
 from magicgui.widgets import *
@@ -53,7 +53,7 @@ class LFQWidgetGui():
 		dict = LFvals.PLUGIN_ARGS["main"]["presets"]
 		self.gui_elms["main"]["presets"] = create_widget(dict)
 		self.btn_preset_load = PushButton(label='Load')
-		self.btn_preset_save = PushButton(label='Save')
+		self.btn_preset_save = PushButton(label='Save As..')
 		self.btn_preset_delete = PushButton(label='Delete')
 		_cont_preset_list_btn = Container(name='Presets', widgets=[self.gui_elms["main"]["presets"], self.btn_preset_load, self.btn_preset_save, self.btn_preset_delete], layout='horizontal', labels=False)
 		_cont_preset_list_btn.native.layout().setContentsMargins(1,1,1,1)
@@ -227,46 +227,52 @@ class LFQWidgetGui():
 		self.btn_cal_req_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_cal_req_def.changed.connect
 		def btn_cal_req_defaults():
-			for key in self.lf_vals["calibrate"]:
-				dict = self.lf_vals["calibrate"][key]
-				if "cat" in dict and dict["cat"] == "required":
-					wid_elm = self.gui_elms["calibrate"][key]
-					try:
-						if wid_elm.widget_type == 'ComboBox':
-							if dict["default"] in wid_elm.choices:
-								wid_elm.value = dict["default"]
-							elif len(wid_elm.choices) == 0:
-								pass
+			qm = QMessageBox
+			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			if ret == qm.Yes:
+				for key in self.lf_vals["calibrate"]:
+					dict = self.lf_vals["calibrate"][key]
+					if "cat" in dict and dict["cat"] == "required":
+						wid_elm = self.gui_elms["calibrate"][key]
+						try:
+							if wid_elm.widget_type == 'ComboBox':
+								if dict["default"] in wid_elm.choices:
+									wid_elm.value = dict["default"]
+								elif len(wid_elm.choices) == 0:
+									pass
+								else:
+									wid_elm.value = wid_elm.choices[0]
 							else:
-								wid_elm.value = wid_elm.choices[0]
-						else:
-							wid_elm.value = dict["default"]
-					except Exception as e:
-						print(e)
-						print(traceback.format_exc())
+								wid_elm.value = dict["default"]
+						except Exception as e:
+							print(e)
+							print(traceback.format_exc())
 		
 		self.btn_cal_opt_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_cal_opt_def.changed.connect
 		def btn_cal_opt_defaults():
-			for key in self.lf_vals["calibrate"]:
-				dict = self.lf_vals["calibrate"][key]
-				if "cat" in dict and dict["cat"] == "required":
-					pass
-				else:
-					wid_elm = self.gui_elms["calibrate"][key]
-					try:
-						if wid_elm.widget_type == 'ComboBox':
-							if dict["default"] in wid_elm.choices:
-								wid_elm.value = dict["default"]
-							elif len(wid_elm.choices) == 0:
-								pass
+			qm = QMessageBox
+			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			if ret == qm.Yes:
+				for key in self.lf_vals["calibrate"]:
+					dict = self.lf_vals["calibrate"][key]
+					if "cat" in dict and dict["cat"] == "required":
+						pass
+					else:
+						wid_elm = self.gui_elms["calibrate"][key]
+						try:
+							if wid_elm.widget_type == 'ComboBox':
+								if dict["default"] in wid_elm.choices:
+									wid_elm.value = dict["default"]
+								elif len(wid_elm.choices) == 0:
+									pass
+								else:
+									wid_elm.value = wid_elm.choices[0]
 							else:
-								wid_elm.value = wid_elm.choices[0]
-						else:
-							wid_elm.value = dict["default"]
-					except Exception as e:
-						print(e)
-						print(traceback.format_exc())
+								wid_elm.value = dict["default"]
+						except Exception as e:
+							print(e)
+							print(traceback.format_exc())
 		
 		if self.lf_vals["misc"]["group_params"]["value"] == False:
 			_widget_calibrate_req.append(self.btn_cal_req_def)			
@@ -364,46 +370,52 @@ class LFQWidgetGui():
 		self.btn_rec_req_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_rec_req_def.changed.connect
 		def btn_rec_req_defaults():
-			for key in self.lf_vals["rectify"]:
-				dict = self.lf_vals["rectify"][key]
-				if "cat" in dict and dict["cat"] == "required":
-					wid_elm = self.gui_elms["rectify"][key]
-					try:
-						if wid_elm.widget_type == 'ComboBox':
-							if dict["default"] in wid_elm.choices:
-								wid_elm.value = dict["default"]
-							elif len(wid_elm.choices) == 0:
-								pass
+			qm = QMessageBox
+			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			if ret == qm.Yes:
+				for key in self.lf_vals["rectify"]:
+					dict = self.lf_vals["rectify"][key]
+					if "cat" in dict and dict["cat"] == "required":
+						wid_elm = self.gui_elms["rectify"][key]
+						try:
+							if wid_elm.widget_type == 'ComboBox':
+								if dict["default"] in wid_elm.choices:
+									wid_elm.value = dict["default"]
+								elif len(wid_elm.choices) == 0:
+									pass
+								else:
+									wid_elm.value = wid_elm.choices[0]
 							else:
-								wid_elm.value = wid_elm.choices[0]
-						else:
-							wid_elm.value = dict["default"]
-					except Exception as e:
-						print(e)
-						print(traceback.format_exc())
+								wid_elm.value = dict["default"]
+						except Exception as e:
+							print(e)
+							print(traceback.format_exc())
 		
 		self.btn_rec_opt_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_rec_opt_def.changed.connect
 		def btn_rec_opt_defaults():
-			for key in self.lf_vals["rectify"]:
-				dict = self.lf_vals["rectify"][key]
-				if "cat" in dict and dict["cat"] == "required":
-					pass
-				else:
-					wid_elm = self.gui_elms["rectify"][key]
-					try:
-						if wid_elm.widget_type == 'ComboBox':
-							if dict["default"] in wid_elm.choices:
-								wid_elm.value = dict["default"]
-							elif len(wid_elm.choices) == 0:
-								pass
+			qm = QMessageBox
+			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			if ret == qm.Yes:
+				for key in self.lf_vals["rectify"]:
+					dict = self.lf_vals["rectify"][key]
+					if "cat" in dict and dict["cat"] == "required":
+						pass
+					else:
+						wid_elm = self.gui_elms["rectify"][key]
+						try:
+							if wid_elm.widget_type == 'ComboBox':
+								if dict["default"] in wid_elm.choices:
+									wid_elm.value = dict["default"]
+								elif len(wid_elm.choices) == 0:
+									pass
+								else:
+									wid_elm.value = wid_elm.choices[0]
 							else:
-								wid_elm.value = wid_elm.choices[0]
-						else:
-							wid_elm.value = dict["default"]
-					except Exception as e:
-						print(e)
-						print(traceback.format_exc())
+								wid_elm.value = dict["default"]
+						except Exception as e:
+							print(e)
+							print(traceback.format_exc())
 						
 		if self.lf_vals["misc"]["group_params"]["value"] == False:
 			_widget_rectify_req.append(self.btn_rec_req_def)			
@@ -497,46 +509,52 @@ class LFQWidgetGui():
 		self.btn_dec_req_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_dec_req_def.changed.connect
 		def btn_dec_req_defaults():
-			for key in self.lf_vals["deconvolve"]:
-				dict = self.lf_vals["deconvolve"][key]
-				if "cat" in dict and dict["cat"] == "required":
-					wid_elm = self.gui_elms["deconvolve"][key]
-					try:
-						if wid_elm.widget_type == 'ComboBox':
-							if dict["default"] in wid_elm.choices:
-								wid_elm.value = dict["default"]
-							elif len(wid_elm.choices) == 0:
-								pass
+			qm = QMessageBox
+			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			if ret == qm.Yes:
+				for key in self.lf_vals["deconvolve"]:
+					dict = self.lf_vals["deconvolve"][key]
+					if "cat" in dict and dict["cat"] == "required":
+						wid_elm = self.gui_elms["deconvolve"][key]
+						try:
+							if wid_elm.widget_type == 'ComboBox':
+								if dict["default"] in wid_elm.choices:
+									wid_elm.value = dict["default"]
+								elif len(wid_elm.choices) == 0:
+									pass
+								else:
+									wid_elm.value = wid_elm.choices[0]
 							else:
-								wid_elm.value = wid_elm.choices[0]
-						else:
-							wid_elm.value = dict["default"]
-					except Exception as e:
-						print(e)
-						print(traceback.format_exc())
+								wid_elm.value = dict["default"]
+						except Exception as e:
+							print(e)
+							print(traceback.format_exc())
 			
 		self.btn_dec_opt_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_dec_opt_def.changed.connect
 		def btn_dec_opt_defaults():
-			for key in self.lf_vals["deconvolve"]:
-				dict = self.lf_vals["deconvolve"][key]
-				if "cat" in dict and dict["cat"] == "required":
-					pass
-				else:
-					wid_elm = self.gui_elms["deconvolve"][key]
-					try:
-						if wid_elm.widget_type == 'ComboBox':
-							if dict["default"] in wid_elm.choices:
-								wid_elm.value = dict["default"]
-							elif len(wid_elm.choices) == 0:
-								pass
+			qm = QMessageBox
+			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			if ret == qm.Yes:
+				for key in self.lf_vals["deconvolve"]:
+					dict = self.lf_vals["deconvolve"][key]
+					if "cat" in dict and dict["cat"] == "required":
+						pass
+					else:
+						wid_elm = self.gui_elms["deconvolve"][key]
+						try:
+							if wid_elm.widget_type == 'ComboBox':
+								if dict["default"] in wid_elm.choices:
+									wid_elm.value = dict["default"]
+								elif len(wid_elm.choices) == 0:
+									pass
+								else:
+									wid_elm.value = wid_elm.choices[0]
 							else:
-								wid_elm.value = wid_elm.choices[0]
-						else:
-							wid_elm.value = dict["default"]
-					except Exception as e:
-						print(e)
-						print(traceback.format_exc())
+								wid_elm.value = dict["default"]
+						except Exception as e:
+							print(e)
+							print(traceback.format_exc())
 					
 		if self.lf_vals["misc"]["group_params"]["value"] == False:
 			_widget_deconvolve_req.append(self.btn_dec_req_def)			
@@ -572,29 +590,32 @@ class LFQWidgetGui():
 		self.btn_hw_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_hw_def.changed.connect
 		def btn_hw_defaults():
-			for key in self.lf_vals["hw"]:
-				dict = self.lf_vals["hw"][key]
-				wid_elm = self.gui_elms["hw"][key]
-				if dict["type"] == "int" and type(wid_elm.value).__name__ == "str":
-					try:
-						wid_elm.value = wid_elm.choices[dict["default"]]
-					except Exception as e:
-						print(e)
-						print(traceback.format_exc())
-				else:
-					try:
-						if wid_elm.widget_type == 'ComboBox':
-							if dict["default"] in wid_elm.choices:
-								wid_elm.value = dict["default"]
-							elif len(wid_elm.choices) == 0:
-								pass
+			qm = QMessageBox
+			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			if ret == qm.Yes:
+				for key in self.lf_vals["hw"]:
+					dict = self.lf_vals["hw"][key]
+					wid_elm = self.gui_elms["hw"][key]
+					if dict["type"] == "int" and type(wid_elm.value).__name__ == "str":
+						try:
+							wid_elm.value = wid_elm.choices[dict["default"]]
+						except Exception as e:
+							print(e)
+							print(traceback.format_exc())
+					else:
+						try:
+							if wid_elm.widget_type == 'ComboBox':
+								if dict["default"] in wid_elm.choices:
+									wid_elm.value = dict["default"]
+								elif len(wid_elm.choices) == 0:
+									pass
+								else:
+									wid_elm.value = wid_elm.choices[0]
 							else:
-								wid_elm.value = wid_elm.choices[0]
-						else:
-							wid_elm.value = dict["default"]
-					except Exception as e:
-						print(e)
-						print(traceback.format_exc())
+								wid_elm.value = dict["default"]
+						except Exception as e:
+							print(e)
+							print(traceback.format_exc())
 
 		_widget_hw.append(self.btn_hw_def)
 			
@@ -622,45 +643,51 @@ class LFQWidgetGui():
 		self.btn_misc_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_misc_def.changed.connect
 		def btn_misc_defaults():
-			for key in self.lf_vals["misc"]:
-				dict = self.lf_vals["misc"][key]
-				wid_elm = self.gui_elms["misc"][key]
-				if key != "lib_ver_label" or (key == "lib_ver_label" and str(self.gui_elms["misc"]["lib_folder"].value) != str(self.lf_vals["misc"]["lib_folder"]["default"])):
-					if dict["type"] == "int" and type(wid_elm.value).__name__ == "str":
-						try:
-							wid_elm.value = wid_elm.choices[dict["default"]]
-						except Exception as e:
-							print(e)
-							print(traceback.format_exc())
-					else:
-						try:
-							if wid_elm.widget_type == 'ComboBox':
-								if dict["default"] in wid_elm.choices:
-									wid_elm.value = dict["default"]
-								elif len(wid_elm.choices) == 0:
-									pass
+			qm = QMessageBox
+			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			if ret == qm.Yes:
+				for key in self.lf_vals["misc"]:
+					dict = self.lf_vals["misc"][key]
+					wid_elm = self.gui_elms["misc"][key]
+					if key != "lib_ver_label" or (key == "lib_ver_label" and str(self.gui_elms["misc"]["lib_folder"].value) != str(self.lf_vals["misc"]["lib_folder"]["default"])):
+						if dict["type"] == "int" and type(wid_elm.value).__name__ == "str":
+							try:
+								wid_elm.value = wid_elm.choices[dict["default"]]
+							except Exception as e:
+								print(e)
+								print(traceback.format_exc())
+						else:
+							try:
+								if wid_elm.widget_type == 'ComboBox':
+									if dict["default"] in wid_elm.choices:
+										wid_elm.value = dict["default"]
+									elif len(wid_elm.choices) == 0:
+										pass
+									else:
+										wid_elm.value = wid_elm.choices[0]
 								else:
-									wid_elm.value = wid_elm.choices[0]
-							else:
-								wid_elm.value = dict["default"]
-						except Exception as e:
-							print(e)
-							print(traceback.format_exc())
+									wid_elm.value = dict["default"]
+							except Exception as e:
+								print(e)
+								print(traceback.format_exc())
 				
 		_layout_misc.addRow(self.btn_misc_def.native)
 		
 		self.btn_all_def = PushButton(name='RTD', label='Reset ALL Settings to Defaults')
 		@self.btn_all_def.changed.connect
-		def btn_all_defaults():			
-			btn_cal_req_defaults()
-			btn_cal_opt_defaults()
-			btn_rec_req_defaults()
-			btn_rec_opt_defaults()
-			btn_dec_req_defaults()
-			btn_dec_opt_defaults()
-			btn_hw_defaults()
-			btn_misc_defaults()
-			self.gui_elms["main"]["comments"].value = self.lf_vals["main"]["comments"]["default"]
+		def btn_all_defaults():
+			qm = QMessageBox
+			ret = qm.question(QWidget(),'', "Reset ALL Values to Default ?", qm.Yes | qm.No)
+			if ret == qm.Yes:
+				btn_cal_req_defaults()
+				btn_cal_opt_defaults()
+				btn_rec_req_defaults()
+				btn_rec_opt_defaults()
+				btn_dec_req_defaults()
+				btn_dec_opt_defaults()
+				btn_hw_defaults()
+				btn_misc_defaults()
+				self.gui_elms["main"]["comments"].value = self.lf_vals["main"]["comments"]["default"]
 			
 		_line = QFrame()
 		_line.setMinimumWidth(1)
@@ -886,6 +913,7 @@ class LFQWidgetGui():
 		self.timer.start(500)
 		
 	def verify_existing_files(self):
+		
 		try:
 			_img_folder = str(self.gui_elms["main"]["img_folder"].value)
 			path = Path(_img_folder)
@@ -960,6 +988,60 @@ class LFQWidgetGui():
 		except Exception as e:
 			print(e)
 			print(traceback.format_exc())
+			
+	def verify_preset_vals(self):
+		preset_sel = self.gui_elms["main"]["presets"].value
+		if preset_sel is not None and preset_sel != "":
+			if "preset_choices" in self.settings:
+				if preset_sel in self.settings["preset_choices"]:
+					loaded_preset_vals = self.settings["preset_choices"][preset_sel]
+					for section in loaded_preset_vals:
+						for prop in loaded_preset_vals[section]:
+							try:
+								if LFvals.PLUGIN_ARGS[section][prop]["type"] == "file" and (os.path.normpath(self.gui_elms[section][prop].value) in [os.path.normpath(loaded_preset_vals[section][prop])]):
+									pass
+								elif self.gui_elms[section][prop].value == loaded_preset_vals[section][prop]:
+									pass
+								else:
+									#print(self.gui_elms[section][prop].value, loaded_preset_vals[section][prop])
+									# self.gui_elms["main"]["presets"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(255, 255, 0); border-width: 1px;")
+									if "" not in self.gui_elms["main"]["presets"].choices:
+										choices = self.gui_elms["main"]["presets"].choices = self.gui_elms["main"]["presets"].choices + ("",)
+									self.gui_elms["main"]["presets"].value = ""
+									break
+							except Exception as e:
+								print(e)
+								print(traceback.format_exc())
+		elif preset_sel == "":
+			for preset_selx in self.settings["preset_choices"]:
+				if preset_selx != "":
+					loaded_preset_vals = self.settings["preset_choices"][preset_selx]
+					for section in loaded_preset_vals:
+						do_break = True
+						do_exit = False
+						for prop in loaded_preset_vals[section]:
+							try:
+								if LFvals.PLUGIN_ARGS[section][prop]["type"] == "file" and (os.path.normpath(self.gui_elms[section][prop].value) in [os.path.normpath(loaded_preset_vals[section][prop])]):
+									pass
+								elif self.gui_elms[section][prop].value == loaded_preset_vals[section][prop]:
+									pass
+								else:
+									do_break = False
+									do_exit = True
+									break
+							except Exception as e:
+								print(e)
+								print(traceback.format_exc())
+						if do_exit:
+							break
+						if do_break:
+							if "" in self.gui_elms["main"]["presets"].choices:
+								tup_list = list(self.gui_elms["main"]["presets"].choices)
+								tup_list.remove("")
+								self.gui_elms["main"]["presets"].choices = tuple(tup_list)
+								self.gui_elms["main"]["presets"].value = preset_selx
+								# self.gui_elms["main"]["presets"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(0, 0, 0); border-width: 1px;")
+							break
 		
 	def refresh_preset_choices(self):
 		preset_choices = []

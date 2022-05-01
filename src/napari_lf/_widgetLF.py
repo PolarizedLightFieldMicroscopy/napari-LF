@@ -110,6 +110,9 @@ class LFQWidget(QWidget):
 				self.gui.populate_cal_img_list() #refresh calib lfc choice in drop-down
 				self.gui.set_cal_img() # set the new calib lfc file as default choice for rectify/deconvolve
 				
+			if vals[1] == 'rec' and vals[2] == '':
+				self.display_rec_image()
+				
 			if vals[1] == 'dec' and vals[2] == '':
 				self.display_proc_image()
 				
@@ -184,7 +187,7 @@ class LFQWidget(QWidget):
 		self.scroll_bottom.setWidget(self.gui.widget_main_bottom_comps.native)
 		splitter.addWidget(self.scroll_bottom)
 		
-		self.setMinimumWidth(460)
+		self.setMinimumWidth(480)
 		self.layout().addWidget(splitter)
 		self.set_lfa_libs()
 		
@@ -234,10 +237,31 @@ class LFQWidget(QWidget):
 		
 	#Event Filter
 	def eventFilter(self, source, event):
+		if (event.type() == QtCore.QEvent.MouseButtonRelease):
+			self.gui.verify_preset_vals()
 		if (event.type() == QtCore.QEvent.Wheel and self.gui.gui_elms['misc']['disable_mousewheel'].value == True):
 			return True
 		return super(LFQWidget, self).eventFilter(source, event)
 
+	def display_rec_image(self):
+		rec_img = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.lf_vals["rectify"]["output_filename"]["value"]))
+		
+		if self.gui.gui_elms["misc"]["use_ext_viewer"].value == True:
+			if self.gui.gui_elms["misc"]["ext_viewer_sel"].value == "System":
+				self.openImage(rec_img)
+			else:
+				self.openImageExtViewer(rec_img)
+		else:
+			if self.method == LFvals.METHODS[0]:
+				self.viewer.open(rec_img, stack=True)
+			elif self.method == LFvals.METHODS[1]:
+				self.viewer.open(rec_img, stack=True)
+			else:
+				if self.gui.gui_elms["misc"]["ext_viewer_sel"].value == "System":
+					self.openImage(rec_img)
+				else:
+					self.openImageExtViewer(proc_img)
+	
 	def display_proc_image(self):
 		proc_img = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.lf_vals["deconvolve"]["output_filename"]["value"]))
 		
@@ -278,7 +302,7 @@ class LFQWidget(QWidget):
 				current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
 			else:
 				current_val = str(current_val)
-			self.new_args_cal.append(current_val)
+			#self.new_args_cal.append(current_val)
 			
 			for section in ["calibrate", "hw"]:
 				for key in self.gui.lf_vals[section]:
@@ -314,7 +338,8 @@ class LFQWidget(QWidget):
 				current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
 			else:
 				current_val = str(current_val)
-			self.new_args_rec.append(current_val)
+			#self.new_args_rec.append(current_val)
+			
 			for key in self.gui.lf_vals["rectify"]:
 				print(f"key:{key}")
 				dict = self.gui.lf_vals["rectify"][key]
@@ -481,4 +506,4 @@ def main(method):
 		sys.exit(app.exec_())
 
 if __name__ == "__main__":
-	main(LFvals.METHODS[2])
+	main(LFvals.METHODS[1])
