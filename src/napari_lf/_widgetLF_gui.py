@@ -247,6 +247,7 @@ class LFQWidgetGui():
 						except Exception as e:
 							print(e)
 							print(traceback.format_exc())
+				self.verify_preset_vals()
 		
 		self.btn_cal_opt_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_cal_opt_def.changed.connect
@@ -273,6 +274,7 @@ class LFQWidgetGui():
 						except Exception as e:
 							print(e)
 							print(traceback.format_exc())
+				self.verify_preset_vals()
 		
 		if self.lf_vals["misc"]["group_params"]["value"] == False:
 			_widget_calibrate_req.append(self.btn_cal_req_def)			
@@ -390,6 +392,7 @@ class LFQWidgetGui():
 						except Exception as e:
 							print(e)
 							print(traceback.format_exc())
+				self.verify_preset_vals()
 		
 		self.btn_rec_opt_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_rec_opt_def.changed.connect
@@ -416,6 +419,7 @@ class LFQWidgetGui():
 						except Exception as e:
 							print(e)
 							print(traceback.format_exc())
+				self.verify_preset_vals()
 						
 		if self.lf_vals["misc"]["group_params"]["value"] == False:
 			_widget_rectify_req.append(self.btn_rec_req_def)			
@@ -529,6 +533,7 @@ class LFQWidgetGui():
 						except Exception as e:
 							print(e)
 							print(traceback.format_exc())
+				self.verify_preset_vals()
 			
 		self.btn_dec_opt_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_dec_opt_def.changed.connect
@@ -555,6 +560,7 @@ class LFQWidgetGui():
 						except Exception as e:
 							print(e)
 							print(traceback.format_exc())
+				self.verify_preset_vals()
 					
 		if self.lf_vals["misc"]["group_params"]["value"] == False:
 			_widget_deconvolve_req.append(self.btn_dec_req_def)			
@@ -616,6 +622,7 @@ class LFQWidgetGui():
 						except Exception as e:
 							print(e)
 							print(traceback.format_exc())
+				self.verify_preset_vals()
 
 		_widget_hw.append(self.btn_hw_def)
 			
@@ -670,6 +677,7 @@ class LFQWidgetGui():
 							except Exception as e:
 								print(e)
 								print(traceback.format_exc())
+				self.verify_preset_vals()
 				
 		_layout_misc.addRow(self.btn_misc_def.native)
 		
@@ -688,6 +696,7 @@ class LFQWidgetGui():
 				btn_hw_defaults()
 				btn_misc_defaults()
 				self.gui_elms["main"]["comments"].value = self.lf_vals["main"]["comments"]["default"]
+				self.verify_preset_vals()
 			
 		_line = QFrame()
 		_line.setMinimumWidth(1)
@@ -1306,6 +1315,15 @@ class LFQWidgetGui():
 		text, ok = QInputDialog.getText(QWidget(), 'Input Dialog', 'Enter preset name:')
 		
 		if ok:
+			if "preset_choices" in self.settings:
+				for preset in self.settings["preset_choices"]:
+					if preset == text:
+						qm = QMessageBox
+						ret = qm.question(QWidget(),'', "Preset name already exists, overwirte ?", qm.Yes | qm.No)
+						if ret == qm.Yes:
+							return (str(text))
+						else:
+							return None
 			return (str(text))
 		return None
 		
