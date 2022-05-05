@@ -1,10 +1,11 @@
-import os, sys, json
+import os, sys, traceback
 from pathlib import Path
 import napari
 from napari.qt.threading import thread_worker
+from qtpy import QtCore, QtGui
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QScrollArea, QMessageBox, QTabWidget
-from magicgui.widgets import Container, FileEdit, Label, LineEdit, FloatSpinBox, PushButton, CheckBox, SpinBox, Slider, ComboBox
+from qtpy.QtWidgets import *
+from magicgui.widgets import *
 
 try:
 	from napari_lf import _widgetLF_gui as LFgui
@@ -19,6 +20,10 @@ try:
 except:
 	from lfa import lfcalibrate, lfdeconvolve, lfrectify
 	from lfa import lflib
+	
+
+# from lfd.settings import Settings
+# from lfd import display
 
 METHOD = LFvals.METHODS[0]
 
@@ -27,7 +32,6 @@ class LFQWidget(QWidget):
 		
 	def __init__(self, napari_viewer):
 		super().__init__()
-		self.settings = {}
 		self.lfa_args = {}
 		self.viewer = napari_viewer
 		self.method = METHOD
@@ -40,16 +44,25 @@ class LFQWidget(QWidget):
 		self.currentdir = os.path.dirname(os.path.realpath(__file__))
 		self.gui = None
 		#Get and Set Prefs
-		self.load_plugin_prefs(pre_init=True)
 		self.gui = LFgui.LFQWidgetGui()
+		self.gui.load_plugin_prefs(pre_init=True)
 		self.gui.method = self.method
 		self.thread_worker = None
+		
+		# load up settings
+		# qt_settings = QtCore.QSettings(QtCore.QSettings.IniFormat,
+									   # QtCore.QSettings.UserScope,
+									   # 'Stanford University',
+									   # 'LFDisplay')
+		# self.lfd_settings = Settings(qt_settings)
 		
 		@self.gui.btn_open_img.changed.connect
 		def img_list_open():
 			img_selected = str(self.gui.gui_elms["main"]["img_list"].value)
 			img_folder = str(self.gui.gui_elms["main"]["img_folder"].value)
 			img_file_path = os.path.join(img_folder, img_selected)
+			
+			# self.lfd_settings.setValue('input/file/default_path',img_file_path)
 			
 			if self.gui.gui_elms["misc"]["use_ext_viewer"].value == True:
 				if self.gui.gui_elms["misc"]["ext_viewer_sel"].value == "System":
@@ -85,20 +98,27 @@ class LFQWidget(QWidget):
 				
 		@self.gui.gui_elms["main"]["img_folder"].changed.connect
 		def img_folder_call():
-			bool = self.read_meta()
+			bool = self.gui.read_meta()
 			if bool:
-				self.refresh_fields()
+				self.refresh_vals()
 			self.gui.image_folder_changes()
 				
 		def set_status(vals):
 			self.gui.set_btns_and_status(True, vals[0])
 			
-			if vals[1] == 'dec':
+			if vals[1] == 'cal' and vals[2] == '':
+				self.gui.populate_cal_img_list() #refresh calib lfc choice in drop-down
+				self.gui.set_cal_img() # set the new calib lfc file as default choice for rectify/deconvolve
+				
+			if vals[1] == 'rec' and vals[2] == '':
+				self.display_rec_image()
+				
+			if vals[1] == 'dec' and vals[2] == '':
 				self.display_proc_image()
 				
 			if vals[2] != '':
 				err = vals[2]
-				print(repr(err))
+				# print(repr(err))
 				msg = QMessageBox()
 				msg.setIcon(QMessageBox.Critical)
 				msg.setText("Error")
@@ -138,23 +158,60 @@ class LFQWidget(QWidget):
 			self.thread_worker.quit()
 			self.gui.set_btns_and_status(True, LFvals.PLUGIN_ARGS['main']['status']['value_idle'])
 			
+		
+		for section in ['calibrate','rectify','deconvolve','hw','misc','main']:
+			for prop in LFvals.PLUGIN_ARGS[section]:
+				if LFvals.PLUGIN_ARGS[section][prop]['type'] in ['int', 'float', 'sel']:
+					self.gui.gui_elms[section][prop].native.installEventFilter(self)
+			
 		#Get and Set Prefs
 		self.gui.populate_img_list()
-		self.load_plugin_prefs()
+		self.gui.populate_cal_img_list()
+		self.gui.load_plugin_prefs()
 		
 		#Layout
 		layout = QVBoxLayout()
 		self.setLayout(layout)
 		
-		self.scroll = QScrollArea()
-		 #Scroll Area Properties
-		self.scroll.setWidgetResizable(True)
-		self.scroll.setWidget(self.gui.widget_main.native)
-		# self.layout().addWidget(self.gui.widget_logo_info.native)
-		self.layout().addWidget(self.gui.widget_main_comps.native)
-		self.layout().addWidget(self.scroll)
-		self.setMinimumSize(400,600)
+		splitter = QSplitter(Qt.Vertical)
+		
+		# self.scroll_top = QScrollArea()
+		# self.scroll_top.setWidgetResizable(False)
+		# self.scroll_top.setWidget(self.gui.widget_main_top_comps.native)
+		# splitter.addWidget(self.scroll_top)
+		
+		splitter.addWidget(self.gui.widget_main_top_comps.native)
+		
+		self.scroll_bottom = QScrollArea()
+		self.scroll_bottom.setWidgetResizable(True)
+		self.scroll_bottom.setWidget(self.gui.widget_main_bottom_comps.native)
+		splitter.addWidget(self.scroll_bottom)
+		
+		self.setMinimumWidth(480)
+		self.layout().addWidget(splitter)
 		self.set_lfa_libs()
+		
+		# create the display widget
+		# set defaults
+		# if not self.lfd_settings.contains('output/default_path'):
+			# self.lfd_settings.setValue('output/default_path',os.getcwd())
+		# if not self.lfd_settings.contains('input/default_path'):
+			# self.lfd_settings.setValue('input/default_path',os.getcwd())
+		# if not self.lfd_settings.contains('app/resource_path') or not os.path.exists(os.path.join(self.lfd_settings.getString('app/resource_path'), 'splash.png')):
+			# load resource location
+			# cwd = os.getcwd()
+			# if not sys.argv[0]:
+				# resource_path = cwd
+			# else:
+				# resource_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+			# self.lfd_settings.setValue('app/resource_path',resource_path)
+			
+		# img_selected = str(self.gui.gui_elms["main"]["img_list"].value)
+		# img_folder = str(self.gui.gui_elms["main"]["img_folder"].value)
+		# img_file_path = os.path.join(img_folder, img_selected)
+		# self.lfd_settings.setValue('input/file/default_path',img_file_path)
+		# self.dispWidget = display.ImagingDisplay(self.lfd_settings, self.gui.LFD_frame)
+		# self.gui.LFD_frame.setCentralWidget(self.dispWidget)
 		
 	def set_lfa_libs(self):
 		if self.method == LFvals.METHODS[0]:
@@ -170,13 +227,41 @@ class LFQWidget(QWidget):
 				print(e)
 				print('LFA could not be loaded from:', self.gui.gui_elms["misc"]["lib_folder"].value)
 				self.gui.gui_elms["misc"]["lib_ver_label"].value = 'Error!'
+				print(traceback.format_exc())
 		
 	def closeEvent(self, event):
-		self.save_plugin_prefs()
+		self.gui.save_plugin_prefs()
 			
 	def hideEvent(self, event):
-		self.save_plugin_prefs()
+		self.gui.save_plugin_prefs()
+		
+	#Event Filter
+	def eventFilter(self, source, event):
+		if (event.type() == QtCore.QEvent.MouseButtonRelease):
+			self.gui.verify_preset_vals()
+		if (event.type() == QtCore.QEvent.Wheel and self.gui.gui_elms['misc']['disable_mousewheel'].value == True):
+			return True
+		return super(LFQWidget, self).eventFilter(source, event)
 
+	def display_rec_image(self):
+		rec_img = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.lf_vals["rectify"]["output_filename"]["value"]))
+		
+		if self.gui.gui_elms["misc"]["use_ext_viewer"].value == True:
+			if self.gui.gui_elms["misc"]["ext_viewer_sel"].value == "System":
+				self.openImage(rec_img)
+			else:
+				self.openImageExtViewer(rec_img)
+		else:
+			if self.method == LFvals.METHODS[0]:
+				self.viewer.open(rec_img, stack=True)
+			elif self.method == LFvals.METHODS[1]:
+				self.viewer.open(rec_img, stack=True)
+			else:
+				if self.gui.gui_elms["misc"]["ext_viewer_sel"].value == "System":
+					self.openImage(rec_img)
+				else:
+					self.openImageExtViewer(proc_img)
+	
 	def display_proc_image(self):
 		proc_img = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.lf_vals["deconvolve"]["output_filename"]["value"]))
 		
@@ -217,12 +302,14 @@ class LFQWidget(QWidget):
 				current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
 			else:
 				current_val = str(current_val)
-			self.new_args_cal.append(current_val)
+			#self.new_args_cal.append(current_val)
 			
 			for section in ["calibrate", "hw"]:
 				for key in self.gui.lf_vals[section]:
 					dict = self.gui.lf_vals[section][key]
 					if "exclude_from_args" in dict and dict["exclude_from_args"] == True:
+						pass
+					elif "bind" in dict and dict["bind"] in self.gui.lf_vals[section] and dict["value"] == self.gui.lf_vals[section][dict["bind"]]["value"]:
 						pass
 					else:
 						prop = dict["prop"]
@@ -245,16 +332,20 @@ class LFQWidget(QWidget):
 								self.new_args_cal.append(current_val)
 
 			key = "input_file"
-			dict = self.gui.lf_vals["deconvolve"][key]
+			dict = self.gui.lf_vals["rectify"][key]
 			current_val = dict["value"]
 			if "img_folder_file" in dict and dict["img_folder_file"] == True:
 				current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
 			else:
 				current_val = str(current_val)
-			self.new_args_rec.append(current_val)
+			#self.new_args_rec.append(current_val)
+			
 			for key in self.gui.lf_vals["rectify"]:
+				print(f"key:{key}")
 				dict = self.gui.lf_vals["rectify"][key]
 				if "exclude_from_args" in dict and dict["exclude_from_args"] == True:
+					pass
+				elif "bind" in dict and dict["bind"] in self.gui.lf_vals["rectify"] and dict["value"] == self.gui.lf_vals["rectify"][dict["bind"]]["value"]:
 					pass
 				else:
 					prop = dict["prop"]
@@ -290,6 +381,8 @@ class LFQWidget(QWidget):
 					dict = self.gui.lf_vals[section][key]
 					if "exclude_from_args" in dict and dict["exclude_from_args"] == True:
 						pass
+					elif "bind" in dict and dict["bind"] in self.gui.lf_vals[section] and dict["value"] == self.gui.lf_vals[section][dict["bind"]]["value"]:
+						pass
 					else:
 						prop = dict["prop"]
 						if ("cat" in dict and dict["cat"] == "required") or (dict["value"] != dict["default"]):
@@ -312,9 +405,10 @@ class LFQWidget(QWidget):
 
 		except Exception as e:
 			print(key)
+			print(traceback.format_exc())
 			raise(e)
 			
-		self.write_meta()
+		self.gui.write_meta()
 
 	@thread_worker(progress={'total': 0})
 	def run_lfcalibrate(self, args):
@@ -327,6 +421,8 @@ class LFQWidget(QWidget):
 			self.lfcalibrate.main(args)
 			return (LFvals.PLUGIN_ARGS['main']['status']['value_idle'], 'cal', '')
 		except Exception as err:
+			print(traceback.format_exc())
+			self.gui.dump_errors(self.currentdir, str(traceback.format_exc()), traceback=True)
 			return (LFvals.PLUGIN_ARGS['main']['status']['value_error'], 'cal', err)
 			
 	@thread_worker(progress={'total': 0})
@@ -340,6 +436,8 @@ class LFQWidget(QWidget):
 			self.lfrectify.main(args)
 			return (LFvals.PLUGIN_ARGS['main']['status']['value_idle'], 'rec', '')
 		except Exception as err:
+			print(traceback.format_exc())
+			self.gui.dump_errors(self.currentdir, str(traceback.format_exc()), traceback=True)
 			return (LFvals.PLUGIN_ARGS['main']['status']['value_error'], 'rec', err)
 		
 	@thread_worker(progress={'total': 0})
@@ -353,114 +451,19 @@ class LFQWidget(QWidget):
 			self.lfdeconvolve.main(args)		
 			return (LFvals.PLUGIN_ARGS['main']['status']['value_idle'], 'dec', '')
 		except Exception as err:
+			print(traceback.format_exc())
+			self.gui.dump_errors(self.currentdir, str(traceback.format_exc()), traceback=True)
 			return (LFvals.PLUGIN_ARGS['main']['status']['value_error'], 'dec', err)
-				
-	def write_meta(self):
-		try:
-			meta_data = {}
-			section = "main"
-			meta_data[section] = {}
-			prop = "comments"
-			meta_data[section][prop] = str(self.gui.gui_elms[section][prop].value)
-			
-			for section in ['calibrate','rectify','deconvolve','hw']:
-				meta_data[section] = {}
-				for prop in LFvals.PLUGIN_ARGS[section]:
-					if "exclude_from_metadata" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_metadata"] == True:
-						pass
-					else:
-						if LFvals.PLUGIN_ARGS[section][prop]["type"] in ["file","folder","str"]:
-							meta_data[section][prop] = str(self.gui.gui_elms[section][prop].value)
-						else:
-							meta_data[section][prop] = self.gui.gui_elms[section][prop].value
-			
-			metadata_file_path = Path(self.gui.gui_elms["main"]["img_folder"].value, self.gui.gui_elms["main"]["metadata_file"].value)
-			with open(metadata_file_path, "w") as f:
-				json.dump(meta_data, f, indent=4)
-		except Exception as e:
-			print(e)
-			
-	def read_meta(self):
-		try:
-			path = Path(os.path.join(self.gui.gui_elms["main"]["img_folder"].value, self.gui.gui_elms["main"]["metadata_file"].value))
-			if path.is_file():
-				with open(os.path.join(self.gui.gui_elms["main"]["img_folder"].value, self.gui.gui_elms["main"]["metadata_file"].value)) as json_file:
-					meta_data = json.load(json_file)
-					
-				for section in meta_data:
-					for prop in meta_data[section]:
-						if prop in self.gui.gui_elms[section] and prop in meta_data[section]:
-							try:
-								self.gui.gui_elms[section][prop].value = meta_data[section][prop]
-							except Exception as e:
-								print(e)
-					
-				return True
-			else:
-				return False
-		except Exception as e:
-			print(e)
-			return False
 
-	def refresh_fields(self):
-		pass
+	def refresh_vals(self):
+		self.gui.refresh_vals()
 
 	def set_method(self, method):
 		self.method = method
 		
 	def set_viewer(self, viewer):
 		self.viewer = viewer
-		
-	def save_plugin_prefs(self):
-		self.settings = {}
-		for section in LFvals.PLUGIN_ARGS:
-			self.settings[section] = {}
-			for prop in LFvals.PLUGIN_ARGS[section]:
-				if "exclude_from_settings" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_settings"] == True:
-					pass
-				else:
-					if LFvals.PLUGIN_ARGS[section][prop]["type"] in ["file","folder","str"]:
-						self.settings[section][prop] = str(self.gui.gui_elms[section][prop].value)
-					else:
-						self.settings[section][prop] = self.gui.gui_elms[section][prop].value
-		
-		settings_file_path = Path(os.path.join(self.currentdir, LFvals.SETTINGS_FILENAME))
-		with open(settings_file_path, "w") as f:
-			json.dump(self.settings, f, indent=4)
 
-	def load_plugin_prefs(self, pre_init=False):
-		try:
-			settings_file_path = Path(os.path.join(self.currentdir, LFvals.SETTINGS_FILENAME))
-			if settings_file_path.is_file() is False:
-				self.save_plugin_prefs()
-			else:
-				with open(settings_file_path, "r") as f:
-					self.settings = json.load(f)
-					
-				for section in LFvals.PLUGIN_ARGS:
-					for prop in LFvals.PLUGIN_ARGS[section]:
-						try:
-							if prop in LFvals.PLUGIN_ARGS[section] and prop in self.settings[section]:
-								LFvals.PLUGIN_ARGS[section][prop]["value"] = self.settings[section][prop]
-							if pre_init == False and prop in self.gui.gui_elms[section] and prop in self.settings[section]:
-								try:
-									self.gui.gui_elms[section][prop].value = self.settings[section][prop]
-								except Exception as e:
-									print(e)
-									if self.gui.gui_elms[section][prop].widget_type == 'ComboBox':
-										self.gui.gui_elms[section][prop].value = self.gui.gui_elms[section][prop].choices[0]
-						except Exception as e:
-							print(e)
-				if pre_init == False:
-					bool = self.read_meta()
-					if bool:
-						self.refresh_fields()
-					self.gui.image_folder_changes()
-			
-		except Exception as e:
-			print(e)
-			self.settings = {}
-	
 def show_Error(err):
 	print(repr(err))
 	msg = QMessageBox()
@@ -480,11 +483,12 @@ def load_lf(folder_path):
 		return (True, {'lfcalibrate':lfcalibrate, 'lfdeconvolve':lfdeconvolve, 'lfrectify':lfrectify, 'lflib':lflib})			
 	except Exception as e:
 		print(e)
+		print(traceback.format_exc())
 		return (False, {})
 
 def main(method):
 	METHOD = method
-	if method == LFvals.METHODS[1]: # Method 2: As Napari viewer	
+	if method == LFvals.METHODS[1]: # Method 2: As napari viewer	
 		viewer = napari.Viewer()
 		widget = LFQWidget(QWidget())
 		widget.set_method(method)
@@ -495,6 +499,7 @@ def main(method):
 		app = QApplication(sys.argv)
 		widget = LFQWidget(QWidget())
 		widget.setWindowTitle('LF Analyze')
+		widget.setWindowIcon(LFvals.q_icon_img)
 		widget.resize(500, 750)
 		widget.set_method(method)
 		widget.show()
