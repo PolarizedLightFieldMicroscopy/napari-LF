@@ -69,7 +69,7 @@ Clone the github repository:
 ```
 conda install git
 
-git clone https://github.com/PolarizedLightFieldMicroscopy/napari-LF/BBii-Decon.git
+git clone https://github.com/PolarizedLightFieldMicroscopy/napari-LF.git
 
 cd napari-LF
 
