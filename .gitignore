@@ -84,3 +84,7 @@ venv/
 **/_version.py
 
 src/napari_lf/settings.ini
+src/napari_lf/examples/antleg/rectified.png
+src/napari_lf/examples/antleg/output_stack.tif
+src/napari_lf/examples/antleg/metadata.txt
+src/napari_lf/examples/antleg/calibration.lfc
