@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF/branch/main/graph/badge.svg)](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-LF)](https://napari-hub.org/plugins/napari-LF)
 
-A plugin to use with napari in the process of developing a light field imaging plugin
+Light field imaging plugin for napari
 
 ----------------------------------
 
