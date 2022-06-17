@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF/branch/main/graph/badge.svg)](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-LF)](https://napari-hub.org/plugins/napari-LF)
 
-A plugin to use with napari in the process of developing a light field imaging plugin
+Light field imaging plugin for napari
 
 ----------------------------------
 
@@ -25,12 +25,8 @@ https://napari.org/plugins/stable/index.html
 
 Create a virtual environment from the command line for napari with the python libraries necessary for the light field plugin.
 
-    conda create --name napari-lf python==3.9
+    conda create --name napari-lf python==3.9 h5py pyopencl napari git -c conda-forge
     conda activate napari-lf
-    conda install h5py
-    conda install -c conda-forge pyopencl
-    pip install opencv-contrib-python
-    pip install "napari[all]"
 
 Then, install the light field plugin. Below are two methods of installing:
 
@@ -63,6 +59,46 @@ At a future time, you can install `napari-LF` via [pip]:
 
     pip install napari-LF
 ------
+
+## Installation for developers
+
+Clone the github repository:
+
+```
+conda install git
+
+git clone https://github.com/PolarizedLightFieldMicroscopy/napari-LF.git
+
+cd napari-LF
+
+pip install -e .
+```
+
+## Deployment to pypi
+
+For deploying the plugin to the python package index (pypi), one needs a [pypi user account](https://pypi.org/account/register/) 
+first. For deploying the plugin to pypi, one needs to install some tools:
+
+```
+python -m pip install --user --upgrade setuptools wheel
+python -m pip install --user --upgrade twine
+```
+
+The following command allows us to package the source code as a python wheel. 
+Make sure that the 'dist' and 'build' folders are deleted before doing this:
+
+```
+python setup.py sdist bdist_wheel
+```
+
+This command ships the just generated to pypi:
+
+```
+python -m twine upload --repository pypi dist/*
+```
+
+[Read more about distributing your python package via pypi](https://realpython.com/pypi-publish-python-package/#publishing-to-pypi).
+
 
 ## Contributing
 
