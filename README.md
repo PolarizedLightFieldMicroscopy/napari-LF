@@ -25,10 +25,8 @@ https://napari.org/plugins/stable/index.html
 
 Create a virtual environment from the command line for napari with the python libraries necessary for the light field plugin.
 
-    conda create --name napari-lf python==3.9 h5py pyopencl napari -c conda-forge
+    conda create --name napari-lf python==3.9 h5py pyopencl napari git -c conda-forge
     conda activate napari-lf
-
-    pip install opencv-contrib-python
 
 Then, install the light field plugin. Below are two methods of installing:
 
