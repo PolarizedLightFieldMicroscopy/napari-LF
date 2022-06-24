@@ -1,7 +1,9 @@
-# from napari_lf import make_sample_data
+# from napari_lf import *
+# from napari_lf\examples\ant_leg import *
 
-# add your tests here...
+# sample tests
+def test_true():
+    assert True
 
-
-def test_something():
-    pass
+def test_false():
+    assert 1 == 2
