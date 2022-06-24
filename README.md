@@ -11,15 +11,45 @@ Light field imaging plugin for napari
 
 ----------------------------------
 
-This [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.
+Deconvolves a 4D light field image into a full 3D focal stack reconstruction
 
-<!--
-Don't miss the full getting started guide to set up your new package:
-https://github.com/napari/cookiecutter-napari-plugin#getting-started
+![Example GIF hosted on Imgur](https://i.imgur.com/A5phCX4.gif)
 
-and review the napari docs for plugin developers:
-https://napari.org/plugins/stable/index.html
--->
+Through the calibration process followed by the deconvolution process, 
+**Calibration** process uses the radiometry frame, dark frame, optical parameters, and volume 
+parameters to rectify the image and generated a point spread function (PSF). **Deconvolution** 
+process uses the PSF and wave optics to deconvolve the light field image into a focal stack.
+
+**Calibration** process uses the calibration (radiometry, dark) images along with optical and 
+volume parameters to rectify the image and generate the point spread function (PSF) of the 
+optical system. **Deconvolution** process uses the PSF and wave optics to deconvolve the light 
+field image into a focal stack.
+
+**Parameter panel**, located at the bottom of the plugin window, allows the user to specify 
+settings of the reconstuction process. Once the appropriate parameters are selected, the 
+`Calibrate` button followed by the `Deconvolve` button can be pushed to complete the 
+reconstruction. 
+
+## Quickstart
+1. Select your **image folder** containing the following images: light field, radiometry, and dark frame.
+1. Write the name of the metadata file you want for recording your reconstruction settings, e.g. metadata.txt.
+1. Calibration
+    - In the parameters panel, navigate to **Calibrate, Required** (top tab **Calibrate**, bottom tab **Required**), which is the default selection.
+    - Select **radiometry** and **dark frame** images from pull down menus.
+    - Write the name of the **calibration file** you would like to produce, e.g. calibration.lfc.
+    - Enter the appropriate **optical parameters** according to your microscope and sample material.
+    - Enter the **volume parameters** you would like for your 3D reconstuction.
+    - Push the `Calibrate` button.
+1. Deconvolution
+    - In the parameters panel, navigate to **Deconvolve, Required**.
+    - Select **light field** image and **calibration file** from pull down menus.
+    - Write the name of the **output image stack** you would like to produce, e.g. output_stack.tif.
+    - Push the `Deconvolve` button.
+3D focal stack reconstruction will display in the napari viewer and be saved in your original image folder.
+
+## Getting Help
+For details about each parameter, hover over each parameter textbox to read the tooltip description.
+For additional information about the reconstruction process, see our documentation on [GitHub](https://github.com/PolarizedLightFieldMicroscopy/napari-LF).
 
 ## Installation
 
