@@ -1,5 +1,5 @@
 site_name: napari-LF
-site_description: A temporary plugin, with npe2, to use with napari in the process of developing a light field imaging plugin
+site_description: A light field imaging plugin to use with napari
 site_author: Geneva Schlafly
 
 theme: readthedocs

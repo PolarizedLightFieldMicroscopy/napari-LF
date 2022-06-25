@@ -36,13 +36,13 @@ PLUGIN_ARGS = {
 			"label":f'<a href="https://chanzuckerberg.com/science/programs-resources/imaging/napari/light-field-imaging-plugin/"><img src="{logo_img}"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
 		},
 		"img_folder":{
-			"label":"Input Image Folder","default":examples_folder,"help":"Select your dataset folder containing the raw light-field image(s).","type":"folder"
+			"label":"Image Folder","default":examples_folder,"help":"Select your dataset folder containing the raw light field image(s).","type":"folder"
 		},
 		"img_list":{
 			"label":"Available Images","default":"","help":"List of available Images to view in the selected Image folder.","type":"sel","options":[""]
 		},
 		"metadata_file":{
-			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"str","enabled":False
+			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"str","enabled":True
 		},
 		"comments":{
 			"default":"","label":"Comments","help":"Comments from Acquisition and Processing","type":"str","type":"text"
