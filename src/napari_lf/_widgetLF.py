@@ -80,7 +80,8 @@ class LFQWidget(QWidget):
 					else:
 						self.openImageExtViewer(img_file_path)
 		
-		@self.gui.gui_elms["misc"]["lib_folder"].changed.connect
+		# @self.gui.gui_elms["misc"]["lib_folder"].changed.connect
+		# @self.gui.gui_elms.get("misc", {}).get("lib_folder").changed.connect
 		def folder_lfa_call():
 			vals = load_lf(self.gui.gui_elms["misc"]["lib_folder"].value)
 			if vals[0]:
@@ -96,7 +97,7 @@ class LFQWidget(QWidget):
 				# print('LFA could not be loaded from:', self.gui.gui_elms["misc"]["lib_folder"].value)
 				self.gui.gui_elms["misc"]["lib_ver_label"].value = 'Error!'
 				
-		@self.gui.gui_elms["main"]["img_folder"].changed.connect
+		# @self.gui.gui_elms["main"]["img_folder"].changed.connect
 		def img_folder_call():
 			bool = self.gui.read_meta()
 			if bool:

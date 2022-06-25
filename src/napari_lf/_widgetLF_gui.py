@@ -712,7 +712,7 @@ class LFQWidgetGui():
 		self.container_lfa = _misc_widget
 		
 		# bind values between props
-		@self.gui_elms["calibrate"]["ulens_focal_length"].changed.connect
+		# @self.gui_elms["calibrate"]["ulens_focal_length"].changed.connect
 		def copy_vals():
 			self.gui_elms["calibrate"]["ulens_focal_distance"].value = self.gui_elms["calibrate"]["ulens_focal_length"].value
 		
@@ -774,7 +774,7 @@ class LFQWidgetGui():
 						self.save_plugin_prefs()
 						self.refresh_preset_choices()
 		
-		@self.gui_elms["calibrate"]["calibration_files"].changed.connect
+		# @self.gui_elms["calibrate"]["calibration_files"].changed.connect
 		def cal_img_list_inspect():
 			img_selected = str(self.gui_elms["calibrate"]["calibration_files"].value)
 			img_folder = str(self.gui_elms["main"]["img_folder"].value)
