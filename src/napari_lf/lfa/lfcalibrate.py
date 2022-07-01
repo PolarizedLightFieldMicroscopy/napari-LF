@@ -145,7 +145,6 @@ def main(args=None, values=None):
 
     # Check if the input paremeters are valid.
     from lflib.lfexceptions import ParameterError, ParameterExistsError
-    print("args.synthetic_lf: ", not args.synthetic_lf)
     if not args.synthetic_lf and not args.radiometry_frame_file:
         raise ParameterError("Please supply exactly one calibration image.")
 

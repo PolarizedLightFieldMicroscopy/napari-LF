@@ -132,6 +132,17 @@ class LFQWidgetGui():
 		_widget_calibrate_ins = []
 		self.gui_elms["calibrate"] = {}
 		
+		# (not working) method to only create gui options for visible parameters
+		visible_cal_keys = []
+		for key in self.lf_vals["calibrate"]:
+			dict = self.lf_vals["calibrate"][key]
+			if "visible" in dict:
+				if dict["visible"] == True:
+					visible_cal_keys.append(key)
+			else:
+				visible_cal_keys.append(key)
+
+		# for key in visible_cal_keys:
 		for key in self.lf_vals["calibrate"]:
 			dict = self.lf_vals["calibrate"][key]
 			if "label" not in dict:
@@ -582,9 +593,9 @@ class LFQWidgetGui():
 		self.gui_elms["hw"] = {}
 		_widget_hw = []
 		self.gpu_choices = self.get_GPU()
-		self.gui_elms["hw"]["gpu_id"] = ComboBox(name='Select Device', label='Select Device', tooltip=LFvals.PLUGIN_ARGS['hw']['gpu_id']['help'], choices=(self.gpu_choices))
+		self.gui_elms["hw"]["gpu_id"] = ComboBox(name='Device', label='Device', tooltip=LFvals.PLUGIN_ARGS['hw']['gpu_id']['help'], choices=(self.gpu_choices))
 		self.platforms_choices = self.get_PlatForms()
-		self.gui_elms["hw"]["platform_id"] = ComboBox(name='Select Platform', label='Select Platform', tooltip=LFvals.PLUGIN_ARGS['hw']['platform_id']['help'], choices=(self.platforms_choices))
+		self.gui_elms["hw"]["platform_id"] = ComboBox(name='Platform', label='Platform', tooltip=LFvals.PLUGIN_ARGS['hw']['platform_id']['help'], choices=(self.platforms_choices))
 		# self.cpu_threads_combobox = ComboBox(label=LFvals.PLUGIN_ARGS['calibrate']['num_threads']['label'], tooltip=LFvals.PLUGIN_ARGS['calibrate']['num_threads']['help'], choices=(list(range(1,129))))
 		self.gui_elms["hw"]["disable_gpu"] = CheckBox(label=LFvals.PLUGIN_ARGS['hw']['disable_gpu']['label'], value=LFvals.PLUGIN_ARGS['hw']['disable_gpu']['default'], tooltip=LFvals.PLUGIN_ARGS['hw']['disable_gpu']['help'])
 		self.gui_elms["hw"]["use_single_prec"] = CheckBox(label=LFvals.PLUGIN_ARGS['hw']['use_single_prec']['label'], value=LFvals.PLUGIN_ARGS['hw']['use_single_prec']['default'], tooltip=LFvals.PLUGIN_ARGS['hw']['use_single_prec']['help'])
