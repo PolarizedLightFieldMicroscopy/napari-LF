@@ -21,7 +21,7 @@ The **Calibrate** process generates a calibration file that represents the optic
 
 The **Rectify** process uses the calibration file for an affine transformation to scale and rotate experimental light field images that were recorded with a light field camera whose microlens array was (slightly) rotat-ed with respect to the pixel array of the area detector and whose pixel pitch is not commensurate with the microlens pitch. After rectification, the rectified light field has the same integer number of pixels behind each microlens. When the Deconvolve process is called for an experimental light field image, rectifying the light field image is automatically applied before the iterative deconvolution does begin. However, the rec-tified light field image is not saved and is not available for viewing. Therefore, by pushing the Rectify but-ton in the middle of the napari-LF widget, only the rectification step is invoked and the rectified light field image is saved to the project directory.
 
-The **Deconvolve** process uses the PSF and a wave optics model to iteratively deconvolve a light field image into a focus stack.
+The **Deconvolve** process uses the PSF and a wave optics model to iteratively deconvolve a light field image into a stack of optical sections.
 
 The **Parameter** panels, located in the lower half of the napari-LF widget, allows the user to specify settings for the reconstruction process. Once the appropriate parameters are selected, the Calibrate button fol-lowed by the Deconvolve button can be pushed to complete the reconstruction.
 
