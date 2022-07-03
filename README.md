@@ -18,8 +18,11 @@ Deconvolves a 4D light field image into a full 3D focal stack reconstruction
 napari-LF provides three basic processes to Calibrate, Rectify, and Deconvolve light field images:
 
 The **Calibrate** process generates a calibration file that represents the optical setup that was used to record the light field images. The same calibration file can be used to rectify and deconvolve all light field images that were recorded with the same optical setup, usually the same microscope and light field camera. The Calibrate process requires as input the radiometry frame, dark frame, optical parameters, and volume pa-rameters to generate the calibration file, which is subsequently used to rectify and deconvolve related light field images. The calibration file includes a point spread function (PSF) derived from the optical and vol-ume parameters and is stored in HDF5 file format.
+
 The **Rectify** process uses the calibration file for an affine transformation to scale and rotate experimental light field images that were recorded with a light field camera whose microlens array was (slightly) rotat-ed with respect to the pixel array of the area detector and whose pixel pitch is not commensurate with the microlens pitch. After rectification, the rectified light field has the same integer number of pixels behind each microlens. When the Deconvolve process is called for an experimental light field image, rectifying the light field image is automatically applied before the iterative deconvolution does begin. However, the rec-tified light field image is not saved and is not available for viewing. Therefore, by pushing the Rectify but-ton in the middle of the napari-LF widget, only the rectification step is invoked and the rectified light field image is saved to the project directory.
+
 The **Deconvolve** process uses the PSF and a wave optics model to iteratively deconvolve a light field image into a focus stack.
+
 The **Parameter** panels, located in the lower half of the napari-LF widget, allows the user to specify settings for the reconstruction process. Once the appropriate parameters are selected, the Calibrate button fol-lowed by the Deconvolve button can be pushed to complete the reconstruction.
 
 ## Quickstart
