@@ -27,7 +27,7 @@ The **Parameter** panels, located in the lower half of the napari-LF widget, all
 
 ## Quickstart
 1. Select your **image folder** containing the following images: light field, radiometry, and dark frame.
-1. Write the name of the metadata file you want for recording your reconstruction settings, e.g. metadata.txt.
+1. Write the name of the metadata file you want for recording your reconstruction settings, e.g. metadata.txt. This file will be updated each time a calibration process is started.
 1. Calibration
     - In the parameters panel, navigate to **Calibrate, Required** (top tab **Calibrate**, bottom tab **Required**), which is the default selection.
     - Select **radiometry** and **dark frame** images from pull down menus.
