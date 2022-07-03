@@ -39,7 +39,7 @@ class LFQWidgetGui():
 		dict = LFvals.PLUGIN_ARGS["main"]["img_list"]
 		self.gui_elms["main"]["img_list"] = create_widget(dict)
 		
-		self.btn_open_img = PushButton(label='Open Image')
+		self.btn_open_img = PushButton(label='Open image')
 		self.btn_open_img.max_width = 80
 		_cont_img_list_btn = Container(name='Image List Open', widgets=[self.gui_elms["main"]["img_list"], self.btn_open_img], layout='horizontal', labels=False)
 
@@ -53,7 +53,7 @@ class LFQWidgetGui():
 		dict = LFvals.PLUGIN_ARGS["main"]["presets"]
 		self.gui_elms["main"]["presets"] = create_widget(dict)
 		self.btn_preset_load = PushButton(label='Load')
-		self.btn_preset_save = PushButton(label='Save As..')
+		self.btn_preset_save = PushButton(label='Save as..')
 		self.btn_preset_delete = PushButton(label='Delete')
 		_cont_preset_list_btn = Container(name='Presets', widgets=[self.gui_elms["main"]["presets"], self.btn_preset_load, self.btn_preset_save, self.btn_preset_delete], layout='horizontal', labels=False)
 		_cont_preset_list_btn.native.layout().setContentsMargins(1,1,1,1)

@@ -3,7 +3,7 @@ from qtpy.QtGui import QIcon
 
 currentdir = os.path.dirname(os.path.realpath(__file__))
 icon_img = os.path.join(currentdir, 'resources/icon.ico')
-logo_img = os.path.join(currentdir, 'resources/lfa_logo_napari.png')
+logo_img = os.path.join(currentdir, 'resources/napari-LF_logo.png')
 loading_img = os.path.join(currentdir, 'resources/loading.gif')
 examples_folder = os.path.join(currentdir, 'examples/antleg')
 lfa_folder = os.path.join(currentdir, 'lfa')
@@ -75,7 +75,7 @@ PLUGIN_ARGS = {
 			"label":"Use system/external viewer","type":"bool","default":False,"help":"Use system/external viewer for displaying images instead."
 		},
 		"ext_viewer_sel":{
-			"label":"Select viewer","type":"sel","default":"System","options":["System","External"],"help":"Chose your viewer (System: OS default, External: User selects path below)."
+			"label":"Viewer","type":"sel","default":"System","options":["System","External"],"help":"Chose your viewer (System: OS default, External: User selects path below)."
 		},
 		"ext_viewer":{
 			"label":"External viewer","type":"file","default":{'linux':'','win32':'','darwin':''}[sys.platform],"help":"Chose your external viewer (executable file)."
