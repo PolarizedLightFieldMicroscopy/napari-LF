@@ -26,7 +26,9 @@ The **Deconvolve** process uses the PSF and a wave optics model to iteratively d
 The **Parameter** panels, located in the lower half of the napari-LF widget, allows the user to specify settings for the reconstruction process. Once the appropriate parameters are selected, the Calibrate button fol-lowed by the Deconvolve button can be pushed to complete the reconstruction.
 
 ## Quickstart
-1. Select your **image folder** containing the following images: light field, radiometry, and dark frame.
+1. Install the napari-LF plugin into your napari environment.
+1. From the napari Plugins menu, select the napari-LF plugin to install its widget into the napari viewer
+1. Near the top of the widget, select your image folder containing the following images: light field, radiometry, and dark frame.
 1. Write the name of the metadata file you want for recording your reconstruction settings, e.g. metadata.txt. This file will be updated each time a calibration process is started.
 1. Calibration
     - In the parameters panel, navigate to **Calibrate, Required** (top tab **Calibrate**, bottom tab **Required**), which is the default selection.
