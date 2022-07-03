@@ -13,7 +13,7 @@ Light field imaging plugin for napari
 
 Deconvolves a 4D light field image into a full 3D focal stack reconstruction
 
-![Example GIF hosted on Imgur]([https://i.imgur.com/A5phCX4.gif](https://github.com/PolarizedLightFieldMicroscopy/napari-LF-sample-files/blob/main/GUVLoop480.mov))
+![Example GIF hosted on napari-LF-sample-files](https://github.com/PolarizedLightFieldMicroscopy/napari-LF-sample-files/blob/main/GUVLoop480.mov)
 
 napari-LF provides three basic processes to Calibrate, Rectify, and Deconvolve light field images:
 
