@@ -4,6 +4,7 @@ from qtpy.QtGui import QIcon
 currentdir = os.path.dirname(os.path.realpath(__file__))
 icon_img = os.path.join(currentdir, 'resources/icon.ico')
 logo_img = os.path.join(currentdir, 'resources/napari-LF_logo.png')
+LFAnalyze_logo_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_201_45px.png')
 loading_img = os.path.join(currentdir, 'resources/loading.gif')
 examples_folder = os.path.join(currentdir, 'examples/antleg')
 lfa_folder = os.path.join(currentdir, 'lfa')
@@ -59,7 +60,10 @@ PLUGIN_ARGS = {
 		},
 		"status":{
 			"label":"STATUS:","value":"== IDLE ==","value_busy":"== BUSY ==","value_idle":"== IDLE ==","value_error":"== ERROR ==","type":"label","default":"== IDLE ==","exclude_from_settings":True
-		}
+		},
+		"LFAnalyze_logo_label":{
+			"label":f'<a href="https://chanzuckerberg.com/science/programs-resources/imaging/napari/light-field-imaging-plugin/"><img src="{LFAnalyze_logo_img}"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
+		},
 	},
 	"misc":{
 		"lib_ver_label":{
