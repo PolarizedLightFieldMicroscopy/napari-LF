@@ -31,7 +31,7 @@ settings of the reconstuction process. Once the appropriate parameters are selec
 reconstruction. 
 
 ## Quickstart
-1. Select your **image folder** containing the following images: light field, radiometry, and dark frame.
+1. Select your **Project folder** containing the following images: light field, radiometry, and dark frame.
 1. Write the name of the metadata file you want for recording your reconstruction settings, e.g. metadata.txt.
 1. Calibration
     - In the parameters panel, navigate to **Calibrate, Required** (top tab **Calibrate**, bottom tab **Required**), which is the default selection.
@@ -45,7 +45,7 @@ reconstruction.
     - Select **light field** image and **calibration file** from pull down menus.
     - Write the name of the **output image stack** you would like to produce, e.g. output_stack.tif.
     - Push the `Deconvolve` button.
-3D focal stack reconstruction will display in the napari viewer and be saved in your original image folder.
+3D focal stack reconstruction will display in the napari viewer and be saved in your original Project folder.
 
 ## Getting Help
 For details about each parameter, hover over each parameter textbox to read the tooltip description.

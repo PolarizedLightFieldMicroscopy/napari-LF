@@ -4,6 +4,7 @@ from qtpy.QtGui import QIcon
 currentdir = os.path.dirname(os.path.realpath(__file__))
 icon_img = os.path.join(currentdir, 'resources/icon.ico')
 logo_img = os.path.join(currentdir, 'resources/napari-LF_logo.png')
+# LFAnalyze_logo_img = os.path.join(currentdir, 'resources/LFAnalyze_logo.png')
 LFAnalyze_logo_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_201_45px.png')
 loading_img = os.path.join(currentdir, 'resources/loading.gif')
 examples_folder = os.path.join(currentdir, 'examples/antleg')
@@ -44,10 +45,10 @@ PLUGIN_ARGS = {
 			"label":f'<a href="https://chanzuckerberg.com/science/programs-resources/imaging/napari/light-field-imaging-plugin/"><img src="{logo_img}"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
 		},
 		"img_folder":{
-			"label":"Image folder","default":examples_folder,"help":"Select your dataset folder containing the raw light field image(s).","type":"folder"
+			"label":"Project folder","default":examples_folder,"help":"Select your dataset folder containing the raw light field image(s).","type":"folder"
 		},
 		"img_list":{
-			"label":"Available images","default":"","help":"List of available Images to view in the selected Image folder.","type":"sel","options":[""]
+			"label":"Available images","default":"","help":"List of available Images to view in the selected Project folder.","type":"sel","options":[""]
 		},
 		"metadata_file":{
 			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"str","enabled":True
