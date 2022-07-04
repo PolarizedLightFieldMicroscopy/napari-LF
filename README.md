@@ -28,7 +28,7 @@ The **Parameter** panels, located in the lower half of the napari-LF widget, all
 ## Quickstart
 1. Install the napari-LF plugin into your napari environment, as described below under **Installation**.
 1. From the napari Plugins menu, select the napari-LF plugin to install its widget into the napari viewer
-1. Near the top of the widget, select your image folder containing the following images: light field, radiometry, and dark frame.
+1. Near the top of the widget, select your project folder containing the following images: light field, radiometry, and dark frame.
 1. Write the name of the metadata file you want for recording your reconstruction settings, e.g. metadata.txt. This file will be updated each time a calibration process is started.
 1. Calibration
     - In the parameters panel, navigate to **Calibrate, Required** (top tab **Calibrate**, bottom tab **Required**), which is the default selection.
@@ -42,7 +42,7 @@ The **Parameter** panels, located in the lower half of the napari-LF widget, all
     - Select **light field** image and **calibration file** from pull down menus.
     - Write the name of the **output image stack** you would like to produce, e.g. output_stack.tif.
     - Push the `Deconvolve` button.
-3D focal stack reconstruction will display in the napari viewer and be saved in your original image folder.
+3D focal stack reconstruction will display in the napari viewer and be saved in your original project folder.
 
 ## Getting Help
 For details about each parameter, hover over each parameter textbox to read the tooltip description.
