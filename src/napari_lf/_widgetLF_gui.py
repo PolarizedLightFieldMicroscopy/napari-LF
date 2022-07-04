@@ -31,7 +31,10 @@ class LFQWidgetGui():
 		self.logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['logo_label']['help'])
 		self.logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-		
+		self.LFAnalyze_logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['help'])
+		self.logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.LFAnalyze_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
 		self.info_label = Label(label=f'<h2><center>LF Analyze</a></center></h2>')
 		dict = LFvals.PLUGIN_ARGS["main"]["img_folder"]
 		self.gui_elms["main"]["img_folder"] = create_widget(dict)
@@ -39,21 +42,23 @@ class LFQWidgetGui():
 		dict = LFvals.PLUGIN_ARGS["main"]["img_list"]
 		self.gui_elms["main"]["img_list"] = create_widget(dict)
 		
-		self.btn_open_img = PushButton(label='Open Image')
+		self.btn_open_img = PushButton(label='Open image')
 		self.btn_open_img.max_width = 80
 		_cont_img_list_btn = Container(name='Image List Open', widgets=[self.gui_elms["main"]["img_list"], self.btn_open_img], layout='horizontal', labels=False)
 
 		dict = LFvals.PLUGIN_ARGS["main"]["metadata_file"]
 		self.gui_elms["main"]["metadata_file"] = create_widget(dict)
+		self.LFAnalyze_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 		
 		dict = LFvals.PLUGIN_ARGS["main"]["comments"]
 		self.gui_elms["main"]["comments"] = create_widget(dict)
 		self.gui_elms["main"]["comments"].native.setMaximumHeight(50)
+		self.gui_elms["main"]["comments"].native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		
 		dict = LFvals.PLUGIN_ARGS["main"]["presets"]
 		self.gui_elms["main"]["presets"] = create_widget(dict)
 		self.btn_preset_load = PushButton(label='Load')
-		self.btn_preset_save = PushButton(label='Save As..')
+		self.btn_preset_save = PushButton(label='Save as..')
 		self.btn_preset_delete = PushButton(label='Delete')
 		_cont_preset_list_btn = Container(name='Presets', widgets=[self.gui_elms["main"]["presets"], self.btn_preset_load, self.btn_preset_save, self.btn_preset_delete], layout='horizontal', labels=False)
 		_cont_preset_list_btn.native.layout().setContentsMargins(1,1,1,1)
@@ -123,7 +128,9 @@ class LFQWidgetGui():
 		self.cont_btn_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		self.cont_btn_status_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.cont_btn_status_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
-		
+
+		_QFormLayout.addRow(self.LFAnalyze_logo_label.native)
+
 		self.groupbox = {"calibrate":{"required":{},"optional":{},"inspect":{}},"rectify":{"required":{},"optional":{}},"deconvolve":{"required":{},"optional":{}}}
 		
 		# == CALIBATE ==
@@ -132,6 +139,17 @@ class LFQWidgetGui():
 		_widget_calibrate_ins = []
 		self.gui_elms["calibrate"] = {}
 		
+		# (not working) method to only create gui options for visible parameters
+		visible_cal_keys = []
+		for key in self.lf_vals["calibrate"]:
+			dict = self.lf_vals["calibrate"][key]
+			if "visible" in dict:
+				if dict["visible"] == True:
+					visible_cal_keys.append(key)
+			else:
+				visible_cal_keys.append(key)
+
+		# for key in visible_cal_keys:
 		for key in self.lf_vals["calibrate"]:
 			dict = self.lf_vals["calibrate"][key]
 			if "label" not in dict:
@@ -582,9 +600,9 @@ class LFQWidgetGui():
 		self.gui_elms["hw"] = {}
 		_widget_hw = []
 		self.gpu_choices = self.get_GPU()
-		self.gui_elms["hw"]["gpu_id"] = ComboBox(name='Select Device', label='Select Device', tooltip=LFvals.PLUGIN_ARGS['hw']['gpu_id']['help'], choices=(self.gpu_choices))
+		self.gui_elms["hw"]["gpu_id"] = ComboBox(name='Device', label='Device', tooltip=LFvals.PLUGIN_ARGS['hw']['gpu_id']['help'], choices=(self.gpu_choices))
 		self.platforms_choices = self.get_PlatForms()
-		self.gui_elms["hw"]["platform_id"] = ComboBox(name='Select Platform', label='Select Platform', tooltip=LFvals.PLUGIN_ARGS['hw']['platform_id']['help'], choices=(self.platforms_choices))
+		self.gui_elms["hw"]["platform_id"] = ComboBox(name='Platform', label='Platform', tooltip=LFvals.PLUGIN_ARGS['hw']['platform_id']['help'], choices=(self.platforms_choices))
 		# self.cpu_threads_combobox = ComboBox(label=LFvals.PLUGIN_ARGS['calibrate']['num_threads']['label'], tooltip=LFvals.PLUGIN_ARGS['calibrate']['num_threads']['help'], choices=(list(range(1,129))))
 		self.gui_elms["hw"]["disable_gpu"] = CheckBox(label=LFvals.PLUGIN_ARGS['hw']['disable_gpu']['label'], value=LFvals.PLUGIN_ARGS['hw']['disable_gpu']['default'], tooltip=LFvals.PLUGIN_ARGS['hw']['disable_gpu']['help'])
 		self.gui_elms["hw"]["use_single_prec"] = CheckBox(label=LFvals.PLUGIN_ARGS['hw']['use_single_prec']['label'], value=LFvals.PLUGIN_ARGS['hw']['use_single_prec']['default'], tooltip=LFvals.PLUGIN_ARGS['hw']['use_single_prec']['help'])
