@@ -15,24 +15,22 @@ Deconvolves a 4D light field image into a full 3D focal stack reconstruction
 
 ![Example GIF hosted on Imgur](https://i.imgur.com/A5phCX4.gif)
 
-Through the calibration process followed by the deconvolution process, 
-**Calibration** process uses the radiometry frame, dark frame, optical parameters, and volume 
-parameters to rectify the image and generated a point spread function (PSF). **Deconvolution** 
-process uses the PSF and wave optics to deconvolve the light field image into a focal stack.
 
-**Calibration** process uses the calibration (radiometry, dark) images along with optical and 
-volume parameters to rectify the image and generate the point spread function (PSF) of the 
-optical system. **Deconvolution** process uses the PSF and wave optics to deconvolve the light 
-field image into a focal stack.
+napari-LF provides three basic processes to Calibrate, Rectify, and Deconvolve light field images:
 
-**Parameter panel**, located at the bottom of the plugin window, allows the user to specify 
-settings of the reconstuction process. Once the appropriate parameters are selected, the 
-`Calibrate` button followed by the `Deconvolve` button can be pushed to complete the 
-reconstruction. 
+The **Calibrate** process generates a calibration file that represents the optical setup that was used to record the light field images. The same calibration file can be used to rectify and deconvolve all light field images that were recorded with the same optical setup, usually the same microscope and light field camera. The Calibrate process requires as input the radiometry frame, dark frame, optical parameters, and volume parameters to generate the calibration file, which is subsequently used to rectify and deconvolve related light field images. The calibration file includes a point spread function (PSF) derived from the optical and volume parameters and is stored in HDF5 file format.
+
+The **Rectify** process uses the calibration file for an affine transformation to scale and rotate experimental light field images that were recorded with a light field camera whose microlens array was (slightly) rotated with respect to the pixel array of the area detector and whose pixel pitch is not commensurate with the microlens pitch. After rectification, the rectified light field has the same integer number of pixels behind each microlens. When the Deconvolve process is called for an experimental light field image, rectifying the light field image is automatically applied before the iterative deconvolution does begin. However, the rectified light field image is not saved and is not available for viewing. Therefore, by pushing the Rectify button in the middle of the napari-LF widget, only the rectification step is invoked and the rectified light field image is saved to the project directory.
+
+The **Deconvolve** process uses the PSF and a wave optics model to iteratively deconvolve a light field image into a stack of optical sections.
+
+The **Parameter** panels, located in the lower half of the napari-LF widget, allows the user to specify settings for the reconstruction process. Once the appropriate parameters are selected, the Calibrate button followed by the Deconvolve button can be pushed to complete the reconstruction. 
 
 ## Quickstart
-1. Select your **Project folder** containing the following images: light field, radiometry, and dark frame.
-1. Write the name of the metadata file you want for recording your reconstruction settings, e.g. metadata.txt.
+1. Install the napari-LF plugin into your napari environment, as described below under **Installation**.
+1. From the napari Plugins menu, select the napari-LF plugin to install its widget into the napari viewer
+1. Near the top of the widget, select your project folder containing the following images: light field, radiometry, and dark frame.
+1. Write the name of the metadata file you want for recording your reconstruction settings, e.g. metadata.txt. This file will be updated each time a calibration process is started.
 1. Calibration
     - In the parameters panel, navigate to **Calibrate, Required** (top tab **Calibrate**, bottom tab **Required**), which is the default selection.
     - Select **radiometry** and **dark frame** images from pull down menus.
@@ -45,7 +43,7 @@ reconstruction.
     - Select **light field** image and **calibration file** from pull down menus.
     - Write the name of the **output image stack** you would like to produce, e.g. output_stack.tif.
     - Push the `Deconvolve` button.
-3D focal stack reconstruction will display in the napari viewer and be saved in your original Project folder.
+3D focal stack reconstruction will display in the napari viewer and be saved in your original project folder.
 
 ## Getting Help
 For details about each parameter, hover over each parameter textbox to read the tooltip description.
