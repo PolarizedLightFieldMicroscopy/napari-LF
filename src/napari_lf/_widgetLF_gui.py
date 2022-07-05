@@ -31,8 +31,9 @@ class LFQWidgetGui():
 		self.logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['logo_label']['help'])
 		self.logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
 		self.LFAnalyze_logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['help'])
-		self.logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.LFAnalyze_logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.LFAnalyze_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
 		self.info_label = Label(label=f'<h2><center>LF Analyze</a></center></h2>')
@@ -48,12 +49,10 @@ class LFQWidgetGui():
 
 		dict = LFvals.PLUGIN_ARGS["main"]["metadata_file"]
 		self.gui_elms["main"]["metadata_file"] = create_widget(dict)
-		self.LFAnalyze_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 		
 		dict = LFvals.PLUGIN_ARGS["main"]["comments"]
 		self.gui_elms["main"]["comments"] = create_widget(dict)
 		self.gui_elms["main"]["comments"].native.setMaximumHeight(50)
-		self.gui_elms["main"]["comments"].native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		
 		dict = LFvals.PLUGIN_ARGS["main"]["presets"]
 		self.gui_elms["main"]["presets"] = create_widget(dict)
