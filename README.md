@@ -101,32 +101,6 @@ cd napari-LF
 pip install -e .
 ```
 
-## Deployment to pypi
-
-For deploying the plugin to the python package index (pypi), one needs a [pypi user account](https://pypi.org/account/register/) 
-first. For deploying the plugin to pypi, one needs to install some tools:
-
-```
-python -m pip install --user --upgrade setuptools wheel
-python -m pip install --user --upgrade twine
-```
-
-The following command allows us to package the source code as a python wheel. 
-Make sure that the 'dist' and 'build' folders are deleted before doing this:
-
-```
-python setup.py sdist bdist_wheel
-```
-
-This command ships the just generated to pypi:
-
-```
-python -m twine upload --repository pypi dist/*
-```
-
-[Read more about distributing your python package via pypi](https://realpython.com/pypi-publish-python-package/#publishing-to-pypi).
-
-
 ## Contributing
 
 Contributions are very welcome. Tests can be run with [tox], please ensure
