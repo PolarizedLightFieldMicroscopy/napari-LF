@@ -82,7 +82,7 @@ Lastly, to access the plugin, open napari from the command line.
 From the menu, select **Plugins > napari-LF > LF-Analyze**.
 
 ------
-At a future time, you can install `napari-LF` via [pip]:
+You can install `napari-LF` via [pip]:
 
     pip install napari-LF
 ------
