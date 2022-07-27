@@ -94,14 +94,6 @@ Deconvolves a 4D light field image into a full 3D focal stack reconstruction
 
 https://user-images.githubusercontent.com/23206511/180571940-9500dd19-119b-4d0d-8b33-5ab1705e9b6f.mov
 
-![GUV generated with napari-LF](https://i.imgur.com/zWlE4CB.mp4)
-
-![Demo Video from docs level](napari-LF_Demo1080.mov)
-
-![Demo Video including docs dir](docs/napari-LF_Demo1080.mov)
-
-![Direct GitHub link for GUV Loop](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/blob/description/docs/GUVLoop480.mov)
-
 napari-LF provides three basic processes to Calibrate, Rectify, and Deconvolve light field images:
 
 The **Calibrate** process generates a calibration file that represents the optical setup that was used to record the light field images. The same calibration file can be used to rectify and deconvolve all light field images that were recorded with the same optical setup, usually the same microscope and light field camera. The Calibrate process requires as input the radiometry frame, dark frame, optical parameters, and volume parameters to generate the calibration file, which is subsequently used to rectify and deconvolve related light field images. The calibration file includes a point spread function (PSF) derived from the optical and volume parameters and is stored in HDF5 file format.
