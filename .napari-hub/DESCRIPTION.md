@@ -96,9 +96,9 @@ https://user-images.githubusercontent.com/23206511/180571940-9500dd19-119b-4d0d-
 
 ![GUV generated with napari-LF](https://i.imgur.com/zWlE4CB.mp4)
 
-![Demo Video from docs level](napari-LF Demo1080.mov)
+![Demo Video from docs level](napari-LF_Demo1080.mov)
 
-![Demo Video including docs dir](docs/napari-LF Demo1080.mov)
+![Demo Video including docs dir](docs/napari-LF_Demo1080.mov)
 
 ![Direct GitHub link for GUV Loop](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/blob/description/docs/GUVLoop480.mov)
 
