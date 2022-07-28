@@ -125,7 +125,7 @@ The **Parameter** panels, located in the lower half of the napari-LF widget, all
 
 ## Getting Help
 For details about each parameter, hover over each parameter textbox to read the tooltip description.
-For additional information about the reconstruction process, see our [User Guide](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/blob/description/docs/napari-LF_UserGuide_5July2022.docx)and general documentation on [GitHub](https://github.com/PolarizedLightFieldMicroscopy/napari-LF).
+For additional information about the reconstruction process, see our [User Guide](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/blob/description/docs/napari-LF_UserGuide_5July2022.docx) along with our general documentation on [GitHub](https://github.com/PolarizedLightFieldMicroscopy/napari-LF).
 
 ## Contributing
 
