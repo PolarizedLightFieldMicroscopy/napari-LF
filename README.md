@@ -4,8 +4,8 @@
 [![PyPI](https://img.shields.io/pypi/v/napari-LF.svg?color=green)](https://pypi.org/project/napari-LF)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-LF.svg?color=green)](https://python.org)
 [![tests](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/workflows/tests/badge.svg)](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/actions)
-<!-- [![codecov](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF/branch/main/graph/badge.svg)](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF) -->
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-LF)](https://napari-hub.org/plugins/napari-LF)
+<!-- [![codecov](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF/branch/main/graph/badge.svg)](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF) -->
 
 Light field imaging plugin for napari
 
@@ -46,7 +46,7 @@ The **Parameter** panels, located in the lower half of the napari-LF widget, all
 
 ## Getting Help
 For details about each parameter, hover over each parameter textbox to read the tooltip description.
-For additional information about the reconstruction process, see our documentation on [GitHub](https://github.com/PolarizedLightFieldMicroscopy/napari-LF).
+For additional information about the reconstruction process, see our [User Guide](docs/napari-LF_UserGuide_5July2022.docx).
 
 ## Installation
 
@@ -91,10 +91,6 @@ Clone the github repository:
     git clone https://github.com/PolarizedLightFieldMicroscopy/napari-LF.git
     cd napari-LF
     pip install -e .
-
-## Getting Help
-For details about each parameter, hover over each parameter textbox to read the tooltip description.
-For additional information about the reconstruction process, see our [User Guide](docs/napari-LF_UserGuide_5July2022.docx).
 
 ## Contributing
 
