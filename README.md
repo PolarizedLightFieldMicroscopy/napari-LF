@@ -92,6 +92,10 @@ Clone the github repository:
     cd napari-LF
     pip install -e .
 
+## Getting Help
+For details about each parameter, hover over each parameter textbox to read the tooltip description.
+For additional information about the reconstruction process, see our [User Guide](docs/napari-LF_UserGuide_5July2022.docx).
+
 ## Contributing
 
 Contributions are very welcome. Tests can be run with [tox], please ensure
