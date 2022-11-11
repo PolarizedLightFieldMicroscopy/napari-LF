@@ -335,6 +335,34 @@ PLUGIN_ARGS = {
 		"log_convergence":{
 			"prop":"--log-convergence","action":"store_true","label":"Log convergence","dest":"log_convergence","type":"bool","default":False,"help":"For logging convergence details.","group":"Assorted other parameters"
 		}
+	},
+	"projections":{
+	# ===============================
+	# ======= Projections ============
+	# ===============================
+		"input_file_volume":{
+			"prop":"input_file_volume","label":"Forward (volumes)","dest":"input_file_volume","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+		},
+		"input_file_volume_btn":{
+			"prop":"input_file_volume_btn","label":"Process","dest":"input_file_volume_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+		},
+		"input_file_lightfield":{
+			"prop":"input_file_lightfield","label":"Backward (lightfields)","dest":"input_file_lightfield","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+		},
+		"input_file_lightfield_btn":{
+			"prop":"input_file_lightfield_btn","label":"Process","dest":"input_file_lightfield_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+		}
+	},
+	"lfmnet":{
+	# ===============================
+	# ======= LFMNet ============
+	# ===============================
+		"input_model":{
+			"prop":"input_model","label":"Select Model","dest":"input_model","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+		},
+		"input_model_btn":{
+			"prop":"input_model_btn","label":"Process","dest":"input_model_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+		}
 	}
 }
 
@@ -342,6 +370,7 @@ def set_default_vals():
 	for section in PLUGIN_ARGS:
 		for key in PLUGIN_ARGS[section]:
 			dict = PLUGIN_ARGS[section][key]
-			dict["value"] = dict["default"]
+			if "default" in dict:
+				dict["value"] = dict["default"]
 				
 set_default_vals()

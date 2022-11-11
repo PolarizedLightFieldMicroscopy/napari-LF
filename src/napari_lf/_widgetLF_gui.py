@@ -595,6 +595,44 @@ class LFQWidgetGui():
 			for wid_elm in _widget_deconvolve_opt:
 				self.widget_deconvolve_opt.native.layout().addWidget(wid_elm)
 		
+		# == PROJECTIONS ==
+		self.gui_elms["projections"] = {}
+		_widget_projections = []
+		for key in LFvals.PLUGIN_ARGS['projections']:
+			dict = LFvals.PLUGIN_ARGS["projections"][key]
+			if "label" not in dict:
+				dict["label"] = dict["dest"]
+			wid_elm = create_widget(dict)
+			self.gui_elms["projections"][key] = wid_elm
+			_widget_projections.append(wid_elm)
+			
+		self.container_projections = Container(name='Projections', widgets=_widget_projections)
+		
+		@self.gui_elms["projections"]["input_file_volume_btn"].changed.connect
+		def input_file_volume_btn_fnc():
+			print("Button for Forward Projections Volume Processing")
+			
+		@self.gui_elms["projections"]["input_file_lightfield_btn"].changed.connect
+		def input_file_lightfield_btn_fnc():
+			print("Button for Backward Projections Lightfield Processing")
+		
+		# == LFMNET ==
+		self.gui_elms["lfmnet"] = {}
+		_widget_lfmnet = []
+		for key in LFvals.PLUGIN_ARGS['lfmnet']:
+			dict = LFvals.PLUGIN_ARGS["lfmnet"][key]
+			if "label" not in dict:
+				dict["label"] = dict["dest"]
+			wid_elm = create_widget(dict)
+			self.gui_elms["lfmnet"][key] = wid_elm
+			_widget_lfmnet.append(wid_elm)
+			
+		self.container_lfmnet = Container(name='LFM-NET', widgets=_widget_lfmnet)
+		
+		@self.gui_elms["lfmnet"]["input_model_btn"].changed.connect
+		def input_model_btn_fnc():
+			print("Button for LFMNet Model Processing")
+		
 		# == HARDWARE ==
 		self.gui_elms["hw"] = {}
 		_widget_hw = []
@@ -663,6 +701,13 @@ class LFQWidgetGui():
 				_layout_misc.addRow(wid_elm.native)
 			else:
 				_layout_misc.addRow(wid_elm.label, wid_elm.native)
+				
+		self.btn_misc_cls = PushButton(name='CLS', label='Clear Terminal')
+		@self.btn_misc_cls.changed.connect
+		def btn_misc_cls():
+			os.system('cls' if os.name == 'nt' else 'clear')
+			
+		_layout_misc.addRow(self.btn_misc_cls.native)
 				
 		self.btn_misc_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_misc_def.changed.connect
@@ -791,7 +836,7 @@ class LFQWidgetGui():
 						self.save_plugin_prefs()
 						self.refresh_preset_choices()
 		
-		# @self.gui_elms["calibrate"]["calibration_files"].changed.connect
+		@self.gui_elms["calibrate"]["calibration_files"].changed.connect
 		def cal_img_list_inspect():
 			img_selected = str(self.gui_elms["calibrate"]["calibration_files"].value)
 			img_folder = str(self.gui_elms["main"]["img_folder"].value)
@@ -819,6 +864,13 @@ class LFQWidgetGui():
 				str_data.append("====================")
 				
 			self.gui_elms["calibrate"]["calibration_files_viewer"].value = ' '.join(str_data)
+			
+		@self.gui_elms["main"]["img_folder"].changed.connect
+		def img_folder_changes():
+			self.verify_existing_files()
+			bool = self.read_meta()
+			if bool:
+				self.refresh_vals()
 		
 		# ==================================
 		
@@ -901,6 +953,20 @@ class LFQWidgetGui():
 		self.qtab_dec_tabWidget.addTab(self.dec_tab, 'Required')
 		self.qtab_dec_tabWidget.addTab(self.dec_tab2, 'Optional')
 		self.qtab_widget.addTab(self.qtab_dec_tabWidget, 'Deconvolve')
+		
+		self.projections_tab = QWidget()
+		_projections_tab_layout = QVBoxLayout()
+		_projections_tab_layout.setAlignment(Qt.AlignTop)
+		self.projections_tab.setLayout(_projections_tab_layout)
+		self.projections_tab.layout().addWidget(self.container_projections.native)
+		self.qtab_widget.addTab(self.projections_tab, 'Projections')
+		
+		self.lfmnet_tab = QWidget()
+		_lfmnet_tab_layout = QVBoxLayout()
+		_lfmnet_tab_layout.setAlignment(Qt.AlignTop)
+		self.lfmnet_tab.setLayout(_lfmnet_tab_layout)
+		self.lfmnet_tab.layout().addWidget(self.container_lfmnet.native)
+		self.qtab_widget.addTab(self.lfmnet_tab, 'LFMNet')
 		
 		self.hardware_tab = QWidget()
 		_hardware_tab_layout = QVBoxLayout()
@@ -1144,6 +1210,7 @@ class LFQWidgetGui():
 		
 		self.populate_img_list()
 		self.populate_cal_img_list()
+
 		
 	def populate_img_list(self):
 		img_folder = str(self.gui_elms["main"]["img_folder"].value)
@@ -1236,9 +1303,9 @@ class LFQWidgetGui():
 				for section in LFvals.PLUGIN_ARGS:
 					for prop in LFvals.PLUGIN_ARGS[section]:
 						try:
-							if prop in LFvals.PLUGIN_ARGS[section] and prop in self.settings[section]:
+							if prop in LFvals.PLUGIN_ARGS[section] and (section in self.settings and prop in self.settings[section]):
 								LFvals.PLUGIN_ARGS[section][prop]["value"] = self.settings[section][prop]
-							if pre_init == False and prop in self.gui_elms[section] and prop in self.settings[section]:
+							if pre_init == False and prop in self.gui_elms[section] and prop in self.settings[section] and (section in self.settings and prop in self.settings[section]):
 								try:
 									if self.gui_elms[section][prop].widget_type == 'ComboBox':
 										if self.settings[section][prop] in self.gui_elms[section][prop].choices:
@@ -1279,7 +1346,7 @@ class LFQWidgetGui():
 			for section in ['calibrate','rectify','deconvolve','hw']:
 				meta_data[section] = {}
 				for prop in LFvals.PLUGIN_ARGS[section]:
-					if "exclude_from_metadata" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_metadata"] == True:
+					if ("exclude_from_settings" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_settings"] == True) or ("exclude_from_settings" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_settings"] == True):
 						pass
 					else:
 						if LFvals.PLUGIN_ARGS[section][prop]["type"] in ["file","folder","str"]:
@@ -1390,6 +1457,8 @@ def create_widget(props):
 			widget = FileEdit(label=props['label'], mode='d', tooltip=props['help'], nullable=True)
 		elif props["type"] == "bool":	
 			widget = CheckBox(label=props['label'], tooltip=props['help'])
+		elif props["type"] == "PushButton":	
+			widget = PushButton(label=props['label'], tooltip=props['help'])
 		else:
 			pass
 			
@@ -1409,8 +1478,9 @@ def create_widget(props):
 					setattr(widget, prop, props[prop])
 				except:
 					pass
-				
-			widget.value = props["default"]
+			
+			if "default" in props:
+				widget.value = props["default"]
 			
 	except Exception as e:
 		print(props)
