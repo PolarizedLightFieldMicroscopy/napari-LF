@@ -5,6 +5,7 @@ currentdir = os.path.dirname(os.path.realpath(__file__))
 icon_img = os.path.join(currentdir, 'resources/icon.ico')
 logo_img = os.path.join(currentdir, 'resources/napari-LF_logo.png')
 LFAnalyze_logo_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_201_45px.png')
+LFMNet_logo_img = os.path.join(currentdir, 'resources/LFMNet_logo.png')
 loading_img = os.path.join(currentdir, 'resources/loading.gif')
 examples_folder = os.path.join(currentdir, 'examples/antleg')
 lfa_folder = os.path.join(currentdir, 'lfa')
@@ -17,6 +18,8 @@ SOLVER_OPTIONS = {
 
 IMAGE_EXTS = ["tif","png","jpg","bmp"]
 HDF5_EXTS = ["hdf", "h4", "hdf4", "h5", "hdf5", "he2", "he5", "lfc"]
+PROJ_EXTS = IMAGE_EXTS
+MODEL_EXTS = ["ckpt"]
 
 METHODS = ['PLUGIN','NAPARI','APP']
 SETTINGS_FILENAME = "settings.ini"
@@ -63,6 +66,9 @@ PLUGIN_ARGS = {
 		},
 		"LFAnalyze_logo_label":{
 			"label":f'<a href="https://chanzuckerberg.com/science/programs-resources/imaging/napari/light-field-imaging-plugin/"><img src="{LFAnalyze_logo_img}"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
+		},
+		"LFMNet_logo_label":{
+			"label":f'<a href="https://github.com/pvjosue/LFMNet"><img src="{LFMNet_logo_img}"></a>',"help":"LFMNet About WebPage","type":"img_label","default":"","exclude_from_settings":True
 		},
 	},
 	"misc":{
@@ -335,6 +341,49 @@ PLUGIN_ARGS = {
 		"log_convergence":{
 			"prop":"--log-convergence","action":"store_true","label":"Log convergence","dest":"log_convergence","type":"bool","default":False,"help":"For logging convergence details.","group":"Assorted other parameters"
 		}
+	},
+	"projections":{
+	# ===============================
+	# ======= Projections ============
+	# ===============================
+		"input_file_volume":{
+			"prop":"input_file_volume","label":"Forward (volumes)","dest":"input_file_volume","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+		},
+		"output_filename_volume":{
+			"prop":"output_file","label":"Output image stack","dest":"output_filename","type":"str","default":"output_proj_vol_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
+		},
+		"input_file_volume_btn":{
+			"prop":"input_file_volume_btn","label":"Process","dest":"input_file_volume_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+		},
+		"input_file_lightfield":{
+			"prop":"input_file_lightfield","label":"Backward (lightfields)","dest":"input_file_lightfield","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+		},
+		"output_filename_lightfield":{
+			"prop":"output_file","label":"Output image stack","dest":"output_filename","type":"str","default":"output_proj_lf_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
+		},
+		"input_file_lightfield_btn":{
+			"prop":"input_file_lightfield_btn","label":"Process","dest":"input_file_lightfield_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+		}
+	},
+	"lfmnet":{
+	# ===============================
+	# ======= LFMNet ============
+	# ===============================
+		"input_file":{
+			"prop":"input_file","label":"Light field image","dest":"input_file","type":"sel","default":"light_field.png","options":["light_field.png"],"help":"Supply at least one light field image to rectify.","cat":"required","img_folder_file":True,"group":"Files"
+		},
+		"calibration_file":{
+			"prop":"calibration-file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"calibration.lfc","options":["calibration.lfc"],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
+		},
+		"input_model":{
+			"prop":"input_model","label":"Select Model","dest":"input_model","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+		},
+		"output_filename":{
+			"prop":"output_file","label":"Output image stack","dest":"output_filename","type":"str","default":"output_network_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
+		},
+		"input_model_btn":{
+			"prop":"input_model_btn","label":"Process","dest":"input_model_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+		}
 	}
 }
 
@@ -342,6 +391,7 @@ def set_default_vals():
 	for section in PLUGIN_ARGS:
 		for key in PLUGIN_ARGS[section]:
 			dict = PLUGIN_ARGS[section][key]
-			dict["value"] = dict["default"]
+			if "default" in dict:
+				dict["value"] = dict["default"]
 				
 set_default_vals()

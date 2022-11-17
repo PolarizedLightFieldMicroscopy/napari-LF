@@ -32,10 +32,6 @@ class LFQWidgetGui():
 		self.logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-		self.LFAnalyze_logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['help'])
-		self.LFAnalyze_logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
-		self.LFAnalyze_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
 		self.info_label = Label(label=f'<h2><center>LF Analyze</a></center></h2>')
 		dict = LFvals.PLUGIN_ARGS["main"]["img_folder"]
 		self.gui_elms["main"]["img_folder"] = create_widget(dict)
@@ -127,8 +123,6 @@ class LFQWidgetGui():
 		self.cont_btn_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		self.cont_btn_status_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.cont_btn_status_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
-
-		_QFormLayout.addRow(self.LFAnalyze_logo_label.native)
 
 		self.groupbox = {"calibrate":{"required":{},"optional":{},"inspect":{}},"rectify":{"required":{},"optional":{}},"deconvolve":{"required":{},"optional":{}}}
 		
@@ -595,6 +589,32 @@ class LFQWidgetGui():
 			for wid_elm in _widget_deconvolve_opt:
 				self.widget_deconvolve_opt.native.layout().addWidget(wid_elm)
 		
+		# == PROJECTIONS ==
+		self.gui_elms["projections"] = {}
+		_widget_projections = []
+		for key in LFvals.PLUGIN_ARGS['projections']:
+			dict = LFvals.PLUGIN_ARGS["projections"][key]
+			if "label" not in dict:
+				dict["label"] = dict["dest"]
+			wid_elm = create_widget(dict)
+			self.gui_elms["projections"][key] = wid_elm
+			_widget_projections.append(wid_elm)
+			
+		self.container_projections = Container(name='Projections', widgets=_widget_projections)
+		
+		# == LFMNET ==
+		self.gui_elms["lfmnet"] = {}
+		_widget_lfmnet = []
+		for key in LFvals.PLUGIN_ARGS['lfmnet']:
+			dict = LFvals.PLUGIN_ARGS["lfmnet"][key]
+			if "label" not in dict:
+				dict["label"] = dict["dest"]
+			wid_elm = create_widget(dict)
+			self.gui_elms["lfmnet"][key] = wid_elm
+			_widget_lfmnet.append(wid_elm)
+			
+		self.container_lfmnet = Container(name='LFM-NET', widgets=_widget_lfmnet)
+		
 		# == HARDWARE ==
 		self.gui_elms["hw"] = {}
 		_widget_hw = []
@@ -664,6 +684,13 @@ class LFQWidgetGui():
 			else:
 				_layout_misc.addRow(wid_elm.label, wid_elm.native)
 				
+		self.btn_misc_cls = PushButton(name='CLS', label='Clear Terminal')
+		@self.btn_misc_cls.changed.connect
+		def btn_misc_cls():
+			os.system('cls' if os.name == 'nt' else 'clear')
+			
+		_layout_misc.addRow(self.btn_misc_cls.native)
+				
 		self.btn_misc_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_misc_def.changed.connect
 		def btn_misc_defaults():
@@ -728,6 +755,14 @@ class LFQWidgetGui():
 		
 		self.container_lfa = _misc_widget
 		
+		self.LFAnalyze_logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['help'])
+		self.LFAnalyze_logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.LFAnalyze_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		
+		self.LFMNet_logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['LFMNet_logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['LFMNet_logo_label']['help'])
+		self.LFMNet_logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.LFMNet_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		
 		# bind values between props
 		# @self.gui_elms["calibrate"]["ulens_focal_length"].changed.connect
 		def copy_vals():
@@ -791,7 +826,7 @@ class LFQWidgetGui():
 						self.save_plugin_prefs()
 						self.refresh_preset_choices()
 		
-		# @self.gui_elms["calibrate"]["calibration_files"].changed.connect
+		@self.gui_elms["calibrate"]["calibration_files"].changed.connect
 		def cal_img_list_inspect():
 			img_selected = str(self.gui_elms["calibrate"]["calibration_files"].value)
 			img_folder = str(self.gui_elms["main"]["img_folder"].value)
@@ -819,6 +854,13 @@ class LFQWidgetGui():
 				str_data.append("====================")
 				
 			self.gui_elms["calibrate"]["calibration_files_viewer"].value = ' '.join(str_data)
+			
+		@self.gui_elms["main"]["img_folder"].changed.connect
+		def img_folder_changes():
+			self.verify_existing_files()
+			bool = self.read_meta()
+			if bool:
+				self.refresh_vals()
 		
 		# ==================================
 		
@@ -902,6 +944,20 @@ class LFQWidgetGui():
 		self.qtab_dec_tabWidget.addTab(self.dec_tab2, 'Optional')
 		self.qtab_widget.addTab(self.qtab_dec_tabWidget, 'Deconvolve')
 		
+		self.projections_tab = QWidget()
+		_projections_tab_layout = QVBoxLayout()
+		_projections_tab_layout.setAlignment(Qt.AlignTop)
+		self.projections_tab.setLayout(_projections_tab_layout)
+		self.projections_tab.layout().addWidget(self.container_projections.native)
+		self.qtab_widget.addTab(self.projections_tab, 'Projections')
+		
+		self.lfmnet_tab = QWidget()
+		_lfmnet_tab_layout = QVBoxLayout()
+		_lfmnet_tab_layout.setAlignment(Qt.AlignTop)
+		self.lfmnet_tab.setLayout(_lfmnet_tab_layout)
+		self.lfmnet_tab.layout().addWidget(self.container_lfmnet.native)
+		self.qtab_widget.addTab(self.lfmnet_tab, 'LFMNet')
+		
 		self.hardware_tab = QWidget()
 		_hardware_tab_layout = QVBoxLayout()
 		_hardware_tab_layout.setAlignment(Qt.AlignTop)
@@ -915,6 +971,14 @@ class LFQWidgetGui():
 		self.lfa_lib_tab.setLayout(_lfa_lib_tab_layout)
 		self.lfa_lib_tab.layout().addWidget(self.container_lfa)
 		self.qtab_widget.addTab(self.lfa_lib_tab, 'Misc')
+		
+		self._about_tab = QWidget()
+		_about_tab_layout = QVBoxLayout()
+		_about_tab_layout.setAlignment(Qt.AlignTop)
+		self._about_tab.setLayout(_about_tab_layout)
+		self._about_tab.layout().addWidget(self.LFAnalyze_logo_label.native)
+		self._about_tab.layout().addWidget(self.LFMNet_logo_label.native)
+		self.qtab_widget.addTab(self._about_tab, 'About')
 		
 		# self.calib_tab = QWidget()
 		# _calib_tab_layout = QVBoxLayout()
@@ -1144,6 +1208,38 @@ class LFQWidgetGui():
 		
 		self.populate_img_list()
 		self.populate_cal_img_list()
+		self.populate_projections_file_list()
+		self.populate_lfmnet_model_list()
+		
+	def populate_projections_file_list(self):
+		img_folder = str(self.gui_elms["main"]["img_folder"].value)
+		proj_files = []
+		for ext in LFvals.PROJ_EXTS:
+			files_search = "*.{file_ext}".format(file_ext=ext)
+			files = glob.glob(os.path.join(img_folder, files_search))
+			for file in files:
+				proj_files.append(ntpath.basename(file))
+				
+		# if len(proj_files) == 0:
+			# self.gui_elms["projections"]["input_file_volume"].value = ""
+			# self.gui_elms["projections"]["input_file_lightfield"].value = ""
+		
+		self.gui_elms["projections"]["input_file_volume"].choices = proj_files
+		self.gui_elms["projections"]["input_file_lightfield"].choices = proj_files
+
+	def populate_lfmnet_model_list(self):
+		img_folder = str(self.gui_elms["main"]["img_folder"].value)
+		model_files = []
+		for ext in LFvals.MODEL_EXTS:
+			files_search = "*.{file_ext}".format(file_ext=ext)
+			files = glob.glob(os.path.join(img_folder, files_search))
+			for file in files:
+				model_files.append(ntpath.basename(file))
+				
+		# if len(model_files) == 0:
+			# self.gui_elms["lfmnet"]["input_model"].value = ""
+		
+		self.gui_elms["lfmnet"]["input_model"].choices = model_files
 		
 	def populate_img_list(self):
 		img_folder = str(self.gui_elms["main"]["img_folder"].value)
@@ -1236,9 +1332,9 @@ class LFQWidgetGui():
 				for section in LFvals.PLUGIN_ARGS:
 					for prop in LFvals.PLUGIN_ARGS[section]:
 						try:
-							if prop in LFvals.PLUGIN_ARGS[section] and prop in self.settings[section]:
+							if prop in LFvals.PLUGIN_ARGS[section] and (section in self.settings and prop in self.settings[section]):
 								LFvals.PLUGIN_ARGS[section][prop]["value"] = self.settings[section][prop]
-							if pre_init == False and prop in self.gui_elms[section] and prop in self.settings[section]:
+							if pre_init == False and prop in self.gui_elms[section] and prop in self.settings[section] and (section in self.settings and prop in self.settings[section]):
 								try:
 									if self.gui_elms[section][prop].widget_type == 'ComboBox':
 										if self.settings[section][prop] in self.gui_elms[section][prop].choices:
@@ -1279,7 +1375,7 @@ class LFQWidgetGui():
 			for section in ['calibrate','rectify','deconvolve','hw']:
 				meta_data[section] = {}
 				for prop in LFvals.PLUGIN_ARGS[section]:
-					if "exclude_from_metadata" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_metadata"] == True:
+					if ("exclude_from_settings" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_settings"] == True) or ("exclude_from_settings" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_settings"] == True):
 						pass
 					else:
 						if LFvals.PLUGIN_ARGS[section][prop]["type"] in ["file","folder","str"]:
@@ -1390,6 +1486,8 @@ def create_widget(props):
 			widget = FileEdit(label=props['label'], mode='d', tooltip=props['help'], nullable=True)
 		elif props["type"] == "bool":	
 			widget = CheckBox(label=props['label'], tooltip=props['help'])
+		elif props["type"] == "PushButton":	
+			widget = PushButton(label=props['label'], tooltip=props['help'])
 		else:
 			pass
 			
@@ -1409,8 +1507,9 @@ def create_widget(props):
 					setattr(widget, prop, props[prop])
 				except:
 					pass
-				
-			widget.value = props["default"]
+			
+			if "default" in props:
+				widget.value = props["default"]
 			
 	except Exception as e:
 		print(props)

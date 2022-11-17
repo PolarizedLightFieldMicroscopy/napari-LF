@@ -159,6 +159,33 @@ class LFQWidget(QWidget):
 			self.thread_worker.quit()
 			self.gui.set_btns_and_status(True, LFvals.PLUGIN_ARGS['main']['status']['value_idle'])
 			
+		@self.gui.gui_elms["projections"]["input_file_volume_btn"].changed.connect
+		def input_file_volume_btn_fnc():
+			print("Button for Forward Projections Volume Processing")
+			self.gui.set_btns_and_status(False, LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
+			self.combine_args()
+			self.thread_worker = self.run_lf_proj_lfs(self.new_args_decon)
+			self.thread_worker.returned.connect(set_status)
+			self.thread_worker.start()
+			
+		@self.gui.gui_elms["projections"]["input_file_lightfield_btn"].changed.connect
+		def input_file_lightfield_btn_fnc():
+			print("Button for Backward Projections Lightfield Processing")
+			self.gui.set_btns_and_status(False, LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
+			self.combine_args()
+			self.thread_worker = self.run_lf_proj_vol(self.new_args_decon)
+			self.thread_worker.returned.connect(set_status)
+			self.thread_worker.start()
+			
+		@self.gui.gui_elms["lfmnet"]["input_model_btn"].changed.connect
+		def input_model_btn_fnc():
+			print("Button for LFMNet Model Processing")
+			self.gui.set_btns_and_status(False, LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
+			self.combine_args()
+			self.thread_worker = self.run_lf_net(self.new_args_decon)
+			self.thread_worker.returned.connect(set_status)
+			self.thread_worker.start()
+			
 		
 		for section in ['calibrate','rectify','deconvolve','hw','misc','main']:
 			for prop in LFvals.PLUGIN_ARGS[section]:
@@ -455,6 +482,39 @@ class LFQWidget(QWidget):
 			print(traceback.format_exc())
 			self.gui.dump_errors(self.currentdir, str(traceback.format_exc()), traceback=True)
 			return (LFvals.PLUGIN_ARGS['main']['status']['value_error'], 'dec', err)
+			
+	@thread_worker(progress={'total': 0})
+	def run_lf_proj_lfs(self, args):
+		try:
+			print(args)
+			print("Projections LFs process")		
+			return (LFvals.PLUGIN_ARGS['main']['status']['value_idle'], 'proj_lf', '')
+		except Exception as err:
+			print(traceback.format_exc())
+			self.gui.dump_errors(self.currentdir, str(traceback.format_exc()), traceback=True)
+			return (LFvals.PLUGIN_ARGS['main']['status']['value_error'], 'proj_lf', err)
+			
+	@thread_worker(progress={'total': 0})
+	def run_lf_proj_vol(self, args):
+		try:
+			print(args)
+			print("Projections Vols process")		
+			return (LFvals.PLUGIN_ARGS['main']['status']['value_idle'], 'proj_vol', '')
+		except Exception as err:
+			print(traceback.format_exc())
+			self.gui.dump_errors(self.currentdir, str(traceback.format_exc()), traceback=True)
+			return (LFvals.PLUGIN_ARGS['main']['status']['value_error'], 'proj_vol', err)
+			
+	@thread_worker(progress={'total': 0})
+	def run_lf_net(self, args):
+		try:
+			print(args)
+			print("LFMNet process")		
+			return (LFvals.PLUGIN_ARGS['main']['status']['value_idle'], 'net', '')
+		except Exception as err:
+			print(traceback.format_exc())
+			self.gui.dump_errors(self.currentdir, str(traceback.format_exc()), traceback=True)
+			return (LFvals.PLUGIN_ARGS['main']['status']['value_error'], 'net', err)
 
 	def refresh_vals(self):
 		self.gui.refresh_vals()
