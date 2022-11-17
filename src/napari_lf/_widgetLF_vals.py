@@ -346,20 +346,23 @@ PLUGIN_ARGS = {
 	# ===============================
 	# ======= Projections ============
 	# ===============================
-		"input_file_volume":{
-			"prop":"input_file_volume","label":"Forward (volumes)","dest":"input_file_volume","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+ 		"calibration_file":{
+			"prop_short":"-c","prop":"--calibration-file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"calibration.lfc","options":["calibration.lfc"],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
 		},
-		"output_filename_volume":{
-			"prop":"output_file","label":"Output image stack","dest":"output_filename","type":"str","default":"output_proj_vol_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
+		"input_file_volume":{
+			"prop":"input_file_volume","label":"Forward (volumes)","dest":"input_file_volume","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"img_folder_file":True,"group":"Files"
+		},
+		"output_filename_lightfield":{
+			"prop":"--output-filename-lightfield","label":"Output LF image","dest":"output_filename","type":"str","default":"output_proj_lf_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
 		},
 		"input_file_volume_btn":{
 			"prop":"input_file_volume_btn","label":"Process","dest":"input_file_volume_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
 		},
 		"input_file_lightfield":{
-			"prop":"input_file_lightfield","label":"Backward (lightfields)","dest":"input_file_lightfield","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+			"prop":"input_file_lightfield","label":"Backward (lightfields)","dest":"input_file_lightfield","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"img_folder_file":True,"group":"Files"
 		},
-		"output_filename_lightfield":{
-			"prop":"output_file","label":"Output image stack","dest":"output_filename","type":"str","default":"output_proj_lf_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
+		"output_filename_volume":{
+			"prop":"--output-filename-volume","label":"Output volume stack","dest":"output_filename","type":"str","default":"output_proj_vol_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
 		},
 		"input_file_lightfield_btn":{
 			"prop":"input_file_lightfield_btn","label":"Process","dest":"input_file_lightfield_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"

@@ -483,11 +483,14 @@ class LightFieldCalibration(object):
         if model is None:
             model = self.geometric_calibration_model
 
-        rectified_im = model.warp_image(light_field_image,
-                                        max(self.nu, self.nv), 'r',
-                                        cropToInside = cropToInside,
-                                        lenslet_offset = lenslet_offset,
-                                        output_size = output_size)
+        if self.skip_alignment:
+            rectified_im = light_field_image
+        else:
+            rectified_im = model.warp_image(light_field_image,
+                                            max(self.nu, self.nv), 'r',
+                                            cropToInside = cropToInside,
+                                            lenslet_offset = lenslet_offset,
+                                            output_size = output_size)
 
         return LightField(rectified_im, self.nu, self.nv, self.ns, self.nt,
                           representation = LightField.TILED_LENSLET)

@@ -15,10 +15,10 @@ except:
 	import _widgetLF_vals as LFvals
 	
 try:
-	from napari_lf.lfa import lfcalibrate, lfdeconvolve, lfrectify
+	from napari_lf.lfa import lfcalibrate, lfdeconvolve, lfrectify, lfproject
 	from napari_lf.lfa import lflib
 except:
-	from lfa import lfcalibrate, lfdeconvolve, lfrectify
+	from lfa import lfcalibrate, lfdeconvolve, lfrectify, lfproject
 	from lfa import lflib
 	
 
@@ -38,6 +38,7 @@ class LFQWidget(QWidget):
 		self.lfcalibrate = None
 		self.lfdeconvolve = None
 		self.lfrectify = None
+		self.lfproject = None
 		self.lflib = None
 		self.lflib_ver = ''
 		self.lflib_ext = False
@@ -89,6 +90,7 @@ class LFQWidget(QWidget):
 				self.lfcalibrate = vals[1]['lfcalibrate']
 				self.lfdeconvolve = vals[1]['lfdeconvolve']
 				self.lfrectify = vals[1]['lfrectify']
+				self.lfproject = vals[1]['lfproject']
 				self.lflib = vals[1]['lflib']
 				self.lflib_ver = self.lflib.version
 				self.gui.gui_elms["misc"]["lib_ver_label"].value = self.lflib_ver
@@ -115,7 +117,10 @@ class LFQWidget(QWidget):
 				self.display_rec_image()
 				
 			if vals[1] == 'dec' and vals[2] == '':
-				self.display_proc_image()
+				self.display_proc_image('dec')
+    
+			if 'proj_' in vals[1] and vals[2] == '':
+				self.display_proc_image(operation_type=vals[1])
 				
 			if vals[2] != '':
 				err = vals[2]
@@ -164,7 +169,7 @@ class LFQWidget(QWidget):
 			print("Button for Forward Projections Volume Processing")
 			self.gui.set_btns_and_status(False, LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
 			self.combine_args()
-			self.thread_worker = self.run_lf_proj_lfs(self.new_args_decon)
+			self.thread_worker = self.run_lf_proj_lfs(self.new_args_proj)
 			self.thread_worker.returned.connect(set_status)
 			self.thread_worker.start()
 			
@@ -173,7 +178,7 @@ class LFQWidget(QWidget):
 			print("Button for Backward Projections Lightfield Processing")
 			self.gui.set_btns_and_status(False, LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
 			self.combine_args()
-			self.thread_worker = self.run_lf_proj_vol(self.new_args_decon)
+			self.thread_worker = self.run_lf_proj_vol(self.new_args_proj)
 			self.thread_worker.returned.connect(set_status)
 			self.thread_worker.start()
 			
@@ -247,6 +252,7 @@ class LFQWidget(QWidget):
 				self.lfcalibrate = lfcalibrate
 				self.lfdeconvolve = lfdeconvolve
 				self.lfrectify = lfrectify
+				self.lfproject = lfproject
 				self.lflib = lflib
 				self.lflib_ver = lflib.version
 				self.gui.gui_elms["misc"]["lib_ver_label"].value = self.lflib_ver
@@ -290,9 +296,15 @@ class LFQWidget(QWidget):
 				else:
 					self.openImageExtViewer(proc_img)
 	
-	def display_proc_image(self):
-		proc_img = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.lf_vals["deconvolve"]["output_filename"]["value"]))
-		
+	def display_proc_image(self, operation_type='dec'):
+		if operation_type=='dec':
+			proc_img = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.lf_vals["deconvolve"]["output_filename"]["value"]))
+		elif operation_type=='proj_lf':
+			proc_img = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.lf_vals["projections"]["output_filename_lightfield"]["value"]))
+		elif operation_type=='proj_vol':
+			proc_img = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.lf_vals["projections"]["output_filename_volume"]["value"]))
+   
+		layer = None
 		if self.gui.gui_elms["misc"]["use_ext_viewer"].value == True:
 			if self.gui.gui_elms["misc"]["ext_viewer_sel"].value == "System":
 				self.openImage(proc_img)
@@ -300,14 +312,20 @@ class LFQWidget(QWidget):
 				self.openImageExtViewer(proc_img)
 		else:
 			if self.method == LFvals.METHODS[0]:
-				self.viewer.open(proc_img, stack=True)
+				layer = self.viewer.open(proc_img, stack=True)
 			elif self.method == LFvals.METHODS[1]:
-				self.viewer.open(proc_img, stack=True)
+				layer = self.viewer.open(proc_img, stack=True)
 			else:
 				if self.gui.gui_elms["misc"]["ext_viewer_sel"].value == "System":
 					self.openImage(proc_img)
 				else:
 					self.openImageExtViewer(proc_img)
+		# Disable scaling of the output if its an image
+		if layer is not None and 'proj' not in operation_type:
+			volume_voxel_scale = [	self.gui.gui_elms['calibrate']['um_per_slice'].value,
+                         			self.gui.gui_elms['calibrate']['pixel_size'].value / self.gui.gui_elms['calibrate']['objective_magnification'].value,
+                         			self.gui.gui_elms['calibrate']['pixel_size'].value / self.gui.gui_elms['calibrate']['objective_magnification'].value]
+			layer[-1].scale = tuple(volume_voxel_scale)
 
 	def openImage(self, path):
 		self.gui.openImage(path)
@@ -319,6 +337,7 @@ class LFQWidget(QWidget):
 		self.new_args_cal = []
 		self.new_args_rec = []
 		self.new_args_decon = []
+		self.new_args_proj = []
 		
 		self.gui.refresh_vals()
 		
@@ -430,6 +449,50 @@ class LFQWidget(QWidget):
 								current_val = str(current_val)
 							self.new_args_decon.append(prop)
 							self.new_args_decon.append(current_val)
+       		
+			key = "input_file_volume"
+			dict = self.gui.lf_vals["projections"][key]
+			current_val = dict["value"]
+			if "img_folder_file" in dict and dict["img_folder_file"] == True:
+				current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
+			else:
+				current_val = str(current_val)
+			self.new_args_proj.append(current_val)
+			key = "input_file_lightfield"
+			dict = self.gui.lf_vals["projections"][key]
+			current_val = dict["value"]
+			if "img_folder_file" in dict and dict["img_folder_file"] == True:
+				current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
+			else:
+				current_val = str(current_val)
+			self.new_args_proj.append(current_val)
+   
+			for section in ["projections", "hw"]:
+				for key in self.gui.lf_vals[section]:
+					dict = self.gui.lf_vals[section][key]
+					if "exclude_from_args" in dict and dict["exclude_from_args"] == True:
+						pass
+					elif "bind" in dict and dict["bind"] in self.gui.lf_vals[section] and dict["value"] == self.gui.lf_vals[section][dict["bind"]]["value"]:
+						pass
+					else:
+						prop = dict["prop"]
+						if ("cat" in dict and dict["cat"] == "required") or (dict["value"] != dict["default"]):
+							current_val = dict["value"]
+						else:
+							current_val = None
+							
+						if current_val == None:
+							pass
+						elif dict["type"] == "bool":
+							if dict["default"] == True or current_val == True:
+								self.new_args_proj.append(prop)
+						else:
+							if "img_folder_file" in dict and dict["img_folder_file"] == True:
+								current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
+							else:
+								current_val = str(current_val)
+							self.new_args_proj.append(prop)
+							self.new_args_proj.append(current_val)
 
 		except Exception as e:
 			print(key)
@@ -486,8 +549,10 @@ class LFQWidget(QWidget):
 	@thread_worker(progress={'total': 0})
 	def run_lf_proj_lfs(self, args):
 		try:
+			args += ['--solver','proj_lf']
 			print(args)
-			print("Projections LFs process")		
+			print("Projections LFs process")	
+			self.lfproject.main(args)
 			return (LFvals.PLUGIN_ARGS['main']['status']['value_idle'], 'proj_lf', '')
 		except Exception as err:
 			print(traceback.format_exc())
@@ -497,8 +562,10 @@ class LFQWidget(QWidget):
 	@thread_worker(progress={'total': 0})
 	def run_lf_proj_vol(self, args):
 		try:
+			args += ['--solver','proj_vol']
 			print(args)
-			print("Projections Vols process")		
+			print("Projections Vols process")	
+			self.lfproject.main(args)	
 			return (LFvals.PLUGIN_ARGS['main']['status']['value_idle'], 'proj_vol', '')
 		except Exception as err:
 			print(traceback.format_exc())
@@ -538,10 +605,10 @@ def load_lf(folder_path):
 	try:
 		sys.path.insert(1, str(folder_path))
 
-		import lfcalibrate, lfdeconvolve, lfrectify
+		import lfcalibrate, lfdeconvolve, lfrectify, lfproject
 		import lflib
 		
-		return (True, {'lfcalibrate':lfcalibrate, 'lfdeconvolve':lfdeconvolve, 'lfrectify':lfrectify, 'lflib':lflib})			
+		return (True, {'lfcalibrate':lfcalibrate, 'lfdeconvolve':lfdeconvolve, 'lfrectify':lfrectify, 'lfproject':lfproject, 'lflib':lflib})			
 	except Exception as e:
 		print(e)
 		print(traceback.format_exc())
