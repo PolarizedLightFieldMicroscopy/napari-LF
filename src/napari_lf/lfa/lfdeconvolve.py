@@ -144,14 +144,15 @@ def do_deconvolve(args):
     print('\t--> %s opened.  Pixel values range: [%d, %d]' % (filename, int(im.min()), int(im.max())))
 
     # Perform dark frame subtraction
-    from lflib.lfexceptions import ZeroImageException
-    try:
-        im = lfcal.subtract_dark_frame(im)
-        print('\t    Dark frame subtracted.  Pixel values range: [%f, %f]' % (im.min(), im.max()))
-        lf_zeros = False
-    except ZeroImageException:
-        print("\t    A frame with no light pixels was found, but it's no big deal")
-        lf_zeros = True
+    lf_zeros = False
+    # from lflib.lfexceptions import ZeroImageException
+    # try:
+    #     im = lfcal.subtract_dark_frame(im)
+    #     print('\t    Dark frame subtracted.  Pixel values range: [%f, %f]' % (im.min(), im.max()))
+    #     lf_zeros = False
+    # except ZeroImageException:
+    #     print("\t    A frame with no light pixels was found, but it's no big deal")
+    #     lf_zeros = True
 
     # Rectify the image
     lf = lfcal.rectify_lf(im)
@@ -196,7 +197,8 @@ def do_deconvolve(args):
     # Trim out entries in the light field that we are ignoring because
     # they are too close to the edge of the NA of the lenslet.  This
     # make our residuals more accurate below.
-    lf = lfcal.mask_trimmed_angles(lf)
+    if 'net' not in args.solver:
+        lf = lfcal.mask_trimmed_angles(lf)
 
     # Generate the b vector, which contains the observed lightfield;
     # and the initial volume x containing all zeros.
@@ -304,6 +306,79 @@ def do_deconvolve(args):
         (x_vec, residuals) = sirt_reconstruction(A_operator, b_vec,
                                                  args.alpha, args.conv_thresh, args.max_iter)
 
+    elif args.solver == 'lfmnet':
+        print(f'Running {args.solver}')
+        import pytorch_lightning as pl
+        import torch
+        try:
+            from lfa.neural_nets.LFMNet import LFMNet
+        except:
+            from neural_nets.LFMNet import LFMNet
+        
+        with torch.no_grad():
+            im_lenslet = lf.asimage(representation = LightField.TILED_LENSLET)
+            # from tifffile import imread
+            # im_lenslet = imread(args.input_file, key=0)
+            LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
+            net = LFMNet(im_lenslet.shape, (64,)+im_lenslet.shape, network_settings_dict={'LFshape' : LFshape})
+            net.load_model("C:\\Users\\OldenbourgLab2\\Code\\LFMNetWindows\\runs\\2022_11_04__174356_1B_0.1bias_5I_32BS_0Sk_9FOV_3nT_0.03ths__Spatial_xshift\\model_330")
+            # net.load_model("C:\\Users\\OldenbourgLab2\\Code\\LFMNetWindows\\runs\\2022_11_07__130847_1B_0.1bias_100I_32BS_0Sk_9FOV_3nT_0.03ths__Spatial_xyshift\\model_2")
+            # net.load_from_checkpoint('C:\\Users\\OldenbourgLab2\\Code\\napari-LF-develop\\lightning_logs\\version_6\\checkpoints\\epoch=9-step=2140.ckpt')
+            net.eval()
+            # Move network to device (GPU/CPU)
+            torch_device = torch.device("cuda:"+str(args.gpu_id) if torch.cuda.is_available() and not args.disable_gpu else "cpu")
+            net = net.to(torch_device)
+            # Prepare input to network
+            b_torch = net.prepare_input(im_lenslet).to(torch_device)
+            # Compute 3D reconstruction
+            prediction = net(b_torch)
+            # Copy to from GPU to CPU numpy
+            x_vec = prediction[0,0,...].detach().cpu().numpy()
+            
+            # Training
+            if False:
+                net.configure_dataloader()
+                trainer = pl.Trainer(gpus=1, precision=32, max_epochs=net.get_train_setting('epochs'))
+                trainer.fit(net, net.train_loader, net.val_loader)
+                
+                # # eval
+                net.eval()
+                net = net.to(torch_device)
+                b_torch = net.prepare_input(im_lenslet).to(torch_device)
+                # Compute 3D reconstruction
+                prediction = net(b_torch)
+                x_vec = prediction[0,0,...].detach().cpu().numpy()
+        
+    elif args.solver == 'vcdnet':
+        print(f'Running {args.solver}')
+        import pytorch_lightning as pl
+        import torch
+        try:
+            from lfa.neural_nets.VCDNet import VCDNet
+        except:
+            from neural_nets.VCDNet import VCDNet
+        
+        with torch.no_grad():
+            im_lenslet = lf.asimage(representation = LightField.TILED_LENSLET)
+            # from tifffile import imread
+            # im_lenslet = imread(args.input_file, key=0)
+            LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
+            net = VCDNet(im_lenslet.shape, (64,)+im_lenslet.shape, network_settings_dict={'LFshape' : LFshape})
+            net.load_model("C:\\Users\\OldenbourgLab2\\Code\\LFMNetWindows\\runs\\2022_11_04__174356_1B_0.1bias_5I_32BS_0Sk_9FOV_3nT_0.03ths__Spatial_xshift\\model_330")
+            # net.load_model("C:\\Users\\OldenbourgLab2\\Code\\LFMNetWindows\\runs\\2022_11_07__130847_1B_0.1bias_100I_32BS_0Sk_9FOV_3nT_0.03ths__Spatial_xyshift\\model_2")
+            # net.load_from_checkpoint('C:\\Users\\OldenbourgLab2\\Code\\napari-LF-develop\\lightning_logs\\version_6\\checkpoints\\epoch=9-step=2140.ckpt')
+            net.eval()
+            # Move network to device (GPU/CPU)
+            torch_device = torch.device("cuda:"+str(args.gpu_id) if torch.cuda.is_available() and not args.disable_gpu else "cpu")
+            net = net.to(torch_device)
+            # Prepare input to network
+            b_torch = net.prepare_input(im_lenslet).to(torch_device)
+            # Compute 3D reconstruction
+            prediction = net(b_torch)
+            # Copy to from GPU to CPU numpy
+            x_vec = prediction[0,0,...].detach().cpu().numpy()
+            
+            
     else:
         raise ValueError("The reconstruction method specified is not an option, " +
                          "available methods are: "
@@ -320,8 +395,10 @@ def do_deconvolve(args):
 
 
     # ============================ RESHAPE & CLEAN UP VOLUME ==============================
-
-    vol = np.reshape(x_vec, (db.ny, db.nx, db.nz))
+    if 'net' in args.solver:
+        vol = x_vec
+    else:
+        vol = np.reshape(x_vec, (db.ny, db.nx, db.nz))
 
     # Slight hack: zero out the outermost XY "shell" of pixels, since
     # these are often subject to radiometry artifacts.
