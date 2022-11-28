@@ -86,16 +86,16 @@ class outconv(nn.Module):
 
 
 class UNetLF(nn.Module):
-    def __init__(self, n_channels, n_classes, use_skip=True):
+    def __init__(self, n_channels, n_classes, use_skip=True, channel_exp=3):
         super(UNetLF, self).__init__()
         self.use_skip = use_skip
-        self.inc = inconv(n_channels, 64)
-        self.down1 = down(64, 128)
-        self.down2 = down(128, 128)
-        self.up3 = up(256, 64, use_skip=use_skip)
-        self.up4 = up(128, 64, use_skip=use_skip)
+        self.inc = inconv(n_channels, 2**channel_exp)
+        self.down1 = down(2**channel_exp, 2**(channel_exp+1))
+        self.down2 = down(2**(channel_exp+1), 2**(channel_exp+1))
+        self.up3 = up(2**(channel_exp+2), 2**channel_exp, use_skip=use_skip)
+        self.up4 = up(2**(channel_exp+1), 2**channel_exp, use_skip=use_skip)
         self.outc = nn.Sequential(
-            outconv(64, n_classes),
+            outconv(2**channel_exp, n_classes),
             nn.Sigmoid()
         )
 

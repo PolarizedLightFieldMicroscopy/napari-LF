@@ -10,7 +10,13 @@ from neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
 class LFMNet(LFNeuralNetworkProto):
     def init_network_instance(self):
         # Required: default network settings
-        self.default_net_settings = {'n_Depths' : 64, 'LF_in_shape' : [33,33,39,39], 'LF_in_fov' : 9, 'use_bias' : True, 'use_skip_conn' : False, 'use_small_unet' : True}
+        self.default_net_settings = {
+            'n_Depths' : 64, 
+            'LF_in_shape' : [33,33,39,39], 
+            'LF_in_fov' : 9, 
+            'use_bias' : True, 
+            'use_skip_conn' : False, 
+            'use_small_unet' : True}
         
         # Populate members, based on user provided or default settings
         self.n_Depths = self.get_setting('n_Depths')
@@ -30,7 +36,7 @@ class LFMNet(LFNeuralNetworkProto):
             convNd(1,self.n_Depths, num_dims=4, kernel_size=(3,3, self.LF_in_fov, self.LF_in_fov), stride=1, padding=(1,1,0,0), use_bias=use_bias),
             nn.LeakyReLU())
         
-        self.Unet = UNetLF(self.n_Depths, self.n_Depths, use_skip=use_skip_conn)   
+        self.Unet = UNetLF(self.n_Depths, self.n_Depths, use_skip=use_skip_conn)
         
         self.save_hyperparameters()
     
@@ -38,10 +44,11 @@ class LFMNet(LFNeuralNetworkProto):
     def configure_dataloader(self):
         self.default_training_settings = {'epochs'              : 3, 
                                           'images_ids'          : list(range(10,15)), 
-                                          'batch_size'          : 32,
+                                          'batch_size'          : 1,
                                           'validation_split'    : 0.1,
                                           'learning_rate'       : 1e-3,
-                                          'LF_ROI_size'         : 3,
+                                          'LF_ROI_size'         : 3, # Volume behind how many micro-lenses to reconstruct? # 39 means full image
+                                          'use_patches'         : False, 
                                           'volume_threshold'    : 0.03,
                                           'dataset_path'        : 'D:\\BrainImagesJosuePage\\Brain_40x_64Depths_362imgs.h5',
                                           'output_dir'       : ''}
@@ -51,7 +58,7 @@ class LFMNet(LFNeuralNetworkProto):
                         fov=self.LF_in_fov, 
                         neighShape=self.get_train_setting('LF_ROI_size'), 
                         img_indices=self.get_train_setting('images_ids'), 
-                        get_full_imgs=False, center_region=None)
+                        get_full_imgs=not self.get_train_setting('use_patches'), center_region=None)
         
         # Create train and test loaders
         train_size = int((1 - self.get_train_setting('validation_split')) * len(all_data))
