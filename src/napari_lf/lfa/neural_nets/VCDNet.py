@@ -50,7 +50,7 @@ class VCDNet(LFNeuralNetworkProto):
             nn.BatchNorm2d(64),
             nn.ReLU())
         ]
-        previous_n =s elf.n_Depths
+        previous_nc = self.n_Depths
         for idx, nc in enumerate(pyramid_channels):
             self.encoder_layers.append(nn.Sequential(nn.Conv2d(previous_nc, nc, kernel_size=3, stride=1),
                                                 nn.BatchNorm2d(nc),
@@ -73,7 +73,7 @@ class VCDNet(LFNeuralNetworkProto):
                 nn.ReLU(),
                 nn.BatchNorm2d(channels_inverted[idx])
             ))
-            print(f'{channels_inverted[idx]+channels_inverted[idx-1]}  {channels_inverted[idx]}')
+            # print(f'{channels_inverted[idx]+channels_inverted[idx-1]}  {channels_inverted[idx]}')
         self.decoder_layers.append(nn.Sequential(
                 nn.Conv2d(channels_inverted[-1]+self.n_Depths, self.n_Depths, kernel_size=3, stride=1, padding=1),
                 nn.Tanh()
@@ -86,8 +86,12 @@ class VCDNet(LFNeuralNetworkProto):
     
     def prepare_input(self, input):
         # todo: maybe assert shape
-        b_torch = torch.from_numpy(input).unsqueeze(0).unsqueeze(0)
-        LF_input = LF2Spatial(b_torch, self.LF_in_shape)
+        if torch.is_tensor(input):
+            # b_torch= input
+            LF_input = input
+        else:
+            b_torch = torch.from_numpy(input).unsqueeze(0).unsqueeze(0)
+            LF_input = LF2Spatial(b_torch, self.LF_in_shape)
         # Pad input with half the LFNet fov, to get an output the same size as the input image
         LF_VCD = LF_input.view(LF_input.shape[0],-1, *LF_input.shape[-2:])
         # Normalize by max: todo: this should be stored in arguments
@@ -95,8 +99,9 @@ class VCDNet(LFNeuralNetworkProto):
         return LF_VCD
     
     def forward(self, input):
+        input_ready = self.prepare_input(input)
         # Upsample views
-        upsampled_views = self.net_upsample(input)
+        upsampled_views = self.net_upsample(input_ready)
         
         # Encoder
         outputs = [self.encoder_layers[0](upsampled_views)]
@@ -118,12 +123,12 @@ class VCDNet(LFNeuralNetworkProto):
     def configure_dataloader(self):
         self.default_training_settings = {'epochs'              : 3, 
                                           'images_ids'          : list(range(10,15)), 
-                                          'batch_size'          : 5,
+                                          'batch_size'          : 1,
                                           'validation_split'    : 0.1,
                                           'learning_rate'       : 1e-3,
                                           'volume_threshold'    : 0.03,
                                           'dataset_path'        : 'D:\\BrainImagesJosuePage\\Brain_40x_64Depths_362imgs.h5',
-                                          'output_prefix'       : ''}
+                                          'output_dir'          : ''}
         
         # Load data
         all_data = Dataset(self.get_train_setting('dataset_path'), 261290, \
@@ -132,6 +137,8 @@ class VCDNet(LFNeuralNetworkProto):
                         img_indices=self.get_train_setting('images_ids'), 
                         get_full_imgs=True, center_region=None)
         
+        # Resize volumes to correct upsampling size
+        all_data.VolFull = F.interpolate(all_data.VolFull.permute(3,2,0,1), 2*[self.LF_in_shape[-2]*2**self.n_interp]).permute(2,3,1,0)
         # Create train and test loaders
         train_size = int((1 - self.get_train_setting('validation_split')) * len(all_data))
         test_size = len(all_data) - train_size
@@ -156,7 +163,8 @@ class VCDNet(LFNeuralNetworkProto):
         vol_pred = self.forward(LF_in_norm)
         loss = F.mse_loss(vol_in_norm, vol_pred)
         
-        self.log('loss/train', loss)
+        self.log('loss/train', loss.detach())
+        self.log("hp_metric", loss.detach())
         if self.global_step % 100 or batch_idx==0:
             tensorboard = self.logger.experiment
             tensorboard.add_image('GT/train',
@@ -182,7 +190,8 @@ class VCDNet(LFNeuralNetworkProto):
         
         vol_pred = self.forward(LF_in_norm)
         loss = F.mse_loss(vol_in_norm, vol_pred)
-        self.log('loss/val', loss)
+        self.log('loss/val', loss.detach())
+        self.log("hp_metric", loss.detach())
 
         if self.global_step % 100 or batch_idx==0:
             tensorboard = self.logger.experiment

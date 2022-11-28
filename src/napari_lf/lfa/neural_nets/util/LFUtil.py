@@ -7,6 +7,8 @@ from torch.autograd import Variable
 from math import exp
 import os
 import sys
+from tqdm import tqdm
+
 class Dataset(object):
     def __init__(self, fname, randomSeed=None, img_indices=None, fov=None, \
          neighShape=1, keep_imgs=False, random_imgs=False, center_region=None, get_full_imgs=False):
@@ -79,9 +81,7 @@ class Dataset(object):
         self.VolFull = torch.zeros(paddedVolSize+tuple([self.nImagesToUse]),dtype=torch.uint8)
 
         
-        print("Loading img:  ",end=' ')
-        for nImg,imgIx in enumerate(self.img_indices):
-            print(str(imgIx),end=' ')
+        for nImg,imgIx in tqdm(enumerate(self.img_indices), "Loading images", total=len(self.img_indices)):
             # Load data from database
             currLF = torch.tensor(self.h5_container['LFData'][:,:,:,:,imgIx], dtype=torch.uint8)
             currVol = torch.tensor(self.h5_container['volData'][:,:,:,imgIx], dtype=torch.uint8)
@@ -99,11 +99,9 @@ class Dataset(object):
                 
         self.volMax = self.VolFull.max()
         self.LFMax = self.LFFull.max()
-        self.VolDims = [neighShape*self.LFShape[0],neighShape*self.LFShape[1],self.volShape[2]]
         self.LFDims = [self.LFShape[0],self.LFShape[1],self.LFSideLenght,self.LFSideLenght]
 
         if self.getFullImgs:
-            self.VolDims = self.volShape[0:3]
             self.LFDims = self.LFShape[0:4]
             self.nPatches = len(self.img_indices)
 
@@ -130,11 +128,11 @@ class Dataset(object):
         return self.nPatches
 
     def get_n_depths(self):
-        return self.VolDims[-1]
+        return self.VolFull.shape[-2]
     def get_max(self):
         return self.LFMax, self.volMax
     def __shape__(self):
-        return self.VolDims, self.LFDims
+        return self.VolFull.shape[:-1], self.LFDims
      
 def convert3Dto2DTiles(x, lateralTile):
     nDepths = x.shape[-1]

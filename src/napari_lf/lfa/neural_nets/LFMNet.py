@@ -44,7 +44,7 @@ class LFMNet(LFNeuralNetworkProto):
                                           'LF_ROI_size'         : 3,
                                           'volume_threshold'    : 0.03,
                                           'dataset_path'        : 'D:\\BrainImagesJosuePage\\Brain_40x_64Depths_362imgs.h5',
-                                          'output_prefix'       : ''}
+                                          'output_dir'       : ''}
         
         # Load data
         all_data = Dataset(self.get_train_setting('dataset_path'), 261290, \
