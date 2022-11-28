@@ -6,7 +6,8 @@ import torchvision as tv
 from neural_nets.util.LFUtil import *
 from neural_nets.util.convNd import convNd
 from neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
-    
+
+# LFMNet definition
 class LFMNet(LFNeuralNetworkProto):
     def init_network_instance(self):
         # Required: default network settings
@@ -38,7 +39,6 @@ class LFMNet(LFNeuralNetworkProto):
         
         self.Unet = UNetLF(self.n_Depths, self.n_Depths, use_skip=use_skip_conn)
         
-        self.save_hyperparameters()
     
     # Configure dataloader
     def configure_dataloader(self):
@@ -75,76 +75,6 @@ class LFMNet(LFNeuralNetworkProto):
         
         self.save_hyperparameters()
         
-    # training_step defines the train loop.  
-    def training_step(self, batch, batch_idx):
-        LF_in, vol_in = batch
-        LF_in_norm = LF_in/self.max_LF_train
-        vol_in_norm = vol_in/self.max_vol_train
-        
-        vol_pred = self.forward(LF_in_norm)
-        loss = F.mse_loss(vol_in_norm, vol_pred)
-        
-        self.log('loss/train', loss)
-        if self.global_step % 100 or batch_idx==0:
-            tensorboard = self.logger.experiment
-            tensorboard.add_image('GT/train',
-                                tv.utils.make_grid(
-                                    volume_2_projections(
-                                        vol_in_norm, 
-                                        depths_in_ch=False)[0,0,...].float().unsqueeze(0).cpu().data.detach(), 
-                                    normalize=True, 
-                                    scale_each=False), self.global_step)
-            tensorboard.add_image('pred/train',
-                                tv.utils.make_grid(
-                                    volume_2_projections(
-                                        vol_pred, 
-                                        depths_in_ch=False)[0,0,...].float().unsqueeze(0).cpu().data.detach(), 
-                                    normalize=True, 
-                                    scale_each=False), self.global_step)
-        return loss
-    
-    def validation_step(self, batch, batch_idx):
-        LF_in, vol_in = batch
-        LF_in_norm = LF_in/self.max_LF_train
-        vol_in_norm = vol_in/self.max_vol_train
-        
-        vol_pred = self.forward(LF_in_norm)
-        loss = F.mse_loss(vol_in_norm, vol_pred)
-        self.log('loss/val', loss)
-
-        if self.global_step % 100 or batch_idx==0:
-            tensorboard = self.logger.experiment
-            tensorboard.add_image('GT/val', 
-                                tv.utils.make_grid(
-                                    volume_2_projections(
-                                        vol_in_norm, 
-                                        depths_in_ch=False)[0,0,...].float().unsqueeze(0).cpu().data.detach(), 
-                                    normalize=True, 
-                                    scale_each=False), self.global_step)
-            tensorboard.add_image('pred/val', 
-                                tv.utils.make_grid(
-                                    volume_2_projections(
-                                        vol_pred, 
-                                        depths_in_ch=False)[0,0,...].float().unsqueeze(0).cpu().data.detach(), 
-                                    normalize=True, 
-                                    scale_each=False), self.global_step)
-        return loss
-    
-    def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.get_train_setting('learning_rate'))
-        return optimizer
-    
-    def load_model(self,path):
-        checkpoint = torch.load(path, map_location='cpu')
-        # load data
-        try:
-            argsModel = checkpoint['args']
-            argsModel.checkpointPath = path
-            self.args_training = argsModel
-            self.load_state_dict(checkpoint['model_state_dict'])
-        except:
-            print('Error while loading network state dictionary')
-        
     def prepare_input(self, input):
         # todo: maybe assert shape
         b_torch = torch.from_numpy(input).unsqueeze(0).unsqueeze(0)
@@ -166,52 +96,3 @@ class LFMNet(LFNeuralNetworkProto):
         # Channels to 3D dimension 
         x3D = x.permute((0,2,3,1)).unsqueeze(1)
         return x3D
-
-
-# class LFMNet(pl.LightningModule):
-#     def __init__(self, n_Depths=64, use_bias=1, use_skip_conn=0, LF_in_shape=[33,33,11,11], LF_in_fov=9, use_small_unet=True):
-#         super().__init__()
-#         self.n_Depths = n_Depths
-#         self.LF_in_shape = LF_in_shape
-        
-#         if use_small_unet:
-#             from lfa.neural_nets.util.UnetShallow import UNetLF
-#         else:
-#             from lfa.neural_nets.util.UnetFull import UNetLF
-
-#         self.lensletConvolution = nn.Sequential(
-#             convNd(1,self.n_Depths, num_dims=4, kernel_size=(3,3,LF_in_fov,LF_in_fov),stride=1, padding=(1,1,0,0), use_bias=use_bias),
-#             nn.LeakyReLU())
-        
-#         self.Unet = UNetLF(self.n_Depths, self.n_Depths, use_skip=use_skip_conn)   
-#         # self.F = FourierNetsLayer([LF_in_shape[0]*3,LF_in_shape[1]*3],n_Depths,3)
-
-#     def training_step(self, batch, batch_idx):
-#         # training_step defines the train loop.
-#         x, y = batch
-#         x = x.view(x.size(0), -1)
-#         z = self.encoder(x)
-#         x_hat = self.decoder(z)
-#         loss = F.mse_loss(x_hat, x)
-#         return loss
-
-#     def configure_optimizers(self):
-#         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
-#         return optimizer
-    
-#     def prepare_input(self, input):
-#         b_torch = torch.from_numpy(input).unsqueeze(0).unsqueeze(0)
-#         return LF2Spatial(b_torch, self.LF_in_shape)
-#     def forward(self, input):
-#         input2D = LF2Spatial(input, input.shape[2:])
-#         # fourer_nets_output = self.F(input2D)
-#         # 4D convolution
-#         inputAfter4DConv = self.lensletConvolution(input)
-#         # 4D to 2D image
-#         newLFSize = inputAfter4DConv.shape[2:]
-#         newLensletImage = LF2Spatial(inputAfter4DConv, newLFSize)
-#         # U-net prediction
-#         x = self.Unet(newLensletImage)
-#         # Channels to 3D dimension 
-#         x3D = x.permute((0,2,3,1)).unsqueeze(1)
-#         return x3D

@@ -7,6 +7,8 @@ from neural_nets.util.LFUtil import *
 from neural_nets.util.convNd import convNd
 from neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
     
+
+# VCDNet definition
 class VCDNet(LFNeuralNetworkProto):
     def init_network_instance(self):
         # Required: default network settings
@@ -81,13 +83,11 @@ class VCDNet(LFNeuralNetworkProto):
         # Create decoder
         self.decoder_layers = nn.Sequential(*self.decoder_layers)
         
-        self.save_hyperparameters()
     
     
     def prepare_input(self, input):
         # todo: maybe assert shape
         if torch.is_tensor(input):
-            # b_torch= input
             LF_input = input
         else:
             b_torch = torch.from_numpy(input).unsqueeze(0).unsqueeze(0)
@@ -95,11 +95,12 @@ class VCDNet(LFNeuralNetworkProto):
         # Pad input with half the LFNet fov, to get an output the same size as the input image
         LF_VCD = LF_input.view(LF_input.shape[0],-1, *LF_input.shape[-2:])
         # Normalize by max: todo: this should be stored in arguments
-        LF_VCD /= LF_VCD.max()
+        if LF_VCD.max() > 1.0:
+            LF_VCD /= self.max_LF_train.item()
         return LF_VCD
     
     def forward(self, input):
-        input_ready = self.prepare_input(input)
+        input_ready = self.prepare_input(input).to(self.device)
         # Upsample views
         upsampled_views = self.net_upsample(input_ready)
         
@@ -119,7 +120,7 @@ class VCDNet(LFNeuralNetworkProto):
         x3D = curr_level.permute((0,2,3,1)).unsqueeze(1)
         return x3D
     
-    # Configure dataloader
+    # Configure dataloader, each architeture may need different shape of input/outputs
     def configure_dataloader(self):
         self.default_training_settings = {'epochs'              : 3, 
                                           'images_ids'          : list(range(10,15)), 
@@ -150,85 +151,8 @@ class VCDNet(LFNeuralNetworkProto):
                                     shuffle=False, num_workers=0, pin_memory=True)
         
         # Find normalization values
-        self.max_LF_train, self.max_vol_train = all_data.get_max()
-        
+        temp_max_LF_train, temp_max_vol_train = all_data.get_max()
+        # store these as nn.Parameter so the network storesthem in a checkpoint
+        self.max_LF_train = nn.Parameter(torch.tensor(float(temp_max_LF_train)))
+        self.max_vol_train = nn.Parameter(torch.tensor(float(temp_max_vol_train)))
         self.save_hyperparameters()
-        
-    # training_step defines the train loop.  
-    def training_step(self, batch, batch_idx):
-        LF_in, vol_in = batch
-        LF_in_norm = LF_in/self.max_LF_train
-        vol_in_norm = vol_in/self.max_vol_train
-        
-        vol_pred = self.forward(LF_in_norm)
-        loss = F.mse_loss(vol_in_norm, vol_pred)
-        
-        self.log('loss/train', loss.detach())
-        self.log("hp_metric", loss.detach())
-        if self.global_step % 100 or batch_idx==0:
-            tensorboard = self.logger.experiment
-            tensorboard.add_image('GT/train',
-                                tv.utils.make_grid(
-                                    volume_2_projections(
-                                        vol_in_norm, 
-                                        depths_in_ch=False)[0,0,...].float().unsqueeze(0).cpu().data.detach(), 
-                                    normalize=True, 
-                                    scale_each=False), self.global_step)
-            tensorboard.add_image('pred/train',
-                                tv.utils.make_grid(
-                                    volume_2_projections(
-                                        vol_pred, 
-                                        depths_in_ch=False)[0,0,...].float().unsqueeze(0).cpu().data.detach(), 
-                                    normalize=True, 
-                                    scale_each=False), self.global_step)
-        return loss
-    
-    def validation_step(self, batch, batch_idx):
-        LF_in, vol_in = batch
-        LF_in_norm = LF_in/self.max_LF_train
-        vol_in_norm = vol_in/self.max_vol_train
-        
-        vol_pred = self.forward(LF_in_norm)
-        loss = F.mse_loss(vol_in_norm, vol_pred)
-        self.log('loss/val', loss.detach())
-        self.log("hp_metric", loss.detach())
-
-        if self.global_step % 100 or batch_idx==0:
-            tensorboard = self.logger.experiment
-            tensorboard.add_image('GT/val', 
-                                tv.utils.make_grid(
-                                    volume_2_projections(
-                                        vol_in_norm, 
-                                        depths_in_ch=False)[0,0,...].float().unsqueeze(0).cpu().data.detach(), 
-                                    normalize=True, 
-                                    scale_each=False), self.global_step)
-            tensorboard.add_image('pred/val', 
-                                tv.utils.make_grid(
-                                    volume_2_projections(
-                                        vol_pred, 
-                                        depths_in_ch=False)[0,0,...].float().unsqueeze(0).cpu().data.detach(), 
-                                    normalize=True, 
-                                    scale_each=False), self.global_step)
-        return loss
-    
-    def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.get_train_setting('learning_rate'))
-        return optimizer
-    
-    def load_model(self,path):
-        checkpoint = torch.load(path, map_location='cpu')
-        # load data
-        try:
-            argsModel = checkpoint['args']
-            argsModel.checkpointPath = path
-            self.args_training = argsModel
-            self.load_state_dict(checkpoint['model_state_dict'])
-        except:
-            print('Error while loading network state dictionary')
-        
-
-
-
-class SubpixelConv2d(nn.Module):
-    def __init__(self, n_in_channel, n_out_channel, scale=2):
-        super(SubpixelConv2d, self).__init__()
