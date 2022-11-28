@@ -88,7 +88,7 @@ class VCDNet(LFNeuralNetworkProto):
     def prepare_input(self, input):
         # todo: maybe assert shape
         if torch.is_tensor(input):
-            LF_input = input
+            LF_input = input.float()
         else:
             b_torch = torch.from_numpy(input).unsqueeze(0).unsqueeze(0)
             LF_input = LF2Spatial(b_torch, self.LF_in_shape)

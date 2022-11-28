@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision as tv
+import glob
+import numpy as np
 from neural_nets.util.LFUtil import *
 
 # Parent class, containing required parameters and classes for a LF network
@@ -35,6 +37,10 @@ class LFNeuralNetworkProto(pl.LightningModule):
     # Format a LF with size [ax,ay,sx,sy] (a:angular s:spatial)
     # into the shape required by the network
     def prepare_input(self, input):
+        raise NotImplementedError
+    
+    # Configure dataloader, each architeture may need different shape of input/outputs
+    def configure_dataloader(self):
         raise NotImplementedError
     
 ############## The following functions work for LFMNet and VCDNet, feel free to overload them with your own implementation
@@ -81,7 +87,40 @@ class LFNeuralNetworkProto(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         return self.evaluate_sample(batch, batch_idx, 'val')
     
-    
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.get_train_setting('learning_rate'))
         return optimizer
+    
+    
+    
+############## Load a network from a checkpoint? Here
+    @staticmethod
+    def load_network_from_file(file_name, LFshape):
+
+        # Extract which network to use from checkpoint file
+        checkpoint_file = glob.glob(file_name)
+        network_params = torch.load(checkpoint_file[0])
+        # Extract name
+        try:
+            network_name = network_params['hyper_parameters']['name']
+        except:
+            network_name = 'VCDNet'
+        # Extract network hyperparameters
+        network_hp = network_params['hyper_parameters']
+        
+        # Import the network found
+        mod = __import__(f'lfa.neural_nets.{network_name}', fromlist=[network_name])
+        network_class = getattr(mod, network_name)
+        
+        # Check that hyperparameters and input data matches
+        assert np.all([network_hp['network_settings_dict']['LFshape'], LFshape]), f"Light field shape missmatch: Network used {network_hp['network_settings_dict']['LFshape']} and user provided {LFshape}"
+        # Update input image shape
+        network_hp['input_shape'] = [LFshape[0]*LFshape[2], LFshape[1]*LFshape[3]]
+        network_hp['training_settings_dict']['images_ids'] = list(range(100,105))
+        # Create network with stored hyperparameters
+        net = network_class(**network_hp)
+        # net = net_lib.Net(im_lenslet.shape, (64,)+im_lenslet.shape, network_settings_dict={'LFshape' : LFshape})
+        net.load_from_checkpoint(checkpoint_file[0], strict=False)
+        net.load_state_dict(network_params['state_dict'], strict=False)
+        
+        return net

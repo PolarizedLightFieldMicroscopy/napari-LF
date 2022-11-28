@@ -71,23 +71,32 @@ class LFMNet(LFNeuralNetworkProto):
                                     shuffle=False, num_workers=0, pin_memory=True)
         
         # Find normalization values
-        self.max_LF_train, self.max_vol_train = all_data.get_max()
+        temp_max_LF_train, temp_max_vol_train = all_data.get_max()
+        # store these as nn.Parameter so the network storesthem in a checkpoint
+        self.max_LF_train = nn.Parameter(torch.tensor(float(temp_max_LF_train)))
+        self.max_vol_train = nn.Parameter(torch.tensor(float(temp_max_vol_train)))
         
         self.save_hyperparameters()
         
     def prepare_input(self, input):
         # todo: maybe assert shape
-        b_torch = torch.from_numpy(input).unsqueeze(0).unsqueeze(0)
+        if torch.is_tensor(input):
+            LF_input = input.float()
+        else:
+            b_torch = torch.from_numpy(input).unsqueeze(0).unsqueeze(0)
+            LF_input = LF2Spatial(b_torch, self.LF_in_shape)
         LF_input = LF2Spatial(b_torch, self.LF_in_shape)
         # Pad input with half the LFNet fov, to get an output the same size as the input image
         LF_padded = F.pad(LF_input, 4*[self.LF_in_fov//2])
-        # Normalize by max: todo: this should be stored in arguments
-        LF_padded /= LF_padded.max()
+        # Normalize by max
+        if LF_padded.max() > 1.0:
+            LF_padded /= self.max_LF_train.item()
         return LF_padded
     
     def forward(self, input):
+        input_ready = self.prepare_input(input).to(self.device)
         # 4D convolution
-        inputAfter4DConv = self.lensletConvolution(input)
+        inputAfter4DConv = self.lensletConvolution(input_ready)
         # 4D to 2D image
         newLFSize = inputAfter4DConv.shape[2:]
         newLensletImage = LF2Spatial(inputAfter4DConv, newLFSize)
