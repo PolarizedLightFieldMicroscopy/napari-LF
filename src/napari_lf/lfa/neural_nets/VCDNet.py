@@ -83,6 +83,15 @@ class VCDNet(LFNeuralNetworkProto):
         # Create decoder
         self.decoder_layers = nn.Sequential(*self.decoder_layers)
         
+        # Init all layers
+        def subnet_initialization_small(m):
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.Conv3d) or isinstance(m, nn.Linear):
+                nn.init.kaiming_uniform_(m.weight.data)
+                # nn.init.xavier_uniform_(m.weight.data,0.01)
+                # if m.bias is not None:
+                #     m.bias.data *= 0.01
+        
+        self.apply(subnet_initialization_small)
     
     
     def prepare_input(self, input):

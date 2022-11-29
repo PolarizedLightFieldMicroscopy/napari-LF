@@ -7,7 +7,7 @@ import glob
 import numpy as np
 from neural_nets.util.LFUtil import *
 
-# Parent class, containing required parameters and classes for a LF network
+# Base class, containing required parameters and classes for a LF network
 class LFNeuralNetworkProto(pl.LightningModule):
     def __init__(self, input_shape, output_shape, network_settings_dict={}, training_settings_dict={}, name='LFNeuralNetworkProto'):
         super().__init__()
@@ -41,6 +41,13 @@ class LFNeuralNetworkProto(pl.LightningModule):
     
     # Configure dataloader, each architeture may need different shape of input/outputs
     def configure_dataloader(self):
+        # This function should create:
+        # Dataloders
+            # self.train_loader
+            # self.val_loader
+        # Normalization information
+            # self.max_LF_train
+            # self.max_vol_train
         raise NotImplementedError
     
 ############## The following functions work for LFMNet and VCDNet, feel free to overload them with your own implementation
@@ -109,7 +116,13 @@ class LFNeuralNetworkProto(pl.LightningModule):
         network_hp = network_params['hyper_parameters']
         
         # Import the network found
-        mod = __import__(f'lfa.neural_nets.{network_name}', fromlist=[network_name])
+        try:
+            mod = __import__(f'lfa.neural_nets.{network_name}', fromlist=[network_name])
+        except:
+            try:
+                mod = __import__(f'neural_nets.{network_name}', fromlist=[network_name])
+            except:
+                print(f'Network file/class {network_name} not found inside neural_nets directory')
         network_class = getattr(mod, network_name)
         
         # Check that hyperparameters and input data matches

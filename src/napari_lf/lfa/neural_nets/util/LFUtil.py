@@ -286,7 +286,7 @@ def ssim(img1, img2, window_size = 11, size_average = True):
 
 
 ######## MIP
-def volume_2_projections(vol_in, proj_type=torch.max, scaling_factors=[1,1,1], depths_in_ch=False, ths=[0.0,1.0], normalize=True, border_thickness=10, add_scale_bars=True, scale_bar_vox_sizes=[40,20]):
+def volume_2_projections(vol_in, proj_type=torch.max, scaling_factors=[1,1,1], depths_in_ch=False, ths=[0.0,1.0], normalize=True, border_thickness=10, add_scale_bars=False, scale_bar_vox_sizes=[40,20]):
     vol = vol_in.detach().clone().abs()
     # Normalize sets limits from 0 to 1
     if normalize:
@@ -320,11 +320,12 @@ def volume_2_projections(vol_in, proj_type=torch.max, scaling_factors=[1,1,1], d
     out_img[:, :, : vol_size[2], vol_size[3] + border_thickness :] = F.interpolate(y_projection, size=[vol_size[2],vol_size[4]], mode='nearest')
 
 
+    line_color = out_img.max()
+    # Draw white lines
+    out_img[:, :, vol_size[2]: vol_size[2]+ border_thickness, ...] = line_color
+    out_img[:, :, :, vol_size[3]:vol_size[3]+border_thickness, ...] = line_color
+        
     if add_scale_bars:
-        line_color = 1.0 #out_img.max()
-        # Draw white lines
-        out_img[:, :, vol_size[2]: vol_size[2]+ border_thickness, ...] = line_color
-        out_img[:, :, :, vol_size[3]:vol_size[3]+border_thickness, ...] = line_color
         start = 0.02
         out_img[:, :, int(start* vol_size[2]):int(start* vol_size[2])+4, int(0.9* vol_size[3]):int(0.9* vol_size[3])+scale_bar_vox_sizes[0]] = line_color
         out_img[:, :, int(start* vol_size[2]):int(start* vol_size[2])+4, vol_size[2] + border_thickness + 10 : vol_size[2] + border_thickness + 10 + scale_bar_vox_sizes[1]*scaling_factors[2]] = line_color
