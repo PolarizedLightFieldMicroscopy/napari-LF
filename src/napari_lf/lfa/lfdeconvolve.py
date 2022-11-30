@@ -308,128 +308,29 @@ def do_deconvolve(args):
 
     elif 'net' in args.solver:
         import torch
-        import pytorch_lightning as pl
-        import glob
-        # Extract which network to use from checkpoint file
-        checkpoint_file = glob.glob('C:/Users/OldenbourgLab2/Code/napari-LF-neural_nets/examples/pretrained_networks/VCDNet/version_0/checkpoints/*.ckpt')
-        network_params = torch.load(checkpoint_file[0])
-        # Extract name
-        try:
-            network_name = network_params['hyper_parameters']['name']
-        except:
-            network_name = 'VCDNet'
-        # Extract network hyperparameters
-        network_hp = network_params['hyper_parameters']
-        # Import the network found
-        mod = __import__(f'lfa.neural_nets.{network_name}', fromlist=[network_name])
-        network_class = getattr(mod, network_name)
+        from lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto 
+        LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
+        # VCDNet
+        checkpoint_path = 'C:/Users/OldenbourgLab2/Code/napari-LF-neural_nets/examples/pretrained_networks/VCDNet/version_0/checkpoints/*.ckpt'
+        # LFMNet
+        # checkpoint_path = 'C:/Users/OldenbourgLab2/Code/napari-LF-neural_nets/examples/pretrained_networks/LFMNet/version_2/checkpoints/*.ckpt'
+        # Load network based on checkpoint
+        net = LFNeuralNetworkProto.load_network_from_file(checkpoint_path, LFshape)
+        # Set network into evaluation mode (faster ode)
+        net.eval()
         
         with torch.no_grad():
-            # Convert input image to 2D
-            im_lenslet = lf.asimage(representation = LightField.TILED_LENSLET)
-            LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
-            # Check that hyperparameters and input data matches
-            assert np.all([network_hp['network_settings_dict']['LFshape'], LFshape]), f"Light field shape missmatch: Network used {network_hp['network_settings_dict']['LFshape']} and user provided {LFshape}"
-            # Update input image shape
-            network_hp['input_shape'] = im_lenslet.shape
-            # Create network with stored hyperparameters
-            net = network_class(**network_hp)
-            # net = net_lib.Net(im_lenslet.shape, (64,)+im_lenslet.shape, network_settings_dict={'LFshape' : LFshape})
-            net.load_from_checkpoint(checkpoint_file[0], strict=False)
-            net.eval()
-            
             # Move network to device (GPU/CPU)
             torch_device = torch.device("cuda:"+str(args.gpu_id) if torch.cuda.is_available() and not args.disable_gpu else "cpu")
-            net = net.to(torch_device)
+            net = net.to(torch_device)   
             # Prepare input to network
-            # b_torch = net.prepare_input(im_lenslet).to(torch_device)
+            im_lenslet = lf.asimage(representation = LightField.TILED_LENSLET)
             # Compute 3D reconstruction
             prediction = net(im_lenslet)
+            # Normalize for output
+            prediction /= prediction.max()
             # Copy to from GPU to CPU numpy
             x_vec = prediction[0,0,...].detach().cpu().numpy()
-            
-    # elif args.solver == 'lfmnet':
-    #     print(f'Running {args.solver}')
-    #     import pytorch_lightning as pl
-    #     import torch
-    #     try:
-    #         from lfa.neural_nets.LFMNet import LFMNet
-    #     except:
-    #         from neural_nets.LFMNet import LFMNet
-        
-    #     with torch.no_grad():
-    #         im_lenslet = lf.asimage(representation = LightField.TILED_LENSLET)
-    #         # from tifffile import imread
-    #         # im_lenslet = imread(args.input_file, key=0)
-    #         LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
-    #         net = LFMNet(im_lenslet.shape, (64,)+im_lenslet.shape, network_settings_dict={'LFshape' : LFshape})
-    #         # net.load_model("C:\\Users\\OldenbourgLab2\\Code\\LFMNetWindows\\runs\\2022_11_04__174356_1B_0.1bias_5I_32BS_0Sk_9FOV_3nT_0.03ths__Spatial_xshift\\model_330")
-    #         # net.load_model("C:\\Users\\OldenbourgLab2\\Code\\LFMNetWindows\\runs\\2022_11_07__130847_1B_0.1bias_100I_32BS_0Sk_9FOV_3nT_0.03ths__Spatial_xyshift\\model_2")
-    #         # net.load_from_checkpoint('C:\\Users\\OldenbourgLab2\\Code\\napari-LF-develop\\lightning_logs\\version_6\\checkpoints\\epoch=9-step=2140.ckpt')
-    #         net.load_from_checkpoint('C:/Users/OldenbourgLab2/Code/napari-LF-neural_nets/examples/pretrained_networks/LFMNet/version_2/checkpoints/epoch=4-step=25.ckpt')
-    #         net.eval()
-    #         # Move network to device (GPU/CPU)
-    #         torch_device = torch.device("cuda:"+str(args.gpu_id) if torch.cuda.is_available() and not args.disable_gpu else "cpu")
-    #         net = net.to(torch_device)
-    #         # Prepare input to network
-    #         b_torch = net.prepare_input(im_lenslet).to(torch_device)
-    #         # Compute 3D reconstruction
-    #         prediction = net(b_torch)
-    #         # Copy to from GPU to CPU numpy
-    #         x_vec = prediction[0,0,...].detach().cpu().numpy()
-            
-    #         # Training
-    #         if False:
-    #             net.configure_dataloader()
-    #             trainer = pl.Trainer(gpus=1, precision=32, max_epochs=net.get_train_setting('epochs'))
-    #             trainer.fit(net, net.train_loader, net.val_loader)
-                
-    #             # # eval
-    #             net.eval()
-    #             net = net.to(torch_device)
-    #             b_torch = net.prepare_input(im_lenslet).to(torch_device)
-    #             # Compute 3D reconstruction
-    #             prediction = net(b_torch)
-    #             x_vec = prediction[0,0,...].detach().cpu().numpy()
-        
-    # elif args.solver == 'vcdnet':
-    #     print(f'Running {args.solver}')
-    #     import pytorch_lightning as pl
-    #     import torch
-    #     from torch import utils
-    #     try:
-    #         from lfa.neural_nets.VCDNet import VCDNet
-    #     except:
-    #         from neural_nets.VCDNet import VCDNet
-        
-    #     with torch.no_grad():
-    #         im_lenslet = lf.asimage(representation = LightField.TILED_LENSLET)
-    #         # from tifffile import imread
-    #         # im_lenslet = imread(args.input_file, key=0)
-    #         LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
-    #         net = VCDNet(im_lenslet.shape, (64,)+im_lenslet.shape, network_settings_dict={'LFshape' : LFshape}, training_settings_dict={'epochs' : 100, 'batch_size' : 2, 'images_ids' : list(range(10))})
-            
-    #         if True: # if train
-    #             net.configure_dataloader()
-                
-    #             # train the model (hint: here are some helpful Trainer arguments for rapid idea iteration)
-    #             trainer = pl.Trainer(gpus=1, precision=32, max_epochs=net.get_train_setting('epochs'))
-    #             trainer.fit(model=net, train_dataloaders=net.train_loader, val_dataloaders=net.val_loader)
-    #         else: # load checkpoint
-    #             net.load_from_checkpoint('C:\\Users\\OldenbourgLab2\\Code\\napari-LF-neural_nets\\lightning_logs\\version_18\\checkpoints\\epoch=9-step=10.ckpt')
-    #         # net.load_model("C:\\Users\\OldenbourgLab2\\Code\\LFMNetWindows\\runs\\2022_11_04__174356_1B_0.1bias_5I_32BS_0Sk_9FOV_3nT_0.03ths__Spatial_xshift\\model_330")
-    #         # net.load_model("C:\\Users\\OldenbourgLab2\\Code\\LFMNetWindows\\runs\\2022_11_07__130847_1B_0.1bias_100I_32BS_0Sk_9FOV_3nT_0.03ths__Spatial_xyshift\\model_2")
-    #         net.load_from_checkpoint('C:\\Users\\OldenbourgLab2\\Code\\napari-LF-develop\\lightning_logs\\version_6\\checkpoints\\epoch=9-step=2140.ckpt')
-    #         net.eval()
-    #         # Move network to device (GPU/CPU)
-    #         torch_device = torch.device("cuda:"+str(args.gpu_id) if torch.cuda.is_available() and not args.disable_gpu else "cpu")
-    #         net = net.to(torch_device)
-    #         # Prepare input to network
-    #         b_torch = net.prepare_input(im_lenslet).to(torch_device)
-    #         # Compute 3D reconstruction
-    #         prediction = net(b_torch)
-    #         # Copy to from GPU to CPU numpy
-    #         x_vec = prediction[0,0,...].detach().cpu().numpy()
             
             
     else:
@@ -453,15 +354,15 @@ def do_deconvolve(args):
     else:
         vol = np.reshape(x_vec, (db.ny, db.nx, db.nz))
 
-    # Slight hack: zero out the outermost XY "shell" of pixels, since
-    # these are often subject to radiometry artifacts.
-    min_val = vol[db.supersample_factor:-db.supersample_factor,
-                  db.supersample_factor:-db.supersample_factor, :].min()
-    print('\t--> Replacing border values with min value: ', min_val)
-    vol[0:db.supersample_factor, :, :] = min_val
-    vol[-db.supersample_factor:, :, :] = min_val
-    vol[:, 0:db.supersample_factor, :] = min_val
-    vol[:, -db.supersample_factor:, :] = min_val
+        # Slight hack: zero out the outermost XY "shell" of pixels, since
+        # these are often subject to radiometry artifacts.
+        min_val = vol[db.supersample_factor:-db.supersample_factor,
+                    db.supersample_factor:-db.supersample_factor, :].min()
+        print('\t--> Replacing border values with min value: ', min_val)
+        vol[0:db.supersample_factor, :, :] = min_val
+        vol[-db.supersample_factor:, :, :] = min_val
+        vol[:, 0:db.supersample_factor, :] = min_val
+        vol[:, -db.supersample_factor:, :] = min_val
 
     # ================================= SAVE RESULTS ==================================
 
