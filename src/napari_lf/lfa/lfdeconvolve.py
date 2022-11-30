@@ -311,7 +311,7 @@ def do_deconvolve(args):
         from lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto 
         LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
         # VCDNet
-        checkpoint_path = 'C:/Users/OldenbourgLab2/Code/napari-LF-neural_nets/examples/pretrained_networks/VCDNet/version_0/checkpoints/*.ckpt'
+        checkpoint_path = 'C:/Users/OldenbourgLab2/Code/napari-LF-neural_nets/examples/pretrained_networks/VCDNet/version_32/checkpoints/*.ckpt'
         # LFMNet
         # checkpoint_path = 'C:/Users/OldenbourgLab2/Code/napari-LF-neural_nets/examples/pretrained_networks/LFMNet/version_2/checkpoints/*.ckpt'
         # Load network based on checkpoint
@@ -319,6 +319,7 @@ def do_deconvolve(args):
         # Set network into evaluation mode (faster ode)
         net.eval()
         
+        ## Process image:
         with torch.no_grad():
             # Move network to device (GPU/CPU)
             torch_device = torch.device("cuda:"+str(args.gpu_id) if torch.cuda.is_available() and not args.disable_gpu else "cpu")
