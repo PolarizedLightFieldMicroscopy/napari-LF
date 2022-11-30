@@ -77,14 +77,14 @@ class LFNeuralNetworkProto(pl.LightningModule):
                                         vol_in_norm, 
                                         depths_in_ch=False)[0,0,...].float().unsqueeze(0).cpu().data.detach(), 
                                     normalize=True, 
-                                    scale_each=False), self.global_step)
+                                    scale_each=True), self.global_step)
             tensorboard.add_image(f'pred/{logging_tag}', 
                                 tv.utils.make_grid(
                                     volume_2_projections(
                                         vol_pred, 
                                         depths_in_ch=False)[0,0,...].float().unsqueeze(0).cpu().data.detach(), 
                                     normalize=True, 
-                                    scale_each=False), self.global_step)
+                                    scale_each=True), self.global_step)
         return loss
     
     # training_step defines the train loop.  
@@ -129,7 +129,6 @@ class LFNeuralNetworkProto(pl.LightningModule):
         assert np.all([network_hp['network_settings_dict']['LFshape'], LFshape]), f"Light field shape missmatch: Network used {network_hp['network_settings_dict']['LFshape']} and user provided {LFshape}"
         # Update input image shape
         network_hp['input_shape'] = [LFshape[0]*LFshape[2], LFshape[1]*LFshape[3]]
-        network_hp['training_settings_dict']['images_ids'] = list(range(100,105))
         # Create network with stored hyperparameters
         net = network_class(**network_hp)
         # net = net_lib.Net(im_lenslet.shape, (64,)+im_lenslet.shape, network_settings_dict={'LFshape' : LFshape})
