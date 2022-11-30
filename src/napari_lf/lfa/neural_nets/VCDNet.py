@@ -91,7 +91,7 @@ class VCDNet(LFNeuralNetworkProto):
                 # if m.bias is not None:
                 #     m.bias.data *= 0.01
         
-        self.apply(subnet_initialization_small)
+        # self.apply(subnet_initialization_small)
     
     
     def prepare_input(self, input):
@@ -106,6 +106,7 @@ class VCDNet(LFNeuralNetworkProto):
         # Normalize by max: todo: this should be stored in arguments
         if LF_VCD.max() > 1.0:
             LF_VCD /= self.max_LF_train.item()
+        LF_VCD[LF_VCD==0] = LF_VCD[LF_VCD!=0.0].min()
         return LF_VCD
     
     def forward(self, input):
