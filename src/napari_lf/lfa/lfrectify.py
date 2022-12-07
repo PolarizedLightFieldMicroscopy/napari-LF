@@ -20,7 +20,7 @@ def main(args=None, values=None):
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-i","--input_file", dest="input_file",
+    parser.add_argument('input_file', 
                         help="Supply at least one light field image to recfity.")
     parser.add_argument("-p", "--output-pixels-per-lenslet", dest="output_pixels_per_lenslet",
                       help="Specify the number of pixels per lenslet in the output image.")
@@ -66,6 +66,7 @@ def main(args=None, values=None):
 
     # Rectify the image
     rectified_lf = lfcal.rectify_lf(im)
+
 
     # Optionally reformat the image so that sub-aperturs are tiled, rather than lenslet images.
     from lflib.lightfield import LightField

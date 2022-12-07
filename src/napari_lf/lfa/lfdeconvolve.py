@@ -1,3 +1,10 @@
+# lflib imports
+import lflib
+from lflib.imageio import load_image, save_image
+from lflib.lightfield import LightField
+from lflib.calibration import LightFieldCalibration
+from lflib.util import ensure_path
+
 # major libraries
 import numpy as np
 import h5py
@@ -8,13 +15,6 @@ import tempfile
 import socket
 import argparse
 import sys
-
-# lflib imports
-import lflib
-from lflib.imageio import load_image, save_image
-from lflib.lightfield import LightField
-from lflib.calibration import LightFieldCalibration
-from lflib.util import ensure_path
 
 #----------------------------------------------------------------------------------
 
@@ -144,15 +144,14 @@ def do_deconvolve(args):
     print('\t--> %s opened.  Pixel values range: [%d, %d]' % (filename, int(im.min()), int(im.max())))
 
     # Perform dark frame subtraction
-    lf_zeros = False
-    # from lflib.lfexceptions import ZeroImageException
-    # try:
-    #     im = lfcal.subtract_dark_frame(im)
-    #     print('\t    Dark frame subtracted.  Pixel values range: [%f, %f]' % (im.min(), im.max()))
-    #     lf_zeros = False
-    # except ZeroImageException:
-    #     print("\t    A frame with no light pixels was found, but it's no big deal")
-    #     lf_zeros = True
+    from lflib.lfexceptions import ZeroImageException
+    try:
+        im = lfcal.subtract_dark_frame(im)
+        print('\t    Dark frame subtracted.  Pixel values range: [%f, %f]' % (im.min(), im.max()))
+        lf_zeros = False
+    except ZeroImageException:
+        print("\t    A frame with no light pixels was found, but it's no big deal")
+        lf_zeros = True
 
     # Rectify the image
     lf = lfcal.rectify_lf(im)
@@ -197,8 +196,7 @@ def do_deconvolve(args):
     # Trim out entries in the light field that we are ignoring because
     # they are too close to the edge of the NA of the lenslet.  This
     # make our residuals more accurate below.
-    if 'net' not in args.solver:
-        lf = lfcal.mask_trimmed_angles(lf)
+    lf = lfcal.mask_trimmed_angles(lf)
 
     # Generate the b vector, which contains the observed lightfield;
     # and the initial volume x containing all zeros.
@@ -306,34 +304,6 @@ def do_deconvolve(args):
         (x_vec, residuals) = sirt_reconstruction(A_operator, b_vec,
                                                  args.alpha, args.conv_thresh, args.max_iter)
 
-    elif 'net' in args.solver:
-        import torch
-        from lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto 
-        LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
-        # VCDNet
-        checkpoint_path = 'C:/Users/OldenbourgLab2/Code/napari-LF-neural_nets/examples/pretrained_networks/VCDNet/version_32/checkpoints/*.ckpt'
-        # LFMNet
-        # checkpoint_path = 'C:/Users/OldenbourgLab2/Code/napari-LF-neural_nets/examples/pretrained_networks/LFMNet/version_2/checkpoints/*.ckpt'
-        # Load network based on checkpoint
-        net = LFNeuralNetworkProto.load_network_from_file(checkpoint_path, LFshape)
-        # Set network into evaluation mode (faster ode)
-        net.eval()
-        
-        ## Process image:
-        with torch.no_grad():
-            # Move network to device (GPU/CPU)
-            torch_device = torch.device("cuda:"+str(args.gpu_id) if torch.cuda.is_available() and not args.disable_gpu else "cpu")
-            net = net.to(torch_device)   
-            # Prepare input to network
-            im_lenslet = lf.asimage(representation = LightField.TILED_LENSLET)
-            # Compute 3D reconstruction
-            prediction = net(im_lenslet)
-            # Normalize for output
-            prediction /= prediction.max()
-            # Copy to from GPU to CPU numpy
-            x_vec = prediction[0,0,...].detach().cpu().numpy()
-            
-            
     else:
         raise ValueError("The reconstruction method specified is not an option, " +
                          "available methods are: "
@@ -350,20 +320,18 @@ def do_deconvolve(args):
 
 
     # ============================ RESHAPE & CLEAN UP VOLUME ==============================
-    if 'net' in args.solver:
-        vol = x_vec
-    else:
-        vol = np.reshape(x_vec, (db.ny, db.nx, db.nz))
 
-        # Slight hack: zero out the outermost XY "shell" of pixels, since
-        # these are often subject to radiometry artifacts.
-        min_val = vol[db.supersample_factor:-db.supersample_factor,
-                    db.supersample_factor:-db.supersample_factor, :].min()
-        print('\t--> Replacing border values with min value: ', min_val)
-        vol[0:db.supersample_factor, :, :] = min_val
-        vol[-db.supersample_factor:, :, :] = min_val
-        vol[:, 0:db.supersample_factor, :] = min_val
-        vol[:, -db.supersample_factor:, :] = min_val
+    vol = np.reshape(x_vec, (db.ny, db.nx, db.nz))
+
+    # Slight hack: zero out the outermost XY "shell" of pixels, since
+    # these are often subject to radiometry artifacts.
+    min_val = vol[db.supersample_factor:-db.supersample_factor,
+                  db.supersample_factor:-db.supersample_factor, :].min()
+    print('\t--> Replacing border values with min value: ', min_val)
+    vol[0:db.supersample_factor, :, :] = min_val
+    vol[-db.supersample_factor:, :, :] = min_val
+    vol[:, 0:db.supersample_factor, :] = min_val
+    vol[:, -db.supersample_factor:, :] = min_val
 
     # ================================= SAVE RESULTS ==================================
 

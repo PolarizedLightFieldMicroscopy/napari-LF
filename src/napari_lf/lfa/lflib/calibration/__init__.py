@@ -276,7 +276,7 @@ class LightFieldCalibration(object):
         return instance
 
     
-    def save(self, filename):
+    def save(self, filename, comments=''):
         '''
         Save the calibartion image to disk.  Calibration information
         is stored in an hdf5 file using attributes.
@@ -284,7 +284,7 @@ class LightFieldCalibration(object):
         import h5py
         calibration_file = h5py.File(filename, 'w')
         calibration_file.attrs['timestamp'] = str(datetime.datetime.now())
-        calibration_file.attrs['comments'] = ''    # Empty for now...
+        calibration_file.attrs['comments'] = str(comments)    # Empty for now...
         
         # Optics
         optics_group = calibration_file.create_group('optics')
@@ -538,9 +538,8 @@ class LightFieldCalibration(object):
         output_im = raw_image.astype(np.float32) - self.dark_frame
 
         if output_im.max() <= 0.0:
-            raise ZeroImageException("ERROR: dark frame subtracted image" 
-                    "contains only zeros. Perhaps you are using the wrong" 
-                    "dark frame?")
+            raise ZeroImageException("ERROR: dark frame subtracted image contains " 
+                    "only zeros. Perhaps you are using the wrong dark frame?")
 
         return output_im.astype(input_dtype)
     

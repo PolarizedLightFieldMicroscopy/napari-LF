@@ -8,9 +8,9 @@
 # microscope), but can be used to update old calibration files from
 # early experiments as well.
 import sys, os
+from lflib.imageio import load_image, save_image
 import numpy as np
 import glob
-from lflib.imageio import load_image, save_image
 
 from lflib.lfexceptions import ParameterError
 
@@ -115,6 +115,8 @@ def main(args=None, values=None):
                       help="Force lfcalibrate to use a specific OpenCL Platform on your system.")
     parser.add_argument("--gpu-id", dest="gpu_id", type=int, default=0,
                       help="Force lfcalibrate to use a specific GPU on your system.")
+    parser.add_argument("--comments", dest="comments", default="",
+                      help="User comments.")
 
     # Other Options
     parser.add_argument("--crop-center-lenslets",
@@ -145,6 +147,7 @@ def main(args=None, values=None):
 
     # Check if the input paremeters are valid.
     from lflib.lfexceptions import ParameterError, ParameterExistsError
+    #print("args.synthetic_lf: ", not args.synthetic_lf)
     if not args.synthetic_lf and not args.radiometry_frame_file:
         raise ParameterError("Please supply exactly one calibration image.")
 
@@ -263,7 +266,7 @@ def main(args=None, values=None):
                 radiometry_frame_file = args.radiometry_frame_file,
                 dark_frame_file = args.dark_frame_file)
         # Save the result
-        lfcal.save(output_filename)
+        lfcal.save(output_filename, args.comments)
         lfcal.print_summary()
 
     except ZeroImageException:

@@ -118,6 +118,9 @@ class LFQWidget(QWidget):
 				
 			if vals[1] == 'dec' and vals[2] == '':
 				self.display_proc_image('dec')
+				
+			if vals[1] == 'lfmnet' and vals[2] == '':
+				self.display_proc_image(operation_type=vals[1])
     
 			if 'proj_' in vals[1] and vals[2] == '':
 				self.display_proc_image(operation_type=vals[1])
@@ -166,7 +169,7 @@ class LFQWidget(QWidget):
 			
 		@self.gui.gui_elms["projections"]["input_file_volume_btn"].changed.connect
 		def input_file_volume_btn_fnc():
-			print("Button for Forward Projections Volume Processing")
+			#print("Button for Forward Projections Volume Processing")
 			self.gui.set_btns_and_status(False, LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
 			self.combine_args()
 			self.thread_worker = self.run_lf_proj_lfs(self.new_args_proj)
@@ -175,7 +178,7 @@ class LFQWidget(QWidget):
 			
 		@self.gui.gui_elms["projections"]["input_file_lightfield_btn"].changed.connect
 		def input_file_lightfield_btn_fnc():
-			print("Button for Backward Projections Lightfield Processing")
+			#print("Button for Backward Projections Lightfield Processing")
 			self.gui.set_btns_and_status(False, LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
 			self.combine_args()
 			self.thread_worker = self.run_lf_proj_vol(self.new_args_proj)
@@ -184,14 +187,51 @@ class LFQWidget(QWidget):
 			
 		@self.gui.gui_elms["lfmnet"]["input_model_btn"].changed.connect
 		def input_model_btn_fnc():
-			print("Button for LFMNet Model Processing")
+			#print("Button for LFMNet Model Processing")
 			self.gui.set_btns_and_status(False, LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
 			self.combine_args()
-			self.thread_worker = self.run_lf_net(self.new_args_decon)
+			self.thread_worker = self.run_lf_net(self.new_args_lfmnet)
 			self.thread_worker.returned.connect(set_status)
 			self.thread_worker.start()
 			
-		
+		@self.gui.gui_elms["lfmnet"]["input_model"].changed.connect
+		def input_model_change_call():
+			#print("Button for LFMNet Model Change")
+			import torch
+
+			from lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
+			# Load calib file
+			if self.gui.gui_elms["lfmnet"]["calibration_file"].value == None:
+				return
+			calibFile_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["calibration_file"].value))
+			path = Path(calibFile_path)
+			if path.is_file():
+				import h5py
+				with h5py.File(calibFile_path, "r") as f:
+					lf = f['geometry']
+					LFshape = [lf.attrs['nu'], lf.attrs['nv'], lf.attrs['ns'], lf.attrs['nt']]
+			
+			# LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
+			# VCDNet
+			if self.gui.gui_elms["lfmnet"]["input_model"].value == None:
+				return
+			checkpoint_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["input_model"].value))
+			# LFMNet
+			# checkpoint_path = '../checkpoints/*.ckpt'
+			# Load network based on checkpoint
+			#print(checkpoint_path)
+			#print(LFshape)
+			net = LFNeuralNetworkProto.load_network_from_file(checkpoint_path, LFshape)
+			
+			# Set network into evaluation mode (faster ode)
+			net.eval()
+			data_str = ""
+			for i in net.network_settings_dict:
+				data_str += i + ' : ' + str(net.network_settings_dict[i]) + '\n'
+			for i in net.training_settings_dict:
+				data_str += i + ' : ' + str(net.training_settings_dict[i]) + '\n'
+			self.gui.gui_elms["lfmnet"]["input_model_prop_viewer"].value = data_str
+			
 		for section in ['calibrate','rectify','deconvolve','hw','misc','main']:
 			for prop in LFvals.PLUGIN_ARGS[section]:
 				if LFvals.PLUGIN_ARGS[section][prop]['type'] in ['int', 'float', 'sel']:
@@ -303,6 +343,8 @@ class LFQWidget(QWidget):
 			proc_img = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.lf_vals["projections"]["output_filename_lightfield"]["value"]))
 		elif operation_type=='proj_vol':
 			proc_img = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.lf_vals["projections"]["output_filename_volume"]["value"]))
+		elif operation_type=='lfmnet':
+			proc_img = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.lf_vals["lfmnet"]["output_filename"]["value"]))
    
 		layer = None
 		if self.gui.gui_elms["misc"]["use_ext_viewer"].value == True:
@@ -338,6 +380,7 @@ class LFQWidget(QWidget):
 		self.new_args_rec = []
 		self.new_args_decon = []
 		self.new_args_proj = []
+		self.new_args_lfmnet = []
 		
 		self.gui.refresh_vals()
 		
@@ -377,6 +420,9 @@ class LFQWidget(QWidget):
 									else:
 										current_val = str(current_val)
 								self.new_args_cal.append(current_val)
+								
+			self.new_args_cal.append(LFvals.PLUGIN_ARGS["main"]["comments"]["prop"])
+			self.new_args_cal.append(self.gui.gui_elms["main"]["comments"].value)
 
 			key = "input_file"
 			dict = self.gui.lf_vals["rectify"][key]
@@ -388,7 +434,7 @@ class LFQWidget(QWidget):
 			#self.new_args_rec.append(current_val)
 			
 			for key in self.gui.lf_vals["rectify"]:
-				print(f"key:{key}")
+				#print(f"key:{key}")
 				dict = self.gui.lf_vals["rectify"][key]
 				if "exclude_from_args" in dict and dict["exclude_from_args"] == True:
 					pass
@@ -449,6 +495,42 @@ class LFQWidget(QWidget):
 								current_val = str(current_val)
 							self.new_args_decon.append(prop)
 							self.new_args_decon.append(current_val)
+							
+			key = "input_file"
+			dict = self.gui.lf_vals["lfmnet"][key]
+			current_val = dict["value"]
+			if "img_folder_file" in dict and dict["img_folder_file"] == True:
+				current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
+			else:
+				current_val = str(current_val)
+			self.new_args_lfmnet.append(current_val)
+			
+			for section in ["lfmnet", "hw"]:
+				for key in self.gui.lf_vals[section]:
+					dict = self.gui.lf_vals[section][key]
+					if "exclude_from_args" in dict and dict["exclude_from_args"] == True:
+						pass
+					elif "bind" in dict and dict["bind"] in self.gui.lf_vals[section] and dict["value"] == self.gui.lf_vals[section][dict["bind"]]["value"]:
+						pass
+					else:
+						prop = dict["prop"]
+						if ("cat" in dict and dict["cat"] == "required") or (dict["value"] != dict["default"]):
+							current_val = dict["value"]
+						else:
+							current_val = None
+							
+						if current_val == None:
+							pass
+						elif dict["type"] == "bool":
+							if dict["default"] == True or current_val == True:
+								self.new_args_lfmnet.append(prop)
+						else:
+							if "img_folder_file" in dict and dict["img_folder_file"] == True:
+								current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
+							else:
+								current_val = str(current_val)
+							self.new_args_lfmnet.append(prop)
+							self.new_args_lfmnet.append(current_val)
        		
 			key = "input_file_volume"
 			dict = self.gui.lf_vals["projections"][key]
@@ -575,13 +657,89 @@ class LFQWidget(QWidget):
 	@thread_worker(progress={'total': 0})
 	def run_lf_net(self, args):
 		try:
+			args += ['--solver','net']
+			gpu_id = 0
+			try:
+				gpu_id = self.gui.gpu_choices.index(self.gui.gui_elms["hw"]["gpu_id"].value)
+			except Exception as err:
+				pass
+			if self.gui.gui_elms["hw"]["disable_gpu"].value == True:
+				args += ['--disable_gpu']
+				args += ['--gpu_id', gpu_id]
+			else:
+				args += ['--gpu_id', gpu_id]
 			print(args)
-			print("LFMNet process")		
-			return (LFvals.PLUGIN_ARGS['main']['status']['value_idle'], 'net', '')
+			print("LFMNet process")
+			
+			print('\t--> hostname:{host}'.format(host=lfdeconvolve.socket.gethostname()))
+			print('\t--> specified gpu-id:{gpuid}'.format(gpuid=gpu_id))
+			
+			import torch
+			from lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
+			# Load calib file
+			if self.gui.gui_elms["lfmnet"]["calibration_file"].value == None:
+				return
+			
+			calibFile_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["calibration_file"].value))
+			path = Path(calibFile_path)
+			if path.is_file() == False:
+				return
+			# Loadim the calibration data
+			calibration_file = lfdeconvolve.retrieve_calibration_file(calibFile_path, id=str(gpu_id))
+			lfcal = lfdeconvolve.LightFieldCalibration.load(calibration_file)
+			print('\t--> loaded calibration file: %s' % (calibFile_path))
+			
+			if self.gui.gui_elms["lfmnet"]["input_file"].value == None:
+				return
+			LF_File_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["input_file"].value))
+			#Import LF image
+			im = lfdeconvolve.load_image(LF_File_path, dtype=lfdeconvolve.np.float32, normalize = False)
+			print('\t--> loaded LF file: %s.  Pixel values range: [%d, %d]' % (LF_File_path, int(im.min()), int(im.max())))
+			
+			# Rectify the image
+			# skip-alignment parameter is set by calib file
+			print('\t--> skip_alignment: %s' % (lfcal.skip_alignment))
+			
+			lf = lfcal.rectify_lf(im)
+			LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
+			
+			# VCDNet
+			if self.gui.gui_elms["lfmnet"]["input_model"].value == None:
+				return
+			checkpoint_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["input_model"].value))
+			# LFMNet
+			# Load network based on checkpoint
+
+			net = LFNeuralNetworkProto.load_network_from_file(checkpoint_path, LFshape)
+			print('\t--> loaded model-checkpoint file: %s' % (checkpoint_path))
+			
+			# Set network into evaluation mode (faster ode)
+			net.eval()
+			
+			## Process image:
+			with torch.no_grad():
+				# Move network to device (GPU/CPU)
+				torch_device = torch.device("cuda:"+str(gpu_id) if torch.cuda.is_available() and not args.disable_gpu else "cpu")
+				net = net.to(torch_device)   
+				# Prepare input to network
+				im_lenslet = lf.asimage(representation = lfdeconvolve.LightField.TILED_LENSLET)
+				# Compute 3D reconstruction
+				prediction = net(im_lenslet)
+				# Normalize for output
+				prediction /= prediction.max()
+				# Copy to from GPU to CPU numpy
+				x_vec = prediction[0,0,...].detach().cpu().numpy()
+
+			# Save volume
+			output_filename = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["output_filename"].value))
+			lfdeconvolve.save_image(output_filename, x_vec)
+			print('\t--> Saved', output_filename)
+			
+			return (LFvals.PLUGIN_ARGS['main']['status']['value_idle'], 'lfmnet', '')
 		except Exception as err:
 			print(traceback.format_exc())
 			self.gui.dump_errors(self.currentdir, str(traceback.format_exc()), traceback=True)
-			return (LFvals.PLUGIN_ARGS['main']['status']['value_error'], 'net', err)
+			return (LFvals.PLUGIN_ARGS['main']['status']['value_error'], 'lfmnet', err)
 
 	def refresh_vals(self):
 		self.gui.refresh_vals()

@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, multiprocessing
 from qtpy.QtGui import QIcon
 
 currentdir = os.path.dirname(os.path.realpath(__file__))
@@ -56,7 +56,7 @@ PLUGIN_ARGS = {
 			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"str","enabled":True
 		},
 		"comments":{
-			"default":"","label":"Comments","help":"Comments from Acquisition and Processing","type":"str","type":"text"
+			"default":"","prop":"--comments","label":"Comments","help":"Comments from Acquisition and Processing","type":"str","type":"text"
 		},
 		"presets":{
 			"default":"","label":"Presets","help":"Save/Load parameters from presets.","type":"sel","options":[""]
@@ -220,7 +220,7 @@ PLUGIN_ARGS = {
 			"prop":"--skip-subpixel-alignment","action":"store_true","label":"Skip subpixel alignment","dest":"skip_subpixel_alignment","type":"bool","default":False,"help":"Skip subpixel alignment for determining lenslet centers.","group":"Other Options"
 		},
 		"num_threads":{
-			"prop":"--num-threads","label":"Number of CPU threads","dest":"num_threads","type":"int","default":10,"help":"Set the number of CPU threads to use when generating the raydb.","group":"Other Options"
+			"prop":"--num-threads","label":"Number of CPU threads","dest":"num_threads","type":"int","default":min(10,multiprocessing.cpu_count()),"help":"Set the number of CPU threads to use when generating the raydb.","group":"Other Options","max":multiprocessing.cpu_count(), "min":1
 		},
 		"pinhole_filename":{
 			"prop":"--pinhole","label":"Pinhole filename","dest":"pinhole_filename","type":"str","default":"","help":"After calibrating save the rectified light field as a rectified sub-aperture image.","group":"Other Options"
@@ -347,25 +347,25 @@ PLUGIN_ARGS = {
 	# ======= Projections ============
 	# ===============================
  		"calibration_file":{
-			"prop_short":"-c","prop":"--calibration-file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"calibration.lfc","options":["calibration.lfc"],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
+			"prop_short":"-c","prop":"--calibration-file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"calibration.lfc","options":["calibration.lfc"],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Calibrations"
 		},
 		"input_file_volume":{
-			"prop":"input_file_volume","label":"Forward (volumes)","dest":"input_file_volume","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"img_folder_file":True,"group":"Files"
+			"prop":"input_file_volume","label":"Forward (volumes)","dest":"input_file_volume","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"img_folder_file":True,"group":"Forward Projections"
 		},
 		"output_filename_lightfield":{
-			"prop":"--output-filename-lightfield","label":"Output LF image","dest":"output_filename","type":"str","default":"output_proj_lf_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
+			"prop":"--output-filename-lightfield","label":"Output LF image","dest":"output_filename","type":"str","default":"output_proj_lf_img.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Forward Projections"
 		},
 		"input_file_volume_btn":{
-			"prop":"input_file_volume_btn","label":"Process","dest":"input_file_volume_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+			"prop":"input_file_volume_btn","label":"Process","dest":"input_file_volume_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Forward Projections"
 		},
 		"input_file_lightfield":{
-			"prop":"input_file_lightfield","label":"Backward (lightfields)","dest":"input_file_lightfield","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"img_folder_file":True,"group":"Files"
+			"prop":"input_file_lightfield","label":"Backward (lightfields)","dest":"input_file_lightfield","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"img_folder_file":True,"group":"Backward Projections"
 		},
 		"output_filename_volume":{
-			"prop":"--output-filename-volume","label":"Output volume stack","dest":"output_filename","type":"str","default":"output_proj_vol_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
+			"prop":"--output-filename-volume","label":"Output volume stack","dest":"output_filename","type":"str","default":"output_proj_vol_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Backward Projections"
 		},
 		"input_file_lightfield_btn":{
-			"prop":"input_file_lightfield_btn","label":"Process","dest":"input_file_lightfield_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+			"prop":"input_file_lightfield_btn","label":"Process","dest":"input_file_lightfield_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Backward Projections"
 		}
 	},
 	"lfmnet":{
@@ -373,13 +373,16 @@ PLUGIN_ARGS = {
 	# ======= LFMNet ============
 	# ===============================
 		"input_file":{
-			"prop":"input_file","label":"Light field image","dest":"input_file","type":"sel","default":"light_field.png","options":["light_field.png"],"help":"Supply at least one light field image to rectify.","cat":"required","img_folder_file":True,"group":"Files"
+			"prop":"input_file","label":"Light field image","dest":"input_file","type":"sel","default":"","options":[""],"help":"Supply at least one light field image to rectify.","cat":"required","img_folder_file":True,"group":"Files"
 		},
 		"calibration_file":{
-			"prop":"calibration-file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"calibration.lfc","options":["calibration.lfc"],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
+			"prop":"calibration_file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"","options":[""],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
 		},
 		"input_model":{
 			"prop":"input_model","label":"Select Model","dest":"input_model","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+		},
+		"input_model_prop_viewer":{
+			"prop":"input_model_prop_viewer","label":"Model Prop Viewer","dest":"input_model_prop_viewer","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files", "type":"text","group":"Network Model Inspector","exclude_from_settings":True,"exclude_from_args":True,"read_only":True,"no_label_layout_style":True
 		},
 		"output_filename":{
 			"prop":"output_file","label":"Output image stack","dest":"output_filename","type":"str","default":"output_network_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"

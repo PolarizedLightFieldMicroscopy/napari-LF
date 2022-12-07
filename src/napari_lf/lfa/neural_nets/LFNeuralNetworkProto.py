@@ -106,7 +106,10 @@ class LFNeuralNetworkProto(pl.LightningModule):
 
         # Extract which network to use from checkpoint file
         checkpoint_file = glob.glob(file_name)
-        network_params = torch.load(checkpoint_file[0])
+        if torch.cuda.is_available():
+            network_params = torch.load(checkpoint_file[0])
+        else:
+            network_params = torch.load(checkpoint_file[0], map_location='cpu')
         # Extract name
         try:
             network_name = network_params['hyper_parameters']['name']

@@ -124,7 +124,7 @@ class LFQWidgetGui():
 		self.cont_btn_status_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.cont_btn_status_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 
-		self.groupbox = {"calibrate":{"required":{},"optional":{},"inspect":{}},"rectify":{"required":{},"optional":{}},"deconvolve":{"required":{},"optional":{}}}
+		self.groupbox = {"calibrate":{"required":{},"optional":{},"inspect":{}},"rectify":{"required":{},"optional":{}},"deconvolve":{"required":{},"optional":{}}, "projections":{}, "lfmnet":{}}
 		
 		# == CALIBATE ==
 		_widget_calibrate_req = []
@@ -591,29 +591,74 @@ class LFQWidgetGui():
 		
 		# == PROJECTIONS ==
 		self.gui_elms["projections"] = {}
+		self.groupbox["projections"] = {}
 		_widget_projections = []
 		for key in LFvals.PLUGIN_ARGS['projections']:
 			dict = LFvals.PLUGIN_ARGS["projections"][key]
+			if "group" in dict and dict["group"] not in self.groupbox["projections"] and self.lf_vals["misc"]["group_params"]["value"] == True:
+				self.groupbox["projections"][dict["group"]] = QGroupBox(dict["group"])
+				vbox = QFormLayout()
+				_widget_projections.append(self.groupbox["projections"][dict["group"]])
+				self.groupbox["projections"][dict["group"]].setLayout(vbox)
 			if "label" not in dict:
 				dict["label"] = dict["dest"]
 			wid_elm = create_widget(dict)
 			self.gui_elms["projections"][key] = wid_elm
-			_widget_projections.append(wid_elm)
-			
-		self.container_projections = Container(name='Projections', widgets=_widget_projections)
+			if "group" in dict:
+				if self.lf_vals["misc"]["group_params"]["value"] == False:
+					_widget_projections.append(wid_elm)
+				else:
+					if dict["type"] == "bool":
+						self.groupbox["projections"][dict["group"]].layout().addRow(wid_elm.native)
+					elif "no_label_layout_style" in dict and dict["no_label_layout_style"] == True:
+						self.groupbox["projections"][dict["group"]].layout().addRow(wid_elm.native)
+					else:
+						self.groupbox["projections"][dict["group"]].layout().addRow(wid_elm.label, wid_elm.native)
+			else:
+				_widget_projections.append(wid_elm)
+				
+		if self.lf_vals["misc"]["group_params"]["value"] == False:	
+			self.container_projections = Container(name='Projections', widgets=_widget_projections)
+		else:		
+			self.container_projections = Container(name='Projections', widgets=())
+			for wid_elm in _widget_projections:
+				self.container_projections.native.layout().addWidget(wid_elm)
 		
 		# == LFMNET ==
 		self.gui_elms["lfmnet"] = {}
+		self.groupbox["lfmnet"] = {}
 		_widget_lfmnet = []
 		for key in LFvals.PLUGIN_ARGS['lfmnet']:
 			dict = LFvals.PLUGIN_ARGS["lfmnet"][key]
+			if "group" in dict and dict["group"] not in self.groupbox["lfmnet"] and self.lf_vals["misc"]["group_params"]["value"] == True:
+				self.groupbox["lfmnet"][dict["group"]] = QGroupBox(dict["group"])
+				vbox = QFormLayout()
+				_widget_lfmnet.append(self.groupbox["lfmnet"][dict["group"]])
+				self.groupbox["lfmnet"][dict["group"]].setLayout(vbox)
 			if "label" not in dict:
 				dict["label"] = dict["dest"]
 			wid_elm = create_widget(dict)
 			self.gui_elms["lfmnet"][key] = wid_elm
-			_widget_lfmnet.append(wid_elm)
-			
-		self.container_lfmnet = Container(name='LFM-NET', widgets=_widget_lfmnet)
+			if "group" in dict:
+				if self.lf_vals["misc"]["group_params"]["value"] == False:
+					_widget_lfmnet.append(wid_elm)
+				else:
+					if dict["type"] == "bool":
+						self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.native)
+					elif "no_label_layout_style" in dict and dict["no_label_layout_style"] == True:
+						self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.native)
+					else:
+						self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.label, wid_elm.native)
+			else:
+				_widget_lfmnet.append(wid_elm)
+				
+		if self.lf_vals["misc"]["group_params"]["value"] == False:	
+			self.container_lfmnet = Container(name='LFM-NET', widgets=_widget_lfmnet)
+		else:		
+			self.container_lfmnet = Container(name='LFM-NET', widgets=())
+			for wid_elm in _widget_lfmnet:
+				self.container_lfmnet.native.layout().addWidget(wid_elm)
+
 		
 		# == HARDWARE ==
 		self.gui_elms["hw"] = {}
@@ -836,6 +881,10 @@ class LFQWidgetGui():
 			
 			str_data = []
 			with h5py.File(img_file_path, "r") as f:
+				for data_key in f.attrs.keys():
+						data = f.attrs[data_key]
+						str_data.append(str(data_key) +' : '+ str(data))
+						str_data.append("\n")
 				# List all groups
 				groups = f.keys()
 				str_data.append("=== Groups: %s ===" % list(groups))
@@ -845,15 +894,15 @@ class LFQWidgetGui():
 					str_data.append("\n")
 					# Get the data
 					data_grp = f[group]
-					str_data.append("-- %s --" % data_grp)
-					str_data.append("\n")
-					for data_key in data_grp:
-						data = data_grp[data_key]
-						str_data.append(str(data))
+					#str_data.append("-- %s --" % data_grp)
+					#str_data.append("\n")
+					for data_key in data_grp.attrs.keys():
+						data = data_grp.attrs[data_key]
+						str_data.append(str(data_key) +' : '+ str(data))
 						str_data.append("\n")
 				str_data.append("====================")
 				
-			self.gui_elms["calibrate"]["calibration_files_viewer"].value = ' '.join(str_data)
+			self.gui_elms["calibrate"]["calibration_files_viewer"].value = ''.join(str_data)
 			
 		@self.gui_elms["main"]["img_folder"].changed.connect
 		def img_folder_changes():
@@ -1009,72 +1058,49 @@ class LFQWidgetGui():
 			path = Path(_img_folder)
 			if path.is_dir():
 			
-				_cal_out = self.gui_elms["calibrate"]["output_filename"].value
-				_rec_out = self.gui_elms["rectify"]["output_filename"].value
-				_dec_out = self.gui_elms["deconvolve"]["output_filename"].value
+				out_files = [
+					{"section":"calibrate","out_file":"output_filename", "sub_section":"required", "group":LFvals.PLUGIN_ARGS['calibrate']['output_filename']['group']},
+					{"section":"rectify","out_file":"output_filename", "sub_section":"required", "group":LFvals.PLUGIN_ARGS['rectify']['output_filename']['group']},
+					{"section":"deconvolve","out_file":"output_filename", "sub_section":"required", "group":LFvals.PLUGIN_ARGS['deconvolve']['output_filename']['group']},
+					{"section":"projections","out_file":"output_filename_lightfield", "group":LFvals.PLUGIN_ARGS['projections']['output_filename_lightfield']['group']},
+					{"section":"projections","out_file":"output_filename_volume", "group":LFvals.PLUGIN_ARGS['projections']['output_filename_volume']['group']},
+					{"section":"lfmnet","out_file":"output_filename", "group":LFvals.PLUGIN_ARGS['lfmnet']['output_filename']['group']}
+				]
 				
 				_alert_symbol = ' ⚠️'
-
-				_file_path = os.path.join(_img_folder, _cal_out)		
-				path = Path(_file_path)
-				if path.is_file():
-					self.gui_elms["calibrate"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(255, 255, 0); border-width: 1px;")
-					if self.lf_vals["misc"]["group_params"]["value"] == True:
-						i, j = self.groupbox["calibrate"]["required"]["Files"].layout().getWidgetPosition(self.gui_elms["calibrate"]["output_filename"].native)
-						widget_item = self.groupbox["calibrate"]["required"]["Files"].layout().itemAt(i, j-1)
-						widget = widget_item.widget()
-						widget.setText(self.gui_elms["calibrate"]["output_filename"].label + _alert_symbol)
-						widget.setToolTip("A filed named '{out_file}' already exists in this folder!\nYou can continue but it will overwrite the existing file.".format(out_file = self.gui_elms["calibrate"]["output_filename"].value))			
-				else:
-					self.gui_elms["calibrate"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(0, 0, 0); border-width: 1px;")
-					if self.lf_vals["misc"]["group_params"]["value"] == True:
-						i, j = self.groupbox["calibrate"]["required"]["Files"].layout().getWidgetPosition(self.gui_elms["calibrate"]["output_filename"].native)
-						widget_item = self.groupbox["calibrate"]["required"]["Files"].layout().itemAt(i, j-1)
-						widget = widget_item.widget()
-						widget.setText(self.gui_elms["calibrate"]["output_filename"].label)
-						widget.setToolTip("")
+				
+				for out in out_files:
+					_img_out = self.gui_elms[out["section"]][out["out_file"]].value
 					
-				
-				_file_path = os.path.join(_img_folder, _rec_out)		
-				path = Path(_file_path)
-				if path.is_file():
-					self.gui_elms["rectify"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(255, 255, 0); border-width: 1px;")
-					if self.lf_vals["misc"]["group_params"]["value"] == True:
-						i, j = self.groupbox["rectify"]["required"]["Files"].layout().getWidgetPosition(self.gui_elms["rectify"]["output_filename"].native)
-						widget_item = self.groupbox["rectify"]["required"]["Files"].layout().itemAt(i, j-1)
-						widget = widget_item.widget()
-						widget.setText(self.gui_elms["rectify"]["output_filename"].label + _alert_symbol)
-						widget.setToolTip("A filed named '{out_file}' already exists in this folder!\nYou can continue but it will overwrite the existing file.".format(out_file = self.gui_elms["rectify"]["output_filename"].value))
-				else:
-					self.gui_elms["rectify"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(0, 0, 0); border-width: 1px;")
-					if self.lf_vals["misc"]["group_params"]["value"] == True:
-						i, j = self.groupbox["rectify"]["required"]["Files"].layout().getWidgetPosition(self.gui_elms["rectify"]["output_filename"].native)
-						widget_item = self.groupbox["rectify"]["required"]["Files"].layout().itemAt(i, j-1)
-						widget = widget_item.widget()
-						widget.setText(self.gui_elms["rectify"]["output_filename"].label)
-						widget.setToolTip("")
-					
-				
-				_file_path = os.path.join(_img_folder, _dec_out)		
-				path = Path(_file_path)
-				if path.is_file():
-					self.gui_elms["deconvolve"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(255, 255, 0); border-width: 1px;")
-					if self.lf_vals["misc"]["group_params"]["value"] == True:
-						i, j = self.groupbox["deconvolve"]["required"]["Files"].layout().getWidgetPosition(self.gui_elms["deconvolve"]["output_filename"].native)
-						widget_item = self.groupbox["deconvolve"]["required"]["Files"].layout().itemAt(i, j-1)
-						widget = widget_item.widget()
-						widget.setText(self.gui_elms["deconvolve"]["output_filename"].label + _alert_symbol)
-						widget.setToolTip("A filed named '{out_file}' already exists in this folder!\nYou can continue but it will overwrite the existing file.".format(out_file = self.gui_elms["deconvolve"]["output_filename"].value))
-				else:
-					self.gui_elms["deconvolve"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(0, 0, 0); border-width: 1px;")
-					if self.lf_vals["misc"]["group_params"]["value"] == True:
-						i, j = self.groupbox["deconvolve"]["required"]["Files"].layout().getWidgetPosition(self.gui_elms["deconvolve"]["output_filename"].native)
-						widget_item = self.groupbox["deconvolve"]["required"]["Files"].layout().itemAt(i, j-1)
-						widget = widget_item.widget()
-						widget.setText(self.gui_elms["deconvolve"]["output_filename"].label)
-						widget.setToolTip("")
-				
-			self.image_folder_changes()
+					_file_path = os.path.join(_img_folder, _img_out)		
+					path = Path(_file_path)
+					if path.is_file():
+						self.gui_elms[out["section"]][out["out_file"]].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(255, 255, 0); border-width: 1px;")
+						if self.lf_vals["misc"]["group_params"]["value"] == True:
+							if "sub_section" in out:
+								i, j = self.groupbox[out["section"]][out["sub_section"]][out["group"]].layout().getWidgetPosition(self.gui_elms[out["section"]][out["out_file"]].native)
+								widget_item = self.groupbox[out["section"]][out["sub_section"]][out["group"]].layout().itemAt(i, j-1)
+							else:
+								i, j = self.groupbox[out["section"]][out["group"]].layout().getWidgetPosition(self.gui_elms[out["section"]][out["out_file"]].native)
+								widget_item = self.groupbox[out["section"]][out["group"]].layout().itemAt(i, j-1)
+							widget = widget_item.widget()
+							widget.setText(self.gui_elms[out["section"]][out["out_file"]].label + _alert_symbol)
+							widget.setToolTip("A filed named '{out_file}' already exists in this folder!\nYou can continue but it will overwrite the existing file.".format(out_file = self.gui_elms[out["section"]][out["out_file"]].value))			
+					else:
+						self.gui_elms[out["section"]][out["out_file"]].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(0, 0, 0); border-width: 1px;")
+						if self.lf_vals["misc"]["group_params"]["value"] == True:
+							if "sub_section" in out:
+								i, j = self.groupbox[out["section"]][out["sub_section"]][out["group"]].layout().getWidgetPosition(self.gui_elms[out["section"]][out["out_file"]].native)
+								widget_item = self.groupbox[out["section"]][out["sub_section"]][out["group"]].layout().itemAt(i, j-1)
+							else:
+								i, j = self.groupbox[out["section"]][out["group"]].layout().getWidgetPosition(self.gui_elms[out["section"]][out["out_file"]].native)
+								widget_item = self.groupbox[out["section"]][out["group"]].layout().itemAt(i, j-1)
+							widget = widget_item.widget()
+							widget.setText(self.gui_elms[out["section"]][out["out_file"]].label)
+							widget.setToolTip("")
+							
+				self.image_folder_changes()
+			
 		except Exception as e:
 			print(e)
 			print(traceback.format_exc())
@@ -1240,6 +1266,8 @@ class LFQWidgetGui():
 			# self.gui_elms["lfmnet"]["input_model"].value = ""
 		
 		self.gui_elms["lfmnet"]["input_model"].choices = model_files
+		if len(model_files) == 0:
+			self.gui_elms["lfmnet"]["input_model_prop_viewer"].value = ""
 		
 	def populate_img_list(self):
 		img_folder = str(self.gui_elms["main"]["img_folder"].value)
@@ -1255,6 +1283,7 @@ class LFQWidgetGui():
 		self.gui_elms["calibrate"]["dark_frame_file"].choices = img_files
 		self.gui_elms["rectify"]["input_file"].choices = img_files
 		self.gui_elms["deconvolve"]["input_file"].choices = img_files
+		self.gui_elms["lfmnet"]["input_file"].choices = img_files
 		
 	def populate_cal_img_list(self):
 		img_folder = str(self.gui_elms["main"]["img_folder"].value)
@@ -1272,6 +1301,7 @@ class LFQWidgetGui():
 		self.gui_elms["rectify"]["calibration_file"].choices = img_files
 		self.gui_elms["deconvolve"]["calibration_file"].choices = img_files
 		self.gui_elms["projections"]["calibration_file"].choices = img_files
+		self.gui_elms["lfmnet"]["calibration_file"].choices = img_files
 		
 	def set_cal_img(self):
 		cal_file = self.gui_elms["calibrate"]["output_filename"].value
@@ -1502,6 +1532,12 @@ def create_widget(props):
 			if widget.widget_type == "LineEdit":
 				widget.min_width = 100
 				widget.native.setStyleSheet("background-color:black;")
+				
+			if widget.widget_type == "SpinBox":
+				if "max" in props:
+					widget.max = props["max"]
+				if "min" in props:
+					widget.min = props["min"]
 				
 			for prop in props:
 				try:
