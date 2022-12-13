@@ -199,7 +199,11 @@ class LFQWidget(QWidget):
 			#print("Button for LFMNet Model Change")
 			import torch
 
-			from lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
+			try:
+				from napari_lf.lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
+			except:
+				from lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
+				
 			# Load calib file
 			if self.gui.gui_elms["lfmnet"]["calibration_file"].value == None:
 				return
@@ -675,7 +679,10 @@ class LFQWidget(QWidget):
 			print('\t--> specified gpu-id:{gpuid}'.format(gpuid=gpu_id))
 			
 			import torch
-			from lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
+			try:
+				from napari_lf.lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
+			except:
+				from lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
 			# Load calib file
 			if self.gui.gui_elms["lfmnet"]["calibration_file"].value == None:
 				return
@@ -719,7 +726,7 @@ class LFQWidget(QWidget):
 			## Process image:
 			with torch.no_grad():
 				# Move network to device (GPU/CPU)
-				torch_device = torch.device("cuda:"+str(gpu_id) if torch.cuda.is_available() and not args.disable_gpu else "cpu")
+				torch_device = torch.device("cuda:"+str(gpu_id) if torch.cuda.is_available() and not '--disable_gpu' in args else "cpu")
 				net = net.to(torch_device)   
 				# Prepare input to network
 				im_lenslet = lf.asimage(representation = lfdeconvolve.LightField.TILED_LENSLET)

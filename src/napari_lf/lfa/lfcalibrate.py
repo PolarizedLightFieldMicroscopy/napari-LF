@@ -115,6 +115,9 @@ def main(args=None, values=None):
                       help="Force lfcalibrate to use a specific OpenCL Platform on your system.")
     parser.add_argument("--gpu-id", dest="gpu_id", type=int, default=0,
                       help="Force lfcalibrate to use a specific GPU on your system.")
+    parser.add_argument("--disable-gpu",
+                      action="store_true", dest="disable_gpu", default=False,
+                      help="Disable GPU deconvolution, and use software implementation instead.")
     parser.add_argument("--comments", dest="comments", default="",
                       help="User comments.")
 
