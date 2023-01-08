@@ -64,8 +64,11 @@ PLUGIN_ARGS = {
 		"status":{
 			"label":"STATUS:","value":"== IDLE ==","value_busy":"== BUSY ==","value_idle":"== IDLE ==","value_error":"== ERROR ==","type":"label","default":"== IDLE ==","exclude_from_settings":True
 		},
+		"NapariLF_ver_label":{
+			"label":"Napari-LF Plugin Ver:","default":"","help":"Napari-LF Plugin version.","type":"label","exclude_from_settings":True
+		},
 		"LFAnalyze_logo_label":{
-			"label":f'<a href="https://chanzuckerberg.com/science/programs-resources/imaging/napari/light-field-imaging-plugin/"><img src="{LFAnalyze_logo_img}"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
+			"label":f'<a href="https://graphics.stanford.edu/projects/lfmicroscope/"><img src="{LFAnalyze_logo_img}"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
 		},
 		"LFMNet_logo_label":{
 			"label":f'<a href="https://github.com/pvjosue/LFMNet"><img src="{LFMNet_logo_img}"></a>',"help":"LFMNet About WebPage","type":"img_label","default":"","exclude_from_settings":True
@@ -237,7 +240,7 @@ PLUGIN_ARGS = {
 	# ========== Rectify ============
 	# ===============================		
 		"input_file":{
-			"prop_short":"-i","prop":"--input_file","label":"Light field image","dest":"input_file","type":"sel","default":"light_field.png","options":["light_field.png"],"help":"Supply at least one light field image to rectify.","cat":"required","img_folder_file":True,"group":"Files"
+			"prop_short":"-i","prop":"--input_file","label":"Light field image","dest":"input_file","type":"sel","default":"light_field.png","options":["light_field.png"],"help":"Supply at least one light field image to rectify.","cat":"required","img_folder_file":True,"exclude_from_args":True,"group":"Files"
 		},
 		"calibration_file":{
 			"prop_short":"-c","prop":"--calibration-file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"calibration.lfc","options":["calibration.lfc"],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"

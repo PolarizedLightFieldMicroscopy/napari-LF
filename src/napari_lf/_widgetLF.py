@@ -56,7 +56,7 @@ class LFQWidget(QWidget):
 									   # 'Stanford University',
 									   # 'LFDisplay')
 		# self.lfd_settings = Settings(qt_settings)
-		
+
 		@self.gui.btn_open_img.changed.connect
 		def img_list_open():
 			img_selected = str(self.gui.gui_elms["main"]["img_list"].value)
@@ -266,6 +266,7 @@ class LFQWidget(QWidget):
 		
 		self.setMinimumWidth(480)
 		self.layout().addWidget(splitter)
+		self.layout().addWidget(self.gui.widget_main_proc_btn_comps.native)
 		self.set_lfa_libs()
 		
 		# create the display widget
@@ -388,16 +389,7 @@ class LFQWidget(QWidget):
 		
 		self.gui.refresh_vals()
 		
-		try:
-			key = "radiometry_frame_file"
-			dict = self.gui.lf_vals["calibrate"][key]
-			current_val = dict["value"]
-			if "img_folder_file" in dict and dict["img_folder_file"] == True:
-				current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
-			else:
-				current_val = str(current_val)
-			#self.new_args_cal.append(current_val)
-			
+		try:			
 			for section in ["calibrate", "hw"]:
 				for key in self.gui.lf_vals[section]:
 					dict = self.gui.lf_vals[section][key]
@@ -416,13 +408,13 @@ class LFQWidget(QWidget):
 							if dict["default"] == True or current_val == True:
 								self.new_args_cal.append(prop)
 						else:
-							if current_val != None:
-								self.new_args_cal.append(prop)
+							if current_val != None:								
 								if dict["type"] != "bool":
 									if "img_folder_file" in dict and dict["img_folder_file"] == True:
 										current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
 									else:
 										current_val = str(current_val)
+								self.new_args_cal.append(prop)
 								self.new_args_cal.append(current_val)
 								
 			self.new_args_cal.append(LFvals.PLUGIN_ARGS["main"]["comments"]["prop"])
@@ -435,10 +427,9 @@ class LFQWidget(QWidget):
 				current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
 			else:
 				current_val = str(current_val)
-			#self.new_args_rec.append(current_val)
+			self.new_args_rec.append(current_val)
 			
 			for key in self.gui.lf_vals["rectify"]:
-				#print(f"key:{key}")
 				dict = self.gui.lf_vals["rectify"][key]
 				if "exclude_from_args" in dict and dict["exclude_from_args"] == True:
 					pass
@@ -456,12 +447,12 @@ class LFQWidget(QWidget):
 							self.new_args_rec.append(prop)
 					else:
 						if current_val != None:
-							self.new_args_rec.append(prop)
 							if dict["type"] != "bool":
 								if "img_folder_file" in dict and dict["img_folder_file"] == True:
 									current_val = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), current_val))
 								else:
 									current_val = str(current_val)
+							self.new_args_rec.append(prop)
 							self.new_args_rec.append(current_val)
 					
 			key = "input_file"

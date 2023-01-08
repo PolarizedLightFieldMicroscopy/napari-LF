@@ -29,6 +29,7 @@ class LFQWidgetGui():
 		self.gui_elms["main"] = {}
 		_widget_main = []
 		self.logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['logo_label']['help'])
+		self.logo_label.native.setOpenExternalLinks(True)
 		self.logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
@@ -48,7 +49,13 @@ class LFQWidgetGui():
 		
 		dict = LFvals.PLUGIN_ARGS["main"]["comments"]
 		self.gui_elms["main"]["comments"] = create_widget(dict)
-		self.gui_elms["main"]["comments"].native.setMaximumHeight(50)
+		#self.gui_elms["main"]["comments"].native.setMaximumHeight(50)
+		self.gui_elms["main"]["comments"].native.setPlaceholderText(LFvals.PLUGIN_ARGS['main']['comments']['help'])
+		self.commentsArea = QScrollArea()
+		#self.commentsArea.resize(50,50)
+		self.commentsArea.setMaximumHeight(50)
+		self.commentsArea.setWidget(self.gui_elms["main"]["comments"].native)
+		self.commentsArea.setWidgetResizable(True)
 		
 		dict = LFvals.PLUGIN_ARGS["main"]["presets"]
 		self.gui_elms["main"]["presets"] = create_widget(dict)
@@ -60,9 +67,7 @@ class LFQWidgetGui():
 		_cont_preset_list_btn.native.layout().setSpacing(1)
 		
 		_cont_btn_QFormLayout = QFormLayout()
-		_cont_btn_widget = QWidget()
-		_cont_btn_widget.setLayout(_cont_btn_QFormLayout)
-		_cont_btn_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		
 		_cont_btn_QFormLayout.setSpacing(2)
 		_cont_btn_QFormLayout.setContentsMargins(1,1,1,1)
 		
@@ -72,7 +77,7 @@ class LFQWidgetGui():
 		self.btn_cal_prog.native.setFixedSize(20,20)
 		self.btn_cal_prog.native.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		
-		_cont_btn_QFormLayout.addRow(self.btn_cal_prog.native, self.btn_cal.native)
+		#_cont_btn_QFormLayout.addRow(self.btn_cal_prog.native, self.btn_cal.native)
 
 		self.btn_rec = PushButton(label='Rectify')
 		self.btn_rec.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -80,7 +85,7 @@ class LFQWidgetGui():
 		self.btn_rec_prog.native.setFixedSize(20,20)
 		self.btn_rec_prog.native.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		
-		_cont_btn_QFormLayout.addRow(self.btn_rec_prog.native, self.btn_rec.native)
+		#_cont_btn_QFormLayout.addRow(self.btn_rec_prog.native, self.btn_rec.native)
 		
 		self.btn_dec = PushButton(label='Deconvolve')
 		self.btn_dec.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -88,7 +93,20 @@ class LFQWidgetGui():
 		self.btn_dec_prog.native.setFixedSize(20,20)
 		self.btn_dec_prog.native.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		
-		_cont_btn_QFormLayout.addRow(self.btn_dec_prog.native, self.btn_dec.native)
+		#_cont_btn_QFormLayout.addRow(self.btn_dec_prog.native, self.btn_dec.native)
+		
+		hBoxLayout = QHBoxLayout()
+		hBoxLayout.addWidget(self.btn_cal_prog.native)
+		hBoxLayout.addWidget(self.btn_cal.native)
+		hBoxLayout.addWidget(self.btn_rec_prog.native)
+		hBoxLayout.addWidget(self.btn_rec.native)
+		hBoxLayout.addWidget(self.btn_dec_prog.native)
+		hBoxLayout.addWidget(self.btn_dec.native)
+		
+		_cont_btn_widget = QWidget()
+		#_cont_btn_widget.setLayout(_cont_btn_QFormLayout)
+		_cont_btn_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		_cont_btn_widget.setLayout(hBoxLayout)
 		
 		_cont_btn_left = Container(name='btn Left', widgets=(), labels=False)
 		_cont_btn_left.native.layout().addWidget(_cont_btn_widget)
@@ -102,23 +120,30 @@ class LFQWidgetGui():
 		_cont_btn_processing.native.layout().setContentsMargins(1,1,1,1)
 		
 		_QFormLayout = QFormLayout()
-		self.cont_btn_status = QWidget()
-		self.cont_btn_status.setLayout(_QFormLayout)
+		self.cont_btn_top = QWidget()
+		self.cont_btn_top.setLayout(_QFormLayout)
 		_QFormLayout.setContentsMargins(1,1,1,1)
-		
-		self.cont_btn_status_label = Label()
-		self.cont_btn_status_label.native.setStyleSheet("border:1px solid rgb(0, 255, 0);")
-		self.cont_btn_status_label.value = ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_idle']
 		
 		_QFormLayout.addRow(self.logo_label.native)
 		_QFormLayout.addRow(self.gui_elms["main"]["img_folder"].label, self.gui_elms["main"]["img_folder"].native)
 		_QFormLayout.addRow(_cont_img_list_btn.native)
 		_QFormLayout.addRow(self.gui_elms["main"]["metadata_file"].label, self.gui_elms["main"]["metadata_file"].native)
 		_QFormLayout.addRow(self.gui_elms["main"]["presets"].label, _cont_preset_list_btn.native)
-		_QFormLayout.addRow(self.gui_elms["main"]["comments"].label, self.gui_elms["main"]["comments"].native)
+		_QFormLayout.addRow(self.gui_elms["main"]["comments"].label, self.commentsArea)
 		
-		_QFormLayout.addRow(_cont_btn_processing.native)
-		_QFormLayout.addRow(self.cont_btn_status_label.native)
+		self.cont_btn_top.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+		
+		_QFormLayout2 = QFormLayout()
+		self.cont_btn_status = QWidget()
+		self.cont_btn_status.setLayout(_QFormLayout2)
+		_QFormLayout2.setContentsMargins(1,1,1,1)
+		
+		self.cont_btn_status_label = Label()
+		self.cont_btn_status_label.native.setStyleSheet("border:1px solid rgb(0, 255, 0);")
+		self.cont_btn_status_label.value = ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_idle']
+		
+		_QFormLayout2.addRow(_cont_btn_processing.native)
+		_QFormLayout2.addRow(self.cont_btn_status_label.native)
 		
 		self.cont_btn_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		self.cont_btn_status_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -800,11 +825,17 @@ class LFQWidgetGui():
 		
 		self.container_lfa = _misc_widget
 		
+		self.NapariLF_ver_label = Label(value=LFvals.PLUGIN_ARGS['main']['NapariLF_ver_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['NapariLF_ver_label']['help'])
+		self.NapariLF_ver_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.NapariLF_ver_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		
 		self.LFAnalyze_logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['help'])
+		self.LFAnalyze_logo_label.native.setOpenExternalLinks(True)
 		self.LFAnalyze_logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.LFAnalyze_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		
 		self.LFMNet_logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['LFMNet_logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['LFMNet_logo_label']['help'])
+		self.LFMNet_logo_label.native.setOpenExternalLinks(True)
 		self.LFMNet_logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.LFMNet_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		
@@ -1022,11 +1053,37 @@ class LFQWidgetGui():
 		self.qtab_widget.addTab(self.lfa_lib_tab, 'Misc')
 		
 		self._about_tab = QWidget()
-		_about_tab_layout = QVBoxLayout()
+		_about_tab_layout = QFormLayout()
 		_about_tab_layout.setAlignment(Qt.AlignTop)
 		self._about_tab.setLayout(_about_tab_layout)
-		self._about_tab.layout().addWidget(self.LFAnalyze_logo_label.native)
-		self._about_tab.layout().addWidget(self.LFMNet_logo_label.native)
+		
+		_line = QFrame()
+		_line.setMinimumWidth(1)
+		_line.setFixedHeight(2)
+		_line.setFrameShape(QFrame.HLine)
+		_line.setFrameShadow(QFrame.Sunken)
+		_line.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+		_line.setStyleSheet("margin:1px; padding:2px; border:1px solid rgb(128,128,128); border-width: 1px;")
+		
+		_line2 = QFrame()
+		_line2.setMinimumWidth(1)
+		_line2.setFixedHeight(2)
+		_line2.setFrameShape(QFrame.HLine)
+		_line2.setFrameShadow(QFrame.Sunken)
+		_line2.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+		_line2.setStyleSheet("margin:1px; padding:2px; border:1px solid rgb(128,128,128); border-width: 1px;")
+		
+		try:
+			from ._version import version as __version__
+		except ImportError:
+			__version__ = "unknown"
+		
+		self.NapariLF_ver_label.native.setText(LFvals.PLUGIN_ARGS["main"]["NapariLF_ver_label"]["label"] + __version__)
+		_about_tab_layout.addRow(self.NapariLF_ver_label.native)
+		_about_tab_layout.addRow(_line)
+		_about_tab_layout.addRow(self.LFAnalyze_logo_label.native)
+		_about_tab_layout.addRow(self.LFMNet_logo_label.native)
+		_about_tab_layout.addRow(_line2)
 		self.qtab_widget.addTab(self._about_tab, 'About')
 		
 		# self.calib_tab = QWidget()
@@ -1040,12 +1097,15 @@ class LFQWidgetGui():
 		
 		#APP
 		self.widget_main_top_comps = Container(widgets=(), labels=True)
-		self.widget_main_top_comps.native.layout().addWidget(self.cont_btn_status)
+		self.widget_main_top_comps.native.layout().addWidget(self.cont_btn_top)
 		
-		self.gui_elms["main"]["comments"].parent.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+		#self.gui_elms["main"]["comments"].parent.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
 		
 		self.widget_main_bottom_comps = Container(widgets=(), labels=True)
 		self.widget_main_bottom_comps.native.layout().addWidget(self.qtab_widget)
+		
+		self.widget_main_proc_btn_comps = Container(widgets=(), labels=True)
+		self.widget_main_proc_btn_comps.native.layout().addWidget(self.cont_btn_status)
 		
 		self.timer = QTimer()
 		self.timer.timeout.connect(self.verify_existing_files)
@@ -1067,7 +1127,8 @@ class LFQWidgetGui():
 					{"section":"lfmnet","out_file":"output_filename", "group":LFvals.PLUGIN_ARGS['lfmnet']['output_filename']['group']}
 				]
 				
-				_alert_symbol = ' ⚠️'
+				_alert_symbol = ' ⚠'
+				_space_char = '  '
 				
 				for out in out_files:
 					_img_out = self.gui_elms[out["section"]][out["out_file"]].value
@@ -1096,7 +1157,7 @@ class LFQWidgetGui():
 								i, j = self.groupbox[out["section"]][out["group"]].layout().getWidgetPosition(self.gui_elms[out["section"]][out["out_file"]].native)
 								widget_item = self.groupbox[out["section"]][out["group"]].layout().itemAt(i, j-1)
 							widget = widget_item.widget()
-							widget.setText(self.gui_elms[out["section"]][out["out_file"]].label)
+							widget.setText(self.gui_elms[out["section"]][out["out_file"]].label + _space_char)
 							widget.setToolTip("")
 							
 				self.image_folder_changes()
