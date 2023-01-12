@@ -53,7 +53,7 @@ class LFQWidgetGui():
 		self.gui_elms["main"]["comments"].native.setPlaceholderText(LFvals.PLUGIN_ARGS['main']['comments']['help'])
 		self.commentsArea = QScrollArea()
 		#self.commentsArea.resize(50,50)
-		self.commentsArea.setMaximumHeight(50)
+		self.commentsArea.setMaximumHeight(75)
 		self.commentsArea.setWidget(self.gui_elms["main"]["comments"].native)
 		self.commentsArea.setWidgetResizable(True)
 		
@@ -122,7 +122,7 @@ class LFQWidgetGui():
 		_QFormLayout = QFormLayout()
 		self.cont_btn_top = QWidget()
 		self.cont_btn_top.setLayout(_QFormLayout)
-		_QFormLayout.setContentsMargins(1,1,1,1)
+		#_QFormLayout.setContentsMargins(1,1,1,1)
 		
 		_QFormLayout.addRow(self.logo_label.native)
 		_QFormLayout.addRow(self.gui_elms["main"]["img_folder"].label, self.gui_elms["main"]["img_folder"].native)
@@ -130,8 +130,9 @@ class LFQWidgetGui():
 		_QFormLayout.addRow(self.gui_elms["main"]["metadata_file"].label, self.gui_elms["main"]["metadata_file"].native)
 		_QFormLayout.addRow(self.gui_elms["main"]["presets"].label, _cont_preset_list_btn.native)
 		_QFormLayout.addRow(self.gui_elms["main"]["comments"].label, self.commentsArea)
-		
-		self.cont_btn_top.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+		_cont_preset_list_btn.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		_QFormLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+		#self.cont_btn_top.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		
 		_QFormLayout2 = QFormLayout()
 		self.cont_btn_status = QWidget()
@@ -145,7 +146,7 @@ class LFQWidgetGui():
 		_QFormLayout2.addRow(_cont_btn_processing.native)
 		_QFormLayout2.addRow(self.cont_btn_status_label.native)
 		
-		self.cont_btn_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+		self.cont_btn_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.cont_btn_status_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.cont_btn_status_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 
