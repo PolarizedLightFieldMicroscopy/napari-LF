@@ -132,7 +132,7 @@ class LFQWidgetGui():
 		_QFormLayout.addRow(self.gui_elms["main"]["comments"].label, self.commentsArea)
 		_cont_preset_list_btn.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		_QFormLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
-		#self.cont_btn_top.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		self.cont_btn_top.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		
 		_QFormLayout2 = QFormLayout()
 		self.cont_btn_status = QWidget()
@@ -146,8 +146,8 @@ class LFQWidgetGui():
 		_QFormLayout2.addRow(_cont_btn_processing.native)
 		_QFormLayout2.addRow(self.cont_btn_status_label.native)
 		
-		self.cont_btn_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-		self.cont_btn_status_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		self.cont_btn_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+		self.cont_btn_status_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		self.cont_btn_status_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 
 		self.groupbox = {"calibrate":{"required":{},"optional":{},"inspect":{}},"rectify":{"required":{},"optional":{}},"deconvolve":{"required":{},"optional":{}}, "projections":{}, "lfmnet":{}}

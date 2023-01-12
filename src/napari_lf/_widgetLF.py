@@ -265,7 +265,8 @@ class LFQWidget(QWidget):
 		splitter.addWidget(self.scroll_bottom)
 		
 		self.setMinimumWidth(480)
-		self.layout().addWidget(splitter)
+		self.layout().addWidget(self.gui.widget_main_top_comps.native)
+		self.layout().addWidget(self.scroll_bottom)
 		self.layout().addWidget(self.gui.widget_main_proc_btn_comps.native)
 		self.set_lfa_libs()
 		
