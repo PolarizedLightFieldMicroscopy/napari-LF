@@ -81,13 +81,20 @@ class LFMNet(LFNeuralNetworkProto):
     def prepare_input(self, input):
         # todo: maybe assert shape
         if torch.is_tensor(input):
-            LF_input = input.float()
+            b_torch = input.float()
         else:
             b_torch = torch.from_numpy(input).unsqueeze(0).unsqueeze(0)
+        # check if the input is already in LF 4D format
+        if b_torch.ndim == 6:
+            LF_input = b_torch
+        else:
+            print(b_torch.shape)
             LF_input = LF2Spatial(b_torch, self.LF_in_shape)
-        LF_input = LF2Spatial(b_torch, self.LF_in_shape)
         # Pad input with half the LFNet fov, to get an output the same size as the input image
-        LF_padded = F.pad(LF_input, 4*[self.LF_in_fov//2])
+        if LF_input.shape[-2] < self.LF_in_shape[-2] and LF_input.shape[-1] < self.LF_in_shape[-1]:
+            LF_padded = F.pad(LF_input, 4*[self.LF_in_fov//2])
+        else:
+            LF_padded = LF_input
         # Normalize by max
         if LF_padded.max() > 1.0:
             LF_padded /= self.max_LF_train.item()
