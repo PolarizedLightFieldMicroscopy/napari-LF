@@ -5,7 +5,13 @@ currentdir = os.path.dirname(os.path.realpath(__file__))
 icon_img = os.path.join(currentdir, 'resources/icon.ico')
 logo_img = os.path.join(currentdir, 'resources/napari-LF_logo.png')
 LFAnalyze_logo_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_201_45px.png')
-LFMNet_logo_img = os.path.join(currentdir, 'resources/LFMNet_logo.png')
+LFAnalyze_logo_btn_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_btn_201_45px.png')
+LFAnalyze_logo_btn_hov_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_btn_hov_201_45px.png')
+LFAnalyze_logo_btn_act_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_btn_act_201_45px.png')
+NeuralNet_logo_img = os.path.join(currentdir, 'resources/NeuralNet_logo_201_45px.png')
+NeuralNet_logo_btn_img = os.path.join(currentdir, 'resources/NeuralNet_logo_btn_201_45px.png')
+NeuralNet_logo_btn_hov_img = os.path.join(currentdir, 'resources/NeuralNet_logo_btn_hov_201_45px.png')
+NeuralNet_logo_btn_act_img = os.path.join(currentdir, 'resources/NeuralNet_logo_btn_act_201_45px.png')
 loading_img = os.path.join(currentdir, 'resources/loading.gif')
 examples_folder = os.path.join(currentdir, 'examples/antleg')
 lfa_folder = os.path.join(currentdir, 'lfa')
@@ -53,7 +59,7 @@ PLUGIN_ARGS = {
 			"label":"Available images","default":"","help":"List of available Images to view in the selected Project folder.","type":"sel","options":[""]
 		},
 		"metadata_file":{
-			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"str","enabled":True
+			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"str","enabled":True,"visible":dev_true
 		},
 		"comments":{
 			"default":"","prop":"--comments","label":"Comments","help":"Comments from Acquisition and Processing","type":"str","type":"text"
@@ -71,7 +77,7 @@ PLUGIN_ARGS = {
 			"label":f'<a href="https://graphics.stanford.edu/projects/lfmicroscope/"><img src="{LFAnalyze_logo_img}"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
 		},
 		"LFMNet_logo_label":{
-			"label":f'<a href="https://github.com/pvjosue/LFMNet"><img src="{LFMNet_logo_img}"></a>',"help":"LFMNet About WebPage","type":"img_label","default":"","exclude_from_settings":True
+			"label":f'<a href="https://github.com/pvjosue/LFMNet"><img src="{NeuralNet_logo_img}"></a>',"help":"LFMNet About WebPage","type":"img_label","default":"","exclude_from_settings":True
 		},
 	},
 	"misc":{
@@ -391,7 +397,7 @@ PLUGIN_ARGS = {
 			"prop":"output_file","label":"Output image stack","dest":"output_filename","type":"str","default":"output_network_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
 		},
 		"input_model_btn":{
-			"prop":"input_model_btn","label":"Process","dest":"input_model_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+			"prop":"input_model_btn","label":"Process","dest":"input_model_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files","visible":dev_true
 		}
 	}
 }

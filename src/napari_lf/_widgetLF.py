@@ -186,6 +186,7 @@ class LFQWidget(QWidget):
 			self.thread_worker.start()
 			
 		@self.gui.gui_elms["lfmnet"]["input_model_btn"].changed.connect
+		@self.gui.btn_nn_proc.changed.connect
 		def input_model_btn_fnc():
 			#print("Button for LFMNet Model Processing")
 			self.gui.set_btns_and_status(False, LFvals.PLUGIN_ARGS['main']['status']['value_busy'])
@@ -250,23 +251,9 @@ class LFQWidget(QWidget):
 		layout = QVBoxLayout()
 		self.setLayout(layout)
 		
-		splitter = QSplitter(Qt.Vertical)
-		
-		# self.scroll_top = QScrollArea()
-		# self.scroll_top.setWidgetResizable(False)
-		# self.scroll_top.setWidget(self.gui.widget_main_top_comps.native)
-		# splitter.addWidget(self.scroll_top)
-		
-		splitter.addWidget(self.gui.widget_main_top_comps.native)
-		
-		self.scroll_bottom = QScrollArea()
-		self.scroll_bottom.setWidgetResizable(True)
-		self.scroll_bottom.setWidget(self.gui.widget_main_bottom_comps.native)
-		splitter.addWidget(self.scroll_bottom)
-		
 		self.setMinimumWidth(480)
 		self.layout().addWidget(self.gui.widget_main_top_comps.native)
-		self.layout().addWidget(self.scroll_bottom)
+		self.layout().addWidget(self.gui.scroll_bottom)
 		self.layout().addWidget(self.gui.widget_main_proc_btn_comps.native)
 		self.set_lfa_libs()
 		

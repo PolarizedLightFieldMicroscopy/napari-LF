@@ -1,6 +1,7 @@
 import os, sys, glob, ntpath, subprocess, traceback, json, time
 from pathlib import Path
 from qtpy import QtCore, QtGui
+from qtpy.QtGui import QPixmap, QPainter
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import *
 from magicgui.widgets import *
@@ -49,13 +50,16 @@ class LFQWidgetGui():
 		
 		dict = LFvals.PLUGIN_ARGS["main"]["comments"]
 		self.gui_elms["main"]["comments"] = create_widget(dict)
-		#self.gui_elms["main"]["comments"].native.setMaximumHeight(50)
 		self.gui_elms["main"]["comments"].native.setPlaceholderText(LFvals.PLUGIN_ARGS['main']['comments']['help'])
-		self.commentsArea = QScrollArea()
-		#self.commentsArea.resize(50,50)
-		self.commentsArea.setMaximumHeight(75)
-		self.commentsArea.setWidget(self.gui_elms["main"]["comments"].native)
-		self.commentsArea.setWidgetResizable(True)
+		self.commentsArea = self.gui_elms["main"]["comments"].native
+		self.commentsArea.setMaximumHeight(60)
+		# self.commentsArea.verticalScrollBar().setDisabled(True)
+		# self.commentsArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+		
+		# self.commentsArea = QScrollArea()
+		# self.commentsArea.setMaximumHeight(60)
+		# self.commentsArea.setWidget(self.gui_elms["main"]["comments"].native)
+		# self.commentsArea.setWidgetResizable(True)
 		
 		dict = LFvals.PLUGIN_ARGS["main"]["presets"]
 		self.gui_elms["main"]["presets"] = create_widget(dict)
@@ -63,73 +67,131 @@ class LFQWidgetGui():
 		self.btn_preset_save = PushButton(label='Save as..')
 		self.btn_preset_delete = PushButton(label='Delete')
 		_cont_preset_list_btn = Container(name='Presets', widgets=[self.gui_elms["main"]["presets"], self.btn_preset_load, self.btn_preset_save, self.btn_preset_delete], layout='horizontal', labels=False)
-		_cont_preset_list_btn.native.layout().setContentsMargins(1,1,1,1)
-		_cont_preset_list_btn.native.layout().setSpacing(1)
-		
-		_cont_btn_QFormLayout = QFormLayout()
-		
-		_cont_btn_QFormLayout.setSpacing(2)
-		_cont_btn_QFormLayout.setContentsMargins(1,1,1,1)
-		
+		_cont_preset_list_btn.native.layout().setContentsMargins(0,0,0,0)
+		_cont_preset_list_btn.native.layout().setSpacing(2)
+				
 		self.btn_cal = PushButton(label='Calibrate')
 		self.btn_cal.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.btn_cal_prog = Label()
-		self.btn_cal_prog.native.setFixedSize(20,20)
-		self.btn_cal_prog.native.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-		
-		#_cont_btn_QFormLayout.addRow(self.btn_cal_prog.native, self.btn_cal.native)
+		# self.btn_cal_prog.native.setFixedSize(20,20)
+		self.btn_cal_prog.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.btn_cal_prog.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
 		self.btn_rec = PushButton(label='Rectify')
 		self.btn_rec.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.btn_rec_prog = Label()
-		self.btn_rec_prog.native.setFixedSize(20,20)
-		self.btn_rec_prog.native.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-		
-		#_cont_btn_QFormLayout.addRow(self.btn_rec_prog.native, self.btn_rec.native)
+		# self.btn_rec_prog.native.setFixedSize(20,20)
+		self.btn_rec_prog.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.btn_rec_prog.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		
 		self.btn_dec = PushButton(label='Deconvolve')
 		self.btn_dec.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.btn_dec_prog = Label()
-		self.btn_dec_prog.native.setFixedSize(20,20)
-		self.btn_dec_prog.native.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		# self.btn_dec_prog.native.setFixedSize(20,20)
+		self.btn_dec_prog.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.btn_dec_prog.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		
-		#_cont_btn_QFormLayout.addRow(self.btn_dec_prog.native, self.btn_dec.native)
+		_cont_btn_checks = Container(name='Btn_chks', widgets=[self.btn_cal_prog, self.btn_rec_prog, self.btn_dec_prog], labels=False, layout='horizontal')
+		_cont_btn_btns = Container(name='Btn press', widgets=[self.btn_cal, self.btn_rec, self.btn_dec], labels=False, layout='horizontal')
 		
-		hBoxLayout = QHBoxLayout()
-		hBoxLayout.addWidget(self.btn_cal_prog.native)
-		hBoxLayout.addWidget(self.btn_cal.native)
-		hBoxLayout.addWidget(self.btn_rec_prog.native)
-		hBoxLayout.addWidget(self.btn_rec.native)
-		hBoxLayout.addWidget(self.btn_dec_prog.native)
-		hBoxLayout.addWidget(self.btn_dec.native)
+		_cont_btn_QFormLayout = QFormLayout()
+		_cont_btn_QFormLayout.setSpacing(0)
+		_cont_btn_QFormLayout.setContentsMargins(0,0,0,0)
+		_cont_btn_QFormLayout.addRow(_cont_btn_checks.native)
+		_cont_btn_QFormLayout.addRow(_cont_btn_btns.native)
 		
 		_cont_btn_widget = QWidget()
-		#_cont_btn_widget.setLayout(_cont_btn_QFormLayout)
 		_cont_btn_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-		_cont_btn_widget.setLayout(hBoxLayout)
+		_cont_btn_widget.setLayout(_cont_btn_QFormLayout)
 		
 		_cont_btn_left = Container(name='btn Left', widgets=(), labels=False)
 		_cont_btn_left.native.layout().addWidget(_cont_btn_widget)
 		
 		self.btn_stop = PushButton(label='Stop')
-		self.btn_stop.min_height = 65
-		self.btn_stop.min_width = 65
+		self.btn_stop.min_height = 60
+		self.btn_stop.min_width = 60
 		
 		_cont_btn_right = Container(name='btn Right', widgets=[self.btn_stop], labels=False)
-		_cont_btn_processing = Container(widgets=[_cont_btn_left, _cont_btn_right], labels=False, layout='horizontal')
-		_cont_btn_processing.native.layout().setContentsMargins(1,1,1,1)
+		self._cont_btn_processing = Container(widgets=[_cont_btn_left, _cont_btn_right], labels=False, layout='horizontal')
+		self._cont_btn_processing.native.layout().setContentsMargins(0,0,0,0)
+		
+		
+		self.btn_nn_proc = PushButton(label='Process')
+		self.btn_nn_proc.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		self.btn_nn_proc_prog = Label()
+		# self.btn_dec_prog.native.setFixedSize(20,20)
+		self.btn_nn_proc_prog.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.btn_nn_proc_prog.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		
+		_cont_btn_checks2 = Container(name='Btn_chks', widgets=[self.btn_nn_proc_prog], labels=False, layout='horizontal')
+		_cont_btn_btns2 = Container(name='Btn press', widgets=[self.btn_nn_proc], labels=False, layout='horizontal')
+		
+		_cont_btn_QFormLayout2 = QFormLayout()
+		_cont_btn_QFormLayout2.setSpacing(0)
+		_cont_btn_QFormLayout2.setContentsMargins(0,0,0,0)
+		_cont_btn_QFormLayout2.addRow(_cont_btn_checks2.native)
+		_cont_btn_QFormLayout2.addRow(_cont_btn_btns2.native)
+		
+		_cont_btn_widget2 = QWidget()
+		_cont_btn_widget2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		_cont_btn_widget2.setLayout(_cont_btn_QFormLayout2)
+		
+		_cont_btn_left2 = Container(name='btn Left', widgets=(), labels=False)
+		_cont_btn_left2.native.layout().addWidget(_cont_btn_widget2)
+		
+		self.btn_stop2 = PushButton(label='Stop')
+		self.btn_stop2.min_height = 60
+		self.btn_stop2.min_width = 60
+		
+		_cont_btn_right2 = Container(name='btn Right', widgets=[self.btn_stop2], labels=False)
+		self._cont_btn_processing2 = Container(widgets=[_cont_btn_left2, _cont_btn_right2], labels=False, layout='horizontal')
+		self._cont_btn_processing2.native.layout().setContentsMargins(0,0,0,0)
+		
 		
 		_QFormLayout = QFormLayout()
 		self.cont_btn_top = QWidget()
 		self.cont_btn_top.setLayout(_QFormLayout)
 		#_QFormLayout.setContentsMargins(1,1,1,1)
 		
+		if LFvals.dev_true:
+			_cont_btn_checks.native.setStyleSheet("border: 1px dashed white;")
+			_cont_btn_btns.native.setStyleSheet("border: 1px dashed white;")
+			_cont_btn_widget.setStyleSheet("border: 1px dashed white;")
+			self._cont_btn_processing.native.setStyleSheet("border: 1px dashed white;")
+			_cont_btn_checks2.native.setStyleSheet("border: 1px dashed white;")
+			_cont_btn_btns2.native.setStyleSheet("border: 1px dashed white;")
+			_cont_btn_widget2.setStyleSheet("border: 1px dashed white;")
+			self._cont_btn_processing2.native.setStyleSheet("border: 1px dashed white;")
+		
 		_QFormLayout.addRow(self.logo_label.native)
 		_QFormLayout.addRow(self.gui_elms["main"]["img_folder"].label, self.gui_elms["main"]["img_folder"].native)
 		_QFormLayout.addRow(_cont_img_list_btn.native)
-		_QFormLayout.addRow(self.gui_elms["main"]["metadata_file"].label, self.gui_elms["main"]["metadata_file"].native)
-		_QFormLayout.addRow(self.gui_elms["main"]["presets"].label, _cont_preset_list_btn.native)
-		_QFormLayout.addRow(self.gui_elms["main"]["comments"].label, self.commentsArea)
+		if self.gui_elms["main"]["metadata_file"].visible:
+			_QFormLayout.addRow(self.gui_elms["main"]["metadata_file"].label, self.gui_elms["main"]["metadata_file"].native)
+			
+
+		self.LFAnalyze_btn = PicButton(QPixmap(LFvals.LFAnalyze_logo_btn_img), QPixmap(LFvals.LFAnalyze_logo_btn_hov_img), QPixmap(LFvals.LFAnalyze_logo_btn_act_img))
+		# self.LFAnalyze_btn.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.LFAnalyze_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.LFAnalyze_btn.clicked.connect(self.LFAnalyze_btn_call)
+		self.LFAnalyze_btn.toggle()
+		
+		self.NeuralNet_btn = PicButton(QPixmap(LFvals.NeuralNet_logo_btn_img),QPixmap(LFvals.NeuralNet_logo_btn_hov_img),QPixmap(LFvals.NeuralNet_logo_btn_act_img))
+		# self.NeuralNet_btn.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.NeuralNet_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.NeuralNet_btn.clicked.connect(self.NeuralNet_btn_call)
+		
+		_processing_methods = QWidget()
+		hBoxLayout = QHBoxLayout()
+		hBoxLayout.addWidget(self.LFAnalyze_btn)
+		hBoxLayout.addWidget(self.NeuralNet_btn)
+		_processing_methods.setLayout(hBoxLayout)
+		_processing_methods.layout().setContentsMargins(0,0,0,0)
+		_QFormLayout.addRow(_processing_methods)
+			
+		# _QFormLayout.addRow(self.gui_elms["main"]["presets"].label, _cont_preset_list_btn.native)
+		# _QFormLayout.addRow(self.gui_elms["main"]["comments"].label, self.commentsArea)
+		
 		_cont_preset_list_btn.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		_QFormLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 		self.cont_btn_top.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -143,7 +205,8 @@ class LFQWidgetGui():
 		self.cont_btn_status_label.native.setStyleSheet("border:1px solid rgb(0, 255, 0);")
 		self.cont_btn_status_label.value = ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_idle']
 		
-		_QFormLayout2.addRow(_cont_btn_processing.native)
+		_QFormLayout2.addRow(self._cont_btn_processing2.native)
+		_QFormLayout2.addRow(self._cont_btn_processing.native)
 		_QFormLayout2.addRow(self.cont_btn_status_label.native)
 		
 		self.cont_btn_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -260,7 +323,7 @@ class LFQWidgetGui():
 								self.groupbox["calibrate"]["optional"]["misc"].layout().addRow(wid_elm.native)
 							else:
 								self.groupbox["calibrate"]["optional"]["misc"].layout().addRow(wid_elm.label, wid_elm.native)
-					
+								
 		self.btn_cal_req_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_cal_req_def.changed.connect
 		def btn_cal_req_defaults():
@@ -669,12 +732,15 @@ class LFQWidgetGui():
 				if self.lf_vals["misc"]["group_params"]["value"] == False:
 					_widget_lfmnet.append(wid_elm)
 				else:
-					if dict["type"] == "bool":
-						self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.native)
-					elif "no_label_layout_style" in dict and dict["no_label_layout_style"] == True:
-						self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.native)
+					if "visible" in dict and dict["visible"] == False:
+						pass
 					else:
-						self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.label, wid_elm.native)
+						if dict["type"] == "bool":
+							self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.native)
+						elif "no_label_layout_style" in dict and dict["no_label_layout_style"] == True:
+							self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.native)
+						else:
+							self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.label, wid_elm.native)
 			else:
 				_widget_lfmnet.append(wid_elm)
 				
@@ -1037,7 +1103,7 @@ class LFQWidgetGui():
 		_lfmnet_tab_layout.setAlignment(Qt.AlignTop)
 		self.lfmnet_tab.setLayout(_lfmnet_tab_layout)
 		self.lfmnet_tab.layout().addWidget(self.container_lfmnet.native)
-		self.qtab_widget.addTab(self.lfmnet_tab, 'LFMNet')
+		# self.qtab_widget.addTab(self.lfmnet_tab, 'Neural Net')
 		
 		self.hardware_tab = QWidget()
 		_hardware_tab_layout = QVBoxLayout()
@@ -1101,9 +1167,49 @@ class LFQWidgetGui():
 		self.widget_main_top_comps.native.layout().addWidget(self.cont_btn_top)
 		
 		#self.gui_elms["main"]["comments"].parent.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+
+		vlay = QVBoxLayout()		
+		box = CollapsibleBox("Presets && Comments")
+		vlay.addWidget(box)
+		lay = QVBoxLayout()
+		lay.addWidget(_cont_preset_list_btn.native)
+		lay.addWidget(self.commentsArea)
+
+		box.setContentLayout(lay)
+		# vlay.addStretch()
+		_preset_comments_expand = QWidget()
+		_preset_comments_expand.setLayout(vlay)
 		
-		self.widget_main_bottom_comps = Container(widgets=(), labels=True)
-		self.widget_main_bottom_comps.native.layout().addWidget(self.qtab_widget)
+		self.widget_main_bottom_comps0 = Container(widgets=(), labels=True)
+		self.widget_main_bottom_comps0.native.layout().addWidget(_preset_comments_expand)
+		self.widget_main_bottom_comps0.native.layout().setContentsMargins(0,0,0,0)
+		self.widget_main_top_comps.native.layout().addWidget(self.widget_main_bottom_comps0.native)
+		self.widget_main_top_comps.native.layout().setContentsMargins(0,0,0,0)
+		if LFvals.dev_true:
+			self.widget_main_top_comps.native.setStyleSheet("border : 1px dashed white;")
+		
+		self.widget_main_bottom_comps1 = Container(widgets=(), labels=True)
+		self.widget_main_bottom_comps1.native.layout().addWidget(self.qtab_widget)
+		
+		self.widget_main_bottom_comps2 = Container(widgets=(), labels=True)
+		self.widget_main_bottom_comps2.native.layout().addWidget(self.lfmnet_tab)
+		self.widget_main_bottom_comps2.visible = False
+		self._cont_btn_processing2.visible = False
+		
+		self.widget_main_bottom_comps_scroll = Container(widgets=(), labels=True)
+		self.widget_main_bottom_comps_scroll.native.layout().addWidget(self.widget_main_bottom_comps1.native)
+		self.widget_main_bottom_comps_scroll.native.layout().addWidget(self.widget_main_bottom_comps2.native)
+		
+		self.scroll_bottom = QScrollArea()
+		self.scroll_bottom.setWidgetResizable(True)
+		self.scroll_bottom.setWidget(self.widget_main_bottom_comps_scroll.native)
+		
+		if LFvals.dev_true:
+			self.widget_main_bottom_comps0.native.setStyleSheet("border: 1px dashed white;")
+			self.widget_main_bottom_comps1.native.setStyleSheet("border: 1px dashed white;")
+			self.widget_main_bottom_comps2.native.setStyleSheet("border: 1px dashed white;")
+			self.widget_main_bottom_comps_scroll.native.setStyleSheet("border: 1px dashed white;")
+			self.scroll_bottom.setStyleSheet("border: 1px dashed white;")
 		
 		self.widget_main_proc_btn_comps = Container(widgets=(), labels=True)
 		self.widget_main_proc_btn_comps.native.layout().addWidget(self.cont_btn_status)
@@ -1111,6 +1217,38 @@ class LFQWidgetGui():
 		self.timer = QTimer()
 		self.timer.timeout.connect(self.verify_existing_files)
 		self.timer.start(500)
+		
+	def LFAnalyze_btn_call(self):
+		# print("LFAnalyze_btn_call")
+		if self.LFAnalyze_btn.isChecked() == True:
+			self.widget_main_bottom_comps0.visible = True
+			self.widget_main_bottom_comps1.visible = True
+			self.widget_main_bottom_comps2.visible = False
+			self._cont_btn_processing.visible = True
+			self._cont_btn_processing2.visible = False
+		else:
+			self.widget_main_bottom_comps0.visible = False
+			self.widget_main_bottom_comps1.visible = False
+			self.widget_main_bottom_comps2.visible = True
+			self._cont_btn_processing.visible = False
+			self._cont_btn_processing2.visible = True
+		self.NeuralNet_btn.toggle()
+			
+	def NeuralNet_btn_call(self):
+		# print("NeuralNet_btn_call")
+		if self.NeuralNet_btn.isChecked() == True:
+			self.widget_main_bottom_comps0.visible = False
+			self.widget_main_bottom_comps1.visible = False
+			self.widget_main_bottom_comps2.visible = True
+			self._cont_btn_processing.visible = False
+			self._cont_btn_processing2.visible = True
+		else:
+			self.widget_main_bottom_comps0.visible = True
+			self.widget_main_bottom_comps1.visible = True
+			self.widget_main_bottom_comps2.visible = False
+			self._cont_btn_processing.visible = True
+			self._cont_btn_processing2.visible = False
+		self.LFAnalyze_btn.toggle()
 		
 	def verify_existing_files(self):
 		
@@ -1293,6 +1431,15 @@ class LFQWidgetGui():
 			self.btn_dec_prog.native.setStyleSheet("font-size: 16px; color: green; vertical-align: baseline;")
 		else:
 			self.btn_dec_prog.native.setText('')
+			
+		dec_nn_file = str(self.gui_elms["lfmnet"]["output_filename"].value)
+		dec_nn_file_path = os.path.join(img_folder, dec_nn_file)
+		path = Path(dec_nn_file_path)
+		if path.is_file():
+			self.btn_nn_proc_prog.native.setText('✔️')
+			self.btn_nn_proc_prog.native.setStyleSheet("font-size: 16px; color: green; vertical-align: baseline;")
+		else:
+			self.btn_nn_proc_prog.native.setText('')
 		
 		self.populate_img_list()
 		self.populate_cal_img_list()
@@ -1616,3 +1763,99 @@ def create_widget(props):
 		print(e)
 		print(traceback.format_exc())
 	return widget
+	
+class CollapsibleBox(QWidget):
+    def __init__(self, title="", parent=None):
+        super(CollapsibleBox, self).__init__(parent)
+
+        self.toggle_button = QToolButton(
+            text=title, checkable=True, checked=False
+        )
+        self.toggle_button.setStyleSheet("QToolButton { border: none; }")
+        self.toggle_button.setToolButtonStyle(
+            QtCore.Qt.ToolButtonTextBesideIcon
+        )
+        self.toggle_button.setArrowType(QtCore.Qt.RightArrow)
+        self.toggle_button.pressed.connect(self.on_pressed)
+
+        self.toggle_animation = QtCore.QParallelAnimationGroup(self)
+
+        self.content_area = QScrollArea(maximumHeight=0, minimumHeight=0)
+        self.content_area.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
+        )
+        self.content_area.setFrameShape(QFrame.NoFrame)
+
+        lay = QVBoxLayout(self)
+        lay.setSpacing(0)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(self.toggle_button)
+        lay.addWidget(self.content_area)
+
+        self.toggle_animation.addAnimation(
+            QtCore.QPropertyAnimation(self, b"minimumHeight")
+        )
+        self.toggle_animation.addAnimation(
+            QtCore.QPropertyAnimation(self, b"maximumHeight")
+        )
+        self.toggle_animation.addAnimation(
+            QtCore.QPropertyAnimation(self.content_area, b"maximumHeight")
+        )
+
+    # @QtCore.pyqtSlot()
+    def on_pressed(self):
+        checked = self.toggle_button.isChecked()
+        self.toggle_button.setArrowType(
+            QtCore.Qt.DownArrow if not checked else QtCore.Qt.RightArrow
+        )
+        self.toggle_animation.setDirection(
+            QtCore.QAbstractAnimation.Forward
+            if not checked
+            else QtCore.QAbstractAnimation.Backward
+        )
+        self.toggle_animation.start()
+
+    def setContentLayout(self, layout):
+        lay = self.content_area.layout()
+        del lay
+        self.content_area.setLayout(layout)
+        collapsed_height = (
+            self.sizeHint().height() - self.content_area.maximumHeight()
+        )
+        content_height = layout.sizeHint().height()
+        for i in range(self.toggle_animation.animationCount()):
+            animation = self.toggle_animation.animationAt(i)
+            animation.setDuration(500)
+            animation.setStartValue(collapsed_height)
+            animation.setEndValue(collapsed_height + content_height)
+
+        content_animation = self.toggle_animation.animationAt(
+            self.toggle_animation.animationCount() - 1
+        )
+        content_animation.setDuration(500)
+        content_animation.setStartValue(0)
+        content_animation.setEndValue(content_height)
+		
+class PicButton(QAbstractButton):
+    def __init__(self, pixmap, pixmap_hover, pixmap_pressed, parent=None):
+        super(PicButton, self).__init__(parent)
+        self.pixmap = pixmap
+        self.pixmap_hover = pixmap_hover
+        self.pixmap_pressed = pixmap_pressed
+        self.setCheckable(True)
+
+    def paintEvent(self, event):
+        pix = self.pixmap_hover if self.underMouse() else self.pixmap
+        if self.isChecked():
+            pix = self.pixmap_pressed
+        painter = QPainter(self)
+        painter.drawPixmap(event.rect(), pix)
+
+    def enterEvent(self, event):
+        self.update()
+
+    def leaveEvent(self, event):
+        self.update()
+
+    def sizeHint(self):
+        return self.pixmap.size()
