@@ -102,7 +102,7 @@ class Dataset(object):
         self.LFDims = [self.LFShape[0],self.LFShape[1],self.LFSideLenght,self.LFSideLenght]
 
         if self.getFullImgs:
-            self.LFDims = self.LFShape[0:4]
+            self.LFDims = list(self.LFFull.shape[:-1])
             self.nPatches = len(self.img_indices)
 
     def __getitem__(self, index):
@@ -131,7 +131,7 @@ class Dataset(object):
         return self.VolFull.shape[-2]
     def get_max(self):
         return self.LFMax, self.volMax
-    def __shape__(self):
+    def shape(self):
         return self.VolFull.shape[:-1], self.LFDims
      
 def convert3Dto2DTiles(x, lateralTile):

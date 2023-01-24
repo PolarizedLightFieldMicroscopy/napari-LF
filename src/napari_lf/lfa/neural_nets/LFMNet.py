@@ -34,10 +34,10 @@ class LFMNet(LFNeuralNetworkProto):
             from neural_nets.util.UnetFull import UNetLF
 
         self.lensletConvolution = nn.Sequential(
-            convNd(1,self.n_Depths, num_dims=4, kernel_size=(3,3, self.LF_in_fov, self.LF_in_fov), stride=1, padding=(1,1,0,0), use_bias=use_bias),
+            convNd(1,2, num_dims=4, kernel_size=(3,3, self.LF_in_fov, self.LF_in_fov), stride=1, padding=(1,1,0,0), use_bias=use_bias),
             nn.LeakyReLU())
         
-        self.Unet = UNetLF(self.n_Depths, self.n_Depths, use_skip=use_skip_conn)
+        self.Unet = UNetLF(2, self.n_Depths, use_skip=use_skip_conn)
         
     
     # Configure dataloader
