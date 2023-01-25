@@ -1,6 +1,7 @@
 import os, sys, glob, ntpath, subprocess, traceback, json, time
 from pathlib import Path
 from qtpy import QtCore, QtGui
+from qtpy.QtGui import QPixmap, QPainter
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtWidgets import *
 from magicgui.widgets import *
@@ -29,12 +30,9 @@ class LFQWidgetGui():
 		self.gui_elms["main"] = {}
 		_widget_main = []
 		self.logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['logo_label']['help'])
+		self.logo_label.native.setOpenExternalLinks(True)
 		self.logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-		self.LFAnalyze_logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['help'])
-		self.LFAnalyze_logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
-		self.LFAnalyze_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
 		self.info_label = Label(label=f'<h2><center>LF Analyze</a></center></h2>')
 		dict = LFvals.PLUGIN_ARGS["main"]["img_folder"]
@@ -52,7 +50,16 @@ class LFQWidgetGui():
 		
 		dict = LFvals.PLUGIN_ARGS["main"]["comments"]
 		self.gui_elms["main"]["comments"] = create_widget(dict)
-		self.gui_elms["main"]["comments"].native.setMaximumHeight(50)
+		self.gui_elms["main"]["comments"].native.setPlaceholderText(LFvals.PLUGIN_ARGS['main']['comments']['help'])
+		self.commentsArea = self.gui_elms["main"]["comments"].native
+		self.commentsArea.setMaximumHeight(60)
+		# self.commentsArea.verticalScrollBar().setDisabled(True)
+		# self.commentsArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+		
+		# self.commentsArea = QScrollArea()
+		# self.commentsArea.setMaximumHeight(60)
+		# self.commentsArea.setWidget(self.gui_elms["main"]["comments"].native)
+		# self.commentsArea.setWidgetResizable(True)
 		
 		dict = LFvals.PLUGIN_ARGS["main"]["presets"]
 		self.gui_elms["main"]["presets"] = create_widget(dict)
@@ -60,77 +67,153 @@ class LFQWidgetGui():
 		self.btn_preset_save = PushButton(label='Save as..')
 		self.btn_preset_delete = PushButton(label='Delete')
 		_cont_preset_list_btn = Container(name='Presets', widgets=[self.gui_elms["main"]["presets"], self.btn_preset_load, self.btn_preset_save, self.btn_preset_delete], layout='horizontal', labels=False)
-		_cont_preset_list_btn.native.layout().setContentsMargins(1,1,1,1)
-		_cont_preset_list_btn.native.layout().setSpacing(1)
-		
-		_cont_btn_QFormLayout = QFormLayout()
-		_cont_btn_widget = QWidget()
-		_cont_btn_widget.setLayout(_cont_btn_QFormLayout)
-		_cont_btn_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-		_cont_btn_QFormLayout.setSpacing(2)
-		_cont_btn_QFormLayout.setContentsMargins(1,1,1,1)
-		
+		_cont_preset_list_btn.native.layout().setContentsMargins(0,0,0,0)
+		_cont_preset_list_btn.native.layout().setSpacing(2)
+				
 		self.btn_cal = PushButton(label='Calibrate')
 		self.btn_cal.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.btn_cal_prog = Label()
-		self.btn_cal_prog.native.setFixedSize(20,20)
-		self.btn_cal_prog.native.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-		
-		_cont_btn_QFormLayout.addRow(self.btn_cal_prog.native, self.btn_cal.native)
+		# self.btn_cal_prog.native.setFixedSize(20,20)
+		self.btn_cal_prog.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.btn_cal_prog.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
 		self.btn_rec = PushButton(label='Rectify')
 		self.btn_rec.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.btn_rec_prog = Label()
-		self.btn_rec_prog.native.setFixedSize(20,20)
-		self.btn_rec_prog.native.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-		
-		_cont_btn_QFormLayout.addRow(self.btn_rec_prog.native, self.btn_rec.native)
+		# self.btn_rec_prog.native.setFixedSize(20,20)
+		self.btn_rec_prog.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.btn_rec_prog.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		
 		self.btn_dec = PushButton(label='Deconvolve')
 		self.btn_dec.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.btn_dec_prog = Label()
-		self.btn_dec_prog.native.setFixedSize(20,20)
-		self.btn_dec_prog.native.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		# self.btn_dec_prog.native.setFixedSize(20,20)
+		self.btn_dec_prog.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.btn_dec_prog.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		
-		_cont_btn_QFormLayout.addRow(self.btn_dec_prog.native, self.btn_dec.native)
+		_cont_btn_checks = Container(name='Btn_chks', widgets=[self.btn_cal_prog, self.btn_rec_prog, self.btn_dec_prog], labels=False, layout='horizontal')
+		_cont_btn_btns = Container(name='Btn press', widgets=[self.btn_cal, self.btn_rec, self.btn_dec], labels=False, layout='horizontal')
+		
+		_cont_btn_QFormLayout = QFormLayout()
+		_cont_btn_QFormLayout.setSpacing(0)
+		_cont_btn_QFormLayout.setContentsMargins(0,0,0,0)
+		_cont_btn_QFormLayout.addRow(_cont_btn_checks.native)
+		_cont_btn_QFormLayout.addRow(_cont_btn_btns.native)
+		
+		_cont_btn_widget = QWidget()
+		_cont_btn_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		_cont_btn_widget.setLayout(_cont_btn_QFormLayout)
 		
 		_cont_btn_left = Container(name='btn Left', widgets=(), labels=False)
 		_cont_btn_left.native.layout().addWidget(_cont_btn_widget)
 		
 		self.btn_stop = PushButton(label='Stop')
-		self.btn_stop.min_height = 65
-		self.btn_stop.min_width = 65
+		self.btn_stop.min_height = 60
+		self.btn_stop.min_width = 60
 		
 		_cont_btn_right = Container(name='btn Right', widgets=[self.btn_stop], labels=False)
-		_cont_btn_processing = Container(widgets=[_cont_btn_left, _cont_btn_right], labels=False, layout='horizontal')
-		_cont_btn_processing.native.layout().setContentsMargins(1,1,1,1)
+		self._cont_btn_processing = Container(widgets=[_cont_btn_left, _cont_btn_right], labels=False, layout='horizontal')
+		self._cont_btn_processing.native.layout().setContentsMargins(0,0,0,0)
+		
+		
+		self.btn_nn_proc = PushButton(label='Process')
+		self.btn_nn_proc.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		self.btn_nn_proc_prog = Label()
+		# self.btn_dec_prog.native.setFixedSize(20,20)
+		self.btn_nn_proc_prog.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.btn_nn_proc_prog.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		
+		_cont_btn_checks2 = Container(name='Btn_chks', widgets=[self.btn_nn_proc_prog], labels=False, layout='horizontal')
+		_cont_btn_btns2 = Container(name='Btn press', widgets=[self.btn_nn_proc], labels=False, layout='horizontal')
+		
+		_cont_btn_QFormLayout2 = QFormLayout()
+		_cont_btn_QFormLayout2.setSpacing(0)
+		_cont_btn_QFormLayout2.setContentsMargins(0,0,0,0)
+		_cont_btn_QFormLayout2.addRow(_cont_btn_checks2.native)
+		_cont_btn_QFormLayout2.addRow(_cont_btn_btns2.native)
+		
+		_cont_btn_widget2 = QWidget()
+		_cont_btn_widget2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		_cont_btn_widget2.setLayout(_cont_btn_QFormLayout2)
+		
+		_cont_btn_left2 = Container(name='btn Left', widgets=(), labels=False)
+		_cont_btn_left2.native.layout().addWidget(_cont_btn_widget2)
+		
+		self.btn_stop2 = PushButton(label='Stop')
+		self.btn_stop2.min_height = 60
+		self.btn_stop2.min_width = 60
+		
+		_cont_btn_right2 = Container(name='btn Right', widgets=[self.btn_stop2], labels=False)
+		self._cont_btn_processing2 = Container(widgets=[_cont_btn_left2, _cont_btn_right2], labels=False, layout='horizontal')
+		self._cont_btn_processing2.native.layout().setContentsMargins(0,0,0,0)
+		
 		
 		_QFormLayout = QFormLayout()
+		self.cont_btn_top = QWidget()
+		self.cont_btn_top.setLayout(_QFormLayout)
+		#_QFormLayout.setContentsMargins(1,1,1,1)
+		
+		if LFvals.dev_true:
+			_cont_btn_checks.native.setStyleSheet("border: 1px dashed white;")
+			_cont_btn_btns.native.setStyleSheet("border: 1px dashed white;")
+			_cont_btn_widget.setStyleSheet("border: 1px dashed white;")
+			self._cont_btn_processing.native.setStyleSheet("border: 1px dashed white;")
+			_cont_btn_checks2.native.setStyleSheet("border: 1px dashed white;")
+			_cont_btn_btns2.native.setStyleSheet("border: 1px dashed white;")
+			_cont_btn_widget2.setStyleSheet("border: 1px dashed white;")
+			self._cont_btn_processing2.native.setStyleSheet("border: 1px dashed white;")
+		
+		_QFormLayout.addRow(self.logo_label.native)
+		_QFormLayout.addRow(self.gui_elms["main"]["img_folder"].label, self.gui_elms["main"]["img_folder"].native)
+		_QFormLayout.addRow(_cont_img_list_btn.native)
+		if self.gui_elms["main"]["metadata_file"].visible:
+			_QFormLayout.addRow(self.gui_elms["main"]["metadata_file"].label, self.gui_elms["main"]["metadata_file"].native)
+			
+
+		self.LFAnalyze_btn = PicButton(QPixmap(LFvals.LFAnalyze_logo_btn_img), QPixmap(LFvals.LFAnalyze_logo_btn_hov_img), QPixmap(LFvals.LFAnalyze_logo_btn_act_img))
+		# self.LFAnalyze_btn.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.LFAnalyze_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.LFAnalyze_btn.clicked.connect(self.LFAnalyze_btn_call)
+		self.LFAnalyze_btn.toggle()
+		
+		self.NeuralNet_btn = PicButton(QPixmap(LFvals.NeuralNet_logo_btn_img),QPixmap(LFvals.NeuralNet_logo_btn_hov_img),QPixmap(LFvals.NeuralNet_logo_btn_act_img))
+		# self.NeuralNet_btn.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.NeuralNet_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.NeuralNet_btn.clicked.connect(self.NeuralNet_btn_call)
+		
+		_processing_methods = QWidget()
+		hBoxLayout = QHBoxLayout()
+		hBoxLayout.addWidget(self.LFAnalyze_btn)
+		hBoxLayout.addWidget(self.NeuralNet_btn)
+		_processing_methods.setLayout(hBoxLayout)
+		_processing_methods.layout().setContentsMargins(0,0,0,0)
+		_QFormLayout.addRow(_processing_methods)
+			
+		# _QFormLayout.addRow(self.gui_elms["main"]["presets"].label, _cont_preset_list_btn.native)
+		# _QFormLayout.addRow(self.gui_elms["main"]["comments"].label, self.commentsArea)
+		
+		_cont_preset_list_btn.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		_QFormLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+		self.cont_btn_top.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+		
+		_QFormLayout2 = QFormLayout()
 		self.cont_btn_status = QWidget()
-		self.cont_btn_status.setLayout(_QFormLayout)
-		_QFormLayout.setContentsMargins(1,1,1,1)
+		self.cont_btn_status.setLayout(_QFormLayout2)
+		_QFormLayout2.setContentsMargins(1,1,1,1)
 		
 		self.cont_btn_status_label = Label()
 		self.cont_btn_status_label.native.setStyleSheet("border:1px solid rgb(0, 255, 0);")
 		self.cont_btn_status_label.value = ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_idle']
 		
-		_QFormLayout.addRow(self.logo_label.native)
-		_QFormLayout.addRow(self.gui_elms["main"]["img_folder"].label, self.gui_elms["main"]["img_folder"].native)
-		_QFormLayout.addRow(_cont_img_list_btn.native)
-		_QFormLayout.addRow(self.gui_elms["main"]["metadata_file"].label, self.gui_elms["main"]["metadata_file"].native)
-		_QFormLayout.addRow(self.gui_elms["main"]["presets"].label, _cont_preset_list_btn.native)
-		_QFormLayout.addRow(self.gui_elms["main"]["comments"].label, self.gui_elms["main"]["comments"].native)
-		
-		_QFormLayout.addRow(_cont_btn_processing.native)
-		_QFormLayout.addRow(self.cont_btn_status_label.native)
+		_QFormLayout2.addRow(self._cont_btn_processing2.native)
+		_QFormLayout2.addRow(self._cont_btn_processing.native)
+		_QFormLayout2.addRow(self.cont_btn_status_label.native)
 		
 		self.cont_btn_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-		self.cont_btn_status_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		self.cont_btn_status_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		self.cont_btn_status_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 
-		_QFormLayout.addRow(self.LFAnalyze_logo_label.native)
-
-		self.groupbox = {"calibrate":{"required":{},"optional":{},"inspect":{}},"rectify":{"required":{},"optional":{}},"deconvolve":{"required":{},"optional":{}}}
+		self.groupbox = {"calibrate":{"required":{},"optional":{},"inspect":{}},"rectify":{"required":{},"optional":{}},"deconvolve":{"required":{},"optional":{}}, "projections":{}, "lfmnet":{}}
 		
 		# == CALIBATE ==
 		_widget_calibrate_req = []
@@ -240,7 +323,7 @@ class LFQWidgetGui():
 								self.groupbox["calibrate"]["optional"]["misc"].layout().addRow(wid_elm.native)
 							else:
 								self.groupbox["calibrate"]["optional"]["misc"].layout().addRow(wid_elm.label, wid_elm.native)
-					
+								
 		self.btn_cal_req_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_cal_req_def.changed.connect
 		def btn_cal_req_defaults():
@@ -597,41 +680,77 @@ class LFQWidgetGui():
 		
 		# == PROJECTIONS ==
 		self.gui_elms["projections"] = {}
+		self.groupbox["projections"] = {}
 		_widget_projections = []
 		for key in LFvals.PLUGIN_ARGS['projections']:
 			dict = LFvals.PLUGIN_ARGS["projections"][key]
+			if "group" in dict and dict["group"] not in self.groupbox["projections"] and self.lf_vals["misc"]["group_params"]["value"] == True:
+				self.groupbox["projections"][dict["group"]] = QGroupBox(dict["group"])
+				vbox = QFormLayout()
+				_widget_projections.append(self.groupbox["projections"][dict["group"]])
+				self.groupbox["projections"][dict["group"]].setLayout(vbox)
 			if "label" not in dict:
 				dict["label"] = dict["dest"]
 			wid_elm = create_widget(dict)
 			self.gui_elms["projections"][key] = wid_elm
-			_widget_projections.append(wid_elm)
-			
-		self.container_projections = Container(name='Projections', widgets=_widget_projections)
-		
-		@self.gui_elms["projections"]["input_file_volume_btn"].changed.connect
-		def input_file_volume_btn_fnc():
-			print("Button for Forward Projections Volume Processing")
-			
-		@self.gui_elms["projections"]["input_file_lightfield_btn"].changed.connect
-		def input_file_lightfield_btn_fnc():
-			print("Button for Backward Projections Lightfield Processing")
+			if "group" in dict:
+				if self.lf_vals["misc"]["group_params"]["value"] == False:
+					_widget_projections.append(wid_elm)
+				else:
+					if dict["type"] == "bool":
+						self.groupbox["projections"][dict["group"]].layout().addRow(wid_elm.native)
+					elif "no_label_layout_style" in dict and dict["no_label_layout_style"] == True:
+						self.groupbox["projections"][dict["group"]].layout().addRow(wid_elm.native)
+					else:
+						self.groupbox["projections"][dict["group"]].layout().addRow(wid_elm.label, wid_elm.native)
+			else:
+				_widget_projections.append(wid_elm)
+				
+		if self.lf_vals["misc"]["group_params"]["value"] == False:	
+			self.container_projections = Container(name='Projections', widgets=_widget_projections)
+		else:		
+			self.container_projections = Container(name='Projections', widgets=())
+			for wid_elm in _widget_projections:
+				self.container_projections.native.layout().addWidget(wid_elm)
 		
 		# == LFMNET ==
 		self.gui_elms["lfmnet"] = {}
+		self.groupbox["lfmnet"] = {}
 		_widget_lfmnet = []
 		for key in LFvals.PLUGIN_ARGS['lfmnet']:
 			dict = LFvals.PLUGIN_ARGS["lfmnet"][key]
+			if "group" in dict and dict["group"] not in self.groupbox["lfmnet"] and self.lf_vals["misc"]["group_params"]["value"] == True:
+				self.groupbox["lfmnet"][dict["group"]] = QGroupBox(dict["group"])
+				vbox = QFormLayout()
+				_widget_lfmnet.append(self.groupbox["lfmnet"][dict["group"]])
+				self.groupbox["lfmnet"][dict["group"]].setLayout(vbox)
 			if "label" not in dict:
 				dict["label"] = dict["dest"]
 			wid_elm = create_widget(dict)
 			self.gui_elms["lfmnet"][key] = wid_elm
-			_widget_lfmnet.append(wid_elm)
-			
-		self.container_lfmnet = Container(name='LFM-NET', widgets=_widget_lfmnet)
-		
-		@self.gui_elms["lfmnet"]["input_model_btn"].changed.connect
-		def input_model_btn_fnc():
-			print("Button for LFMNet Model Processing")
+			if "group" in dict:
+				if self.lf_vals["misc"]["group_params"]["value"] == False:
+					_widget_lfmnet.append(wid_elm)
+				else:
+					if "visible" in dict and dict["visible"] == False:
+						pass
+					else:
+						if dict["type"] == "bool":
+							self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.native)
+						elif "no_label_layout_style" in dict and dict["no_label_layout_style"] == True:
+							self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.native)
+						else:
+							self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.label, wid_elm.native)
+			else:
+				_widget_lfmnet.append(wid_elm)
+				
+		if self.lf_vals["misc"]["group_params"]["value"] == False:	
+			self.container_lfmnet = Container(name='LFM-NET', widgets=_widget_lfmnet)
+		else:		
+			self.container_lfmnet = Container(name='LFM-NET', widgets=())
+			for wid_elm in _widget_lfmnet:
+				self.container_lfmnet.native.layout().addWidget(wid_elm)
+
 		
 		# == HARDWARE ==
 		self.gui_elms["hw"] = {}
@@ -773,6 +892,20 @@ class LFQWidgetGui():
 		
 		self.container_lfa = _misc_widget
 		
+		self.NapariLF_ver_label = Label(value=LFvals.PLUGIN_ARGS['main']['NapariLF_ver_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['NapariLF_ver_label']['help'])
+		self.NapariLF_ver_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.NapariLF_ver_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		
+		self.LFAnalyze_logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['help'])
+		self.LFAnalyze_logo_label.native.setOpenExternalLinks(True)
+		self.LFAnalyze_logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.LFAnalyze_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		
+		self.LFMNet_logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['LFMNet_logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['LFMNet_logo_label']['help'])
+		self.LFMNet_logo_label.native.setOpenExternalLinks(True)
+		self.LFMNet_logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.LFMNet_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		
 		# bind values between props
 		# @self.gui_elms["calibrate"]["ulens_focal_length"].changed.connect
 		def copy_vals():
@@ -846,6 +979,10 @@ class LFQWidgetGui():
 			
 			str_data = []
 			with h5py.File(img_file_path, "r") as f:
+				for data_key in f.attrs.keys():
+						data = f.attrs[data_key]
+						str_data.append(str(data_key) +' : '+ str(data))
+						str_data.append("\n")
 				# List all groups
 				groups = f.keys()
 				str_data.append("=== Groups: %s ===" % list(groups))
@@ -855,15 +992,15 @@ class LFQWidgetGui():
 					str_data.append("\n")
 					# Get the data
 					data_grp = f[group]
-					str_data.append("-- %s --" % data_grp)
-					str_data.append("\n")
-					for data_key in data_grp:
-						data = data_grp[data_key]
-						str_data.append(str(data))
+					#str_data.append("-- %s --" % data_grp)
+					#str_data.append("\n")
+					for data_key in data_grp.attrs.keys():
+						data = data_grp.attrs[data_key]
+						str_data.append(str(data_key) +' : '+ str(data))
 						str_data.append("\n")
 				str_data.append("====================")
 				
-			self.gui_elms["calibrate"]["calibration_files_viewer"].value = ' '.join(str_data)
+			self.gui_elms["calibrate"]["calibration_files_viewer"].value = ''.join(str_data)
 			
 		@self.gui_elms["main"]["img_folder"].changed.connect
 		def img_folder_changes():
@@ -966,7 +1103,7 @@ class LFQWidgetGui():
 		_lfmnet_tab_layout.setAlignment(Qt.AlignTop)
 		self.lfmnet_tab.setLayout(_lfmnet_tab_layout)
 		self.lfmnet_tab.layout().addWidget(self.container_lfmnet.native)
-		self.qtab_widget.addTab(self.lfmnet_tab, 'LFMNet')
+		# self.qtab_widget.addTab(self.lfmnet_tab, 'Neural Net')
 		
 		self.hardware_tab = QWidget()
 		_hardware_tab_layout = QVBoxLayout()
@@ -982,6 +1119,40 @@ class LFQWidgetGui():
 		self.lfa_lib_tab.layout().addWidget(self.container_lfa)
 		self.qtab_widget.addTab(self.lfa_lib_tab, 'Misc')
 		
+		self._about_tab = QWidget()
+		_about_tab_layout = QFormLayout()
+		_about_tab_layout.setAlignment(Qt.AlignTop)
+		self._about_tab.setLayout(_about_tab_layout)
+		
+		_line = QFrame()
+		_line.setMinimumWidth(1)
+		_line.setFixedHeight(2)
+		_line.setFrameShape(QFrame.HLine)
+		_line.setFrameShadow(QFrame.Sunken)
+		_line.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+		_line.setStyleSheet("margin:1px; padding:2px; border:1px solid rgb(128,128,128); border-width: 1px;")
+		
+		_line2 = QFrame()
+		_line2.setMinimumWidth(1)
+		_line2.setFixedHeight(2)
+		_line2.setFrameShape(QFrame.HLine)
+		_line2.setFrameShadow(QFrame.Sunken)
+		_line2.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+		_line2.setStyleSheet("margin:1px; padding:2px; border:1px solid rgb(128,128,128); border-width: 1px;")
+		
+		try:
+			from ._version import version as __version__
+		except ImportError:
+			__version__ = "unknown"
+		
+		self.NapariLF_ver_label.native.setText(LFvals.PLUGIN_ARGS["main"]["NapariLF_ver_label"]["label"] + __version__)
+		_about_tab_layout.addRow(self.NapariLF_ver_label.native)
+		_about_tab_layout.addRow(_line)
+		_about_tab_layout.addRow(self.LFAnalyze_logo_label.native)
+		_about_tab_layout.addRow(self.LFMNet_logo_label.native)
+		_about_tab_layout.addRow(_line2)
+		self.qtab_widget.addTab(self._about_tab, 'About')
+		
 		# self.calib_tab = QWidget()
 		# _calib_tab_layout = QVBoxLayout()
 		# _calib_tab_layout.setAlignment(Qt.AlignTop)
@@ -993,16 +1164,91 @@ class LFQWidgetGui():
 		
 		#APP
 		self.widget_main_top_comps = Container(widgets=(), labels=True)
-		self.widget_main_top_comps.native.layout().addWidget(self.cont_btn_status)
+		self.widget_main_top_comps.native.layout().addWidget(self.cont_btn_top)
 		
-		self.gui_elms["main"]["comments"].parent.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+		#self.gui_elms["main"]["comments"].parent.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+
+		vlay = QVBoxLayout()		
+		box = CollapsibleBox("Presets && Comments")
+		vlay.addWidget(box)
+		lay = QVBoxLayout()
+		lay.addWidget(_cont_preset_list_btn.native)
+		lay.addWidget(self.commentsArea)
+
+		box.setContentLayout(lay)
+		# vlay.addStretch()
+		_preset_comments_expand = QWidget()
+		_preset_comments_expand.setLayout(vlay)
 		
-		self.widget_main_bottom_comps = Container(widgets=(), labels=True)
-		self.widget_main_bottom_comps.native.layout().addWidget(self.qtab_widget)
+		self.widget_main_bottom_comps0 = Container(widgets=(), labels=True)
+		self.widget_main_bottom_comps0.native.layout().addWidget(_preset_comments_expand)
+		self.widget_main_bottom_comps0.native.layout().setContentsMargins(0,0,0,0)
+		self.widget_main_top_comps.native.layout().addWidget(self.widget_main_bottom_comps0.native)
+		self.widget_main_top_comps.native.layout().setContentsMargins(0,0,0,0)
+		if LFvals.dev_true:
+			self.widget_main_top_comps.native.setStyleSheet("border : 1px dashed white;")
+		
+		self.widget_main_bottom_comps1 = Container(widgets=(), labels=True)
+		self.widget_main_bottom_comps1.native.layout().addWidget(self.qtab_widget)
+		
+		self.widget_main_bottom_comps2 = Container(widgets=(), labels=True)
+		self.widget_main_bottom_comps2.native.layout().addWidget(self.lfmnet_tab)
+		self.widget_main_bottom_comps2.visible = False
+		self._cont_btn_processing2.visible = False
+		
+		self.widget_main_bottom_comps_scroll = Container(widgets=(), labels=True)
+		self.widget_main_bottom_comps_scroll.native.layout().addWidget(self.widget_main_bottom_comps1.native)
+		self.widget_main_bottom_comps_scroll.native.layout().addWidget(self.widget_main_bottom_comps2.native)
+		
+		self.scroll_bottom = QScrollArea()
+		self.scroll_bottom.setWidgetResizable(True)
+		self.scroll_bottom.setWidget(self.widget_main_bottom_comps_scroll.native)
+		
+		if LFvals.dev_true:
+			self.widget_main_bottom_comps0.native.setStyleSheet("border: 1px dashed white;")
+			self.widget_main_bottom_comps1.native.setStyleSheet("border: 1px dashed white;")
+			self.widget_main_bottom_comps2.native.setStyleSheet("border: 1px dashed white;")
+			self.widget_main_bottom_comps_scroll.native.setStyleSheet("border: 1px dashed white;")
+			self.scroll_bottom.setStyleSheet("border: 1px dashed white;")
+		
+		self.widget_main_proc_btn_comps = Container(widgets=(), labels=True)
+		self.widget_main_proc_btn_comps.native.layout().addWidget(self.cont_btn_status)
 		
 		self.timer = QTimer()
 		self.timer.timeout.connect(self.verify_existing_files)
 		self.timer.start(500)
+		
+	def LFAnalyze_btn_call(self):
+		# print("LFAnalyze_btn_call")
+		if self.LFAnalyze_btn.isChecked() == True:
+			self.widget_main_bottom_comps0.visible = True
+			self.widget_main_bottom_comps1.visible = True
+			self.widget_main_bottom_comps2.visible = False
+			self._cont_btn_processing.visible = True
+			self._cont_btn_processing2.visible = False
+		else:
+			self.widget_main_bottom_comps0.visible = False
+			self.widget_main_bottom_comps1.visible = False
+			self.widget_main_bottom_comps2.visible = True
+			self._cont_btn_processing.visible = False
+			self._cont_btn_processing2.visible = True
+		self.NeuralNet_btn.toggle()
+			
+	def NeuralNet_btn_call(self):
+		# print("NeuralNet_btn_call")
+		if self.NeuralNet_btn.isChecked() == True:
+			self.widget_main_bottom_comps0.visible = False
+			self.widget_main_bottom_comps1.visible = False
+			self.widget_main_bottom_comps2.visible = True
+			self._cont_btn_processing.visible = False
+			self._cont_btn_processing2.visible = True
+		else:
+			self.widget_main_bottom_comps0.visible = True
+			self.widget_main_bottom_comps1.visible = True
+			self.widget_main_bottom_comps2.visible = False
+			self._cont_btn_processing.visible = True
+			self._cont_btn_processing2.visible = False
+		self.LFAnalyze_btn.toggle()
 		
 	def verify_existing_files(self):
 		
@@ -1011,72 +1257,50 @@ class LFQWidgetGui():
 			path = Path(_img_folder)
 			if path.is_dir():
 			
-				_cal_out = self.gui_elms["calibrate"]["output_filename"].value
-				_rec_out = self.gui_elms["rectify"]["output_filename"].value
-				_dec_out = self.gui_elms["deconvolve"]["output_filename"].value
+				out_files = [
+					{"section":"calibrate","out_file":"output_filename", "sub_section":"required", "group":LFvals.PLUGIN_ARGS['calibrate']['output_filename']['group']},
+					{"section":"rectify","out_file":"output_filename", "sub_section":"required", "group":LFvals.PLUGIN_ARGS['rectify']['output_filename']['group']},
+					{"section":"deconvolve","out_file":"output_filename", "sub_section":"required", "group":LFvals.PLUGIN_ARGS['deconvolve']['output_filename']['group']},
+					{"section":"projections","out_file":"output_filename_lightfield", "group":LFvals.PLUGIN_ARGS['projections']['output_filename_lightfield']['group']},
+					{"section":"projections","out_file":"output_filename_volume", "group":LFvals.PLUGIN_ARGS['projections']['output_filename_volume']['group']},
+					{"section":"lfmnet","out_file":"output_filename", "group":LFvals.PLUGIN_ARGS['lfmnet']['output_filename']['group']}
+				]
 				
-				_alert_symbol = ' ⚠️'
-
-				_file_path = os.path.join(_img_folder, _cal_out)		
-				path = Path(_file_path)
-				if path.is_file():
-					self.gui_elms["calibrate"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(255, 255, 0); border-width: 1px;")
-					if self.lf_vals["misc"]["group_params"]["value"] == True:
-						i, j = self.groupbox["calibrate"]["required"]["Files"].layout().getWidgetPosition(self.gui_elms["calibrate"]["output_filename"].native)
-						widget_item = self.groupbox["calibrate"]["required"]["Files"].layout().itemAt(i, j-1)
-						widget = widget_item.widget()
-						widget.setText(self.gui_elms["calibrate"]["output_filename"].label + _alert_symbol)
-						widget.setToolTip("A filed named '{out_file}' already exists in this folder!\nYou can continue but it will overwrite the existing file.".format(out_file = self.gui_elms["calibrate"]["output_filename"].value))			
-				else:
-					self.gui_elms["calibrate"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(0, 0, 0); border-width: 1px;")
-					if self.lf_vals["misc"]["group_params"]["value"] == True:
-						i, j = self.groupbox["calibrate"]["required"]["Files"].layout().getWidgetPosition(self.gui_elms["calibrate"]["output_filename"].native)
-						widget_item = self.groupbox["calibrate"]["required"]["Files"].layout().itemAt(i, j-1)
-						widget = widget_item.widget()
-						widget.setText(self.gui_elms["calibrate"]["output_filename"].label)
-						widget.setToolTip("")
+				_alert_symbol = ' ⚠'
+				_space_char = '  '
+				
+				for out in out_files:
+					_img_out = self.gui_elms[out["section"]][out["out_file"]].value
 					
-				
-				_file_path = os.path.join(_img_folder, _rec_out)		
-				path = Path(_file_path)
-				if path.is_file():
-					self.gui_elms["rectify"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(255, 255, 0); border-width: 1px;")
-					if self.lf_vals["misc"]["group_params"]["value"] == True:
-						i, j = self.groupbox["rectify"]["required"]["Files"].layout().getWidgetPosition(self.gui_elms["rectify"]["output_filename"].native)
-						widget_item = self.groupbox["rectify"]["required"]["Files"].layout().itemAt(i, j-1)
-						widget = widget_item.widget()
-						widget.setText(self.gui_elms["rectify"]["output_filename"].label + _alert_symbol)
-						widget.setToolTip("A filed named '{out_file}' already exists in this folder!\nYou can continue but it will overwrite the existing file.".format(out_file = self.gui_elms["rectify"]["output_filename"].value))
-				else:
-					self.gui_elms["rectify"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(0, 0, 0); border-width: 1px;")
-					if self.lf_vals["misc"]["group_params"]["value"] == True:
-						i, j = self.groupbox["rectify"]["required"]["Files"].layout().getWidgetPosition(self.gui_elms["rectify"]["output_filename"].native)
-						widget_item = self.groupbox["rectify"]["required"]["Files"].layout().itemAt(i, j-1)
-						widget = widget_item.widget()
-						widget.setText(self.gui_elms["rectify"]["output_filename"].label)
-						widget.setToolTip("")
-					
-				
-				_file_path = os.path.join(_img_folder, _dec_out)		
-				path = Path(_file_path)
-				if path.is_file():
-					self.gui_elms["deconvolve"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(255, 255, 0); border-width: 1px;")
-					if self.lf_vals["misc"]["group_params"]["value"] == True:
-						i, j = self.groupbox["deconvolve"]["required"]["Files"].layout().getWidgetPosition(self.gui_elms["deconvolve"]["output_filename"].native)
-						widget_item = self.groupbox["deconvolve"]["required"]["Files"].layout().itemAt(i, j-1)
-						widget = widget_item.widget()
-						widget.setText(self.gui_elms["deconvolve"]["output_filename"].label + _alert_symbol)
-						widget.setToolTip("A filed named '{out_file}' already exists in this folder!\nYou can continue but it will overwrite the existing file.".format(out_file = self.gui_elms["deconvolve"]["output_filename"].value))
-				else:
-					self.gui_elms["deconvolve"]["output_filename"].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(0, 0, 0); border-width: 1px;")
-					if self.lf_vals["misc"]["group_params"]["value"] == True:
-						i, j = self.groupbox["deconvolve"]["required"]["Files"].layout().getWidgetPosition(self.gui_elms["deconvolve"]["output_filename"].native)
-						widget_item = self.groupbox["deconvolve"]["required"]["Files"].layout().itemAt(i, j-1)
-						widget = widget_item.widget()
-						widget.setText(self.gui_elms["deconvolve"]["output_filename"].label)
-						widget.setToolTip("")
-				
-			self.image_folder_changes()
+					_file_path = os.path.join(_img_folder, _img_out)		
+					path = Path(_file_path)
+					if path.is_file():
+						self.gui_elms[out["section"]][out["out_file"]].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(255, 255, 0); border-width: 1px;")
+						if self.lf_vals["misc"]["group_params"]["value"] == True:
+							if "sub_section" in out:
+								i, j = self.groupbox[out["section"]][out["sub_section"]][out["group"]].layout().getWidgetPosition(self.gui_elms[out["section"]][out["out_file"]].native)
+								widget_item = self.groupbox[out["section"]][out["sub_section"]][out["group"]].layout().itemAt(i, j-1)
+							else:
+								i, j = self.groupbox[out["section"]][out["group"]].layout().getWidgetPosition(self.gui_elms[out["section"]][out["out_file"]].native)
+								widget_item = self.groupbox[out["section"]][out["group"]].layout().itemAt(i, j-1)
+							widget = widget_item.widget()
+							widget.setText(self.gui_elms[out["section"]][out["out_file"]].label + _alert_symbol)
+							widget.setToolTip("A filed named '{out_file}' already exists in this folder!\nYou can continue but it will overwrite the existing file.".format(out_file = self.gui_elms[out["section"]][out["out_file"]].value))			
+					else:
+						self.gui_elms[out["section"]][out["out_file"]].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(0, 0, 0); border-width: 1px;")
+						if self.lf_vals["misc"]["group_params"]["value"] == True:
+							if "sub_section" in out:
+								i, j = self.groupbox[out["section"]][out["sub_section"]][out["group"]].layout().getWidgetPosition(self.gui_elms[out["section"]][out["out_file"]].native)
+								widget_item = self.groupbox[out["section"]][out["sub_section"]][out["group"]].layout().itemAt(i, j-1)
+							else:
+								i, j = self.groupbox[out["section"]][out["group"]].layout().getWidgetPosition(self.gui_elms[out["section"]][out["out_file"]].native)
+								widget_item = self.groupbox[out["section"]][out["group"]].layout().itemAt(i, j-1)
+							widget = widget_item.widget()
+							widget.setText(self.gui_elms[out["section"]][out["out_file"]].label + _space_char)
+							widget.setToolTip("")
+							
+				self.image_folder_changes()
+			
 		except Exception as e:
 			print(e)
 			print(traceback.format_exc())
@@ -1207,10 +1431,52 @@ class LFQWidgetGui():
 			self.btn_dec_prog.native.setStyleSheet("font-size: 16px; color: green; vertical-align: baseline;")
 		else:
 			self.btn_dec_prog.native.setText('')
+			
+		dec_nn_file = str(self.gui_elms["lfmnet"]["output_filename"].value)
+		dec_nn_file_path = os.path.join(img_folder, dec_nn_file)
+		path = Path(dec_nn_file_path)
+		if path.is_file():
+			self.btn_nn_proc_prog.native.setText('✔️')
+			self.btn_nn_proc_prog.native.setStyleSheet("font-size: 16px; color: green; vertical-align: baseline;")
+		else:
+			self.btn_nn_proc_prog.native.setText('')
 		
 		self.populate_img_list()
 		self.populate_cal_img_list()
+		self.populate_projections_file_list()
+		self.populate_lfmnet_model_list()
+		
+	def populate_projections_file_list(self):
+		img_folder = str(self.gui_elms["main"]["img_folder"].value)
+		proj_files = []
+		for ext in LFvals.PROJ_EXTS:
+			files_search = "*.{file_ext}".format(file_ext=ext)
+			files = glob.glob(os.path.join(img_folder, files_search))
+			for file in files:
+				proj_files.append(ntpath.basename(file))
+				
+		# if len(proj_files) == 0:
+			# self.gui_elms["projections"]["input_file_volume"].value = ""
+			# self.gui_elms["projections"]["input_file_lightfield"].value = ""
+		
+		self.gui_elms["projections"]["input_file_volume"].choices = proj_files
+		self.gui_elms["projections"]["input_file_lightfield"].choices = proj_files
 
+	def populate_lfmnet_model_list(self):
+		img_folder = str(self.gui_elms["main"]["img_folder"].value)
+		model_files = []
+		for ext in LFvals.MODEL_EXTS:
+			files_search = "*.{file_ext}".format(file_ext=ext)
+			files = glob.glob(os.path.join(img_folder, files_search))
+			for file in files:
+				model_files.append(ntpath.basename(file))
+				
+		# if len(model_files) == 0:
+			# self.gui_elms["lfmnet"]["input_model"].value = ""
+		
+		self.gui_elms["lfmnet"]["input_model"].choices = model_files
+		if len(model_files) == 0:
+			self.gui_elms["lfmnet"]["input_model_prop_viewer"].value = ""
 		
 	def populate_img_list(self):
 		img_folder = str(self.gui_elms["main"]["img_folder"].value)
@@ -1226,6 +1492,7 @@ class LFQWidgetGui():
 		self.gui_elms["calibrate"]["dark_frame_file"].choices = img_files
 		self.gui_elms["rectify"]["input_file"].choices = img_files
 		self.gui_elms["deconvolve"]["input_file"].choices = img_files
+		self.gui_elms["lfmnet"]["input_file"].choices = img_files
 		
 	def populate_cal_img_list(self):
 		img_folder = str(self.gui_elms["main"]["img_folder"].value)
@@ -1242,11 +1509,14 @@ class LFQWidgetGui():
 		self.gui_elms["calibrate"]["calibration_files"].choices = img_files
 		self.gui_elms["rectify"]["calibration_file"].choices = img_files
 		self.gui_elms["deconvolve"]["calibration_file"].choices = img_files
+		self.gui_elms["projections"]["calibration_file"].choices = img_files
+		self.gui_elms["lfmnet"]["calibration_file"].choices = img_files
 		
 	def set_cal_img(self):
 		cal_file = self.gui_elms["calibrate"]["output_filename"].value
 		self.gui_elms["rectify"]["calibration_file"].value = cal_file
 		self.gui_elms["deconvolve"]["calibration_file"].value = cal_file
+		self.gui_elms["projections"]["calibration_file"].value = cal_file
 		
 	def openImage(self, path):
 		imageViewerFromCommandLine = {'linux':'xdg-open','win32':'explorer','darwin':'open'}[sys.platform]
@@ -1472,6 +1742,12 @@ def create_widget(props):
 				widget.min_width = 100
 				widget.native.setStyleSheet("background-color:black;")
 				
+			if widget.widget_type == "SpinBox":
+				if "max" in props:
+					widget.max = props["max"]
+				if "min" in props:
+					widget.min = props["min"]
+				
 			for prop in props:
 				try:
 					getattr(widget, prop)
@@ -1487,3 +1763,99 @@ def create_widget(props):
 		print(e)
 		print(traceback.format_exc())
 	return widget
+	
+class CollapsibleBox(QWidget):
+    def __init__(self, title="", parent=None):
+        super(CollapsibleBox, self).__init__(parent)
+
+        self.toggle_button = QToolButton(
+            text=title, checkable=True, checked=False
+        )
+        self.toggle_button.setStyleSheet("QToolButton { border: none; }")
+        self.toggle_button.setToolButtonStyle(
+            QtCore.Qt.ToolButtonTextBesideIcon
+        )
+        self.toggle_button.setArrowType(QtCore.Qt.RightArrow)
+        self.toggle_button.pressed.connect(self.on_pressed)
+
+        self.toggle_animation = QtCore.QParallelAnimationGroup(self)
+
+        self.content_area = QScrollArea(maximumHeight=0, minimumHeight=0)
+        self.content_area.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Fixed
+        )
+        self.content_area.setFrameShape(QFrame.NoFrame)
+
+        lay = QVBoxLayout(self)
+        lay.setSpacing(0)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(self.toggle_button)
+        lay.addWidget(self.content_area)
+
+        self.toggle_animation.addAnimation(
+            QtCore.QPropertyAnimation(self, b"minimumHeight")
+        )
+        self.toggle_animation.addAnimation(
+            QtCore.QPropertyAnimation(self, b"maximumHeight")
+        )
+        self.toggle_animation.addAnimation(
+            QtCore.QPropertyAnimation(self.content_area, b"maximumHeight")
+        )
+
+    # @QtCore.pyqtSlot()
+    def on_pressed(self):
+        checked = self.toggle_button.isChecked()
+        self.toggle_button.setArrowType(
+            QtCore.Qt.DownArrow if not checked else QtCore.Qt.RightArrow
+        )
+        self.toggle_animation.setDirection(
+            QtCore.QAbstractAnimation.Forward
+            if not checked
+            else QtCore.QAbstractAnimation.Backward
+        )
+        self.toggle_animation.start()
+
+    def setContentLayout(self, layout):
+        lay = self.content_area.layout()
+        del lay
+        self.content_area.setLayout(layout)
+        collapsed_height = (
+            self.sizeHint().height() - self.content_area.maximumHeight()
+        )
+        content_height = layout.sizeHint().height()
+        for i in range(self.toggle_animation.animationCount()):
+            animation = self.toggle_animation.animationAt(i)
+            animation.setDuration(500)
+            animation.setStartValue(collapsed_height)
+            animation.setEndValue(collapsed_height + content_height)
+
+        content_animation = self.toggle_animation.animationAt(
+            self.toggle_animation.animationCount() - 1
+        )
+        content_animation.setDuration(500)
+        content_animation.setStartValue(0)
+        content_animation.setEndValue(content_height)
+		
+class PicButton(QAbstractButton):
+    def __init__(self, pixmap, pixmap_hover, pixmap_pressed, parent=None):
+        super(PicButton, self).__init__(parent)
+        self.pixmap = pixmap
+        self.pixmap_hover = pixmap_hover
+        self.pixmap_pressed = pixmap_pressed
+        self.setCheckable(True)
+
+    def paintEvent(self, event):
+        pix = self.pixmap_hover if self.underMouse() else self.pixmap
+        if self.isChecked():
+            pix = self.pixmap_pressed
+        painter = QPainter(self)
+        painter.drawPixmap(event.rect(), pix)
+
+    def enterEvent(self, event):
+        self.update()
+
+    def leaveEvent(self, event):
+        self.update()
+
+    def sizeHint(self):
+        return self.pixmap.size()

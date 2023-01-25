@@ -1,6 +1,6 @@
 import numpy as np
 from lflib.lightfield import LightField
-
+# from numba import jit
 
 #----------------------------------------------------------------------------------
 #                         WAVESPREAD SUPPORT ROUTINES
@@ -272,6 +272,24 @@ def compute_light_field_psf(intensity, x, y, z,
     # Normalize by the weight sum and return the psf
     return psf / weight_sum
 
+# Including this function directly in optics.py instead of importing from lightfield.py
+def lenslet_image_coords_to_uvst(vec, nu, nv):
+    # Converts a series of image coordinates in a TILED_LENSLET light
+    # field image stored in the rows of a vector to light field
+    # coordinates.  IMPORTANT NOTE: [m, n] are expected to be in numpy
+    # order (i.e. [row, col])
+    m = vec[:,0]
+    n = vec[:,1]
+
+    u = np.mod(n, nu);
+    v = np.mod(m, nv);
+    s = np.floor(np.divide(n,nu))
+    t = np.floor(np.divide(m,nv))
+
+    return np.vstack((u, v, s, t)).T.astype(np.int32)
+
+# @jit(nopython=True)
+# @jit()
 def compute_psf_imap(in_tuple):
     '''
     This is a helper routine that allows us to build the psf database in a multithreaded fashion.
@@ -321,7 +339,8 @@ def compute_psf_imap(in_tuple):
     # be used in the forward_project() and back_project()
     # operators in volume.py
     #
-    from .lightfield import lenslet_image_coords_to_uvst
+    # Removed import from lightfield and included directly
+    # from .lightfield import lenslet_image_coords_to_uvst
     uvst = lenslet_image_coords_to_uvst(coords, lenslet_array.nu, lenslet_array.nv)
     uvst[:,2] -= int((num_lenslets_in_aperture-1) / 2)
     uvst[:,3] -= int((num_lenslets_in_aperture-1) / 2)
@@ -630,15 +649,26 @@ class LensletArray(LfSensor):
                                        num_lenslets_in_aperture, self, radiometry, x, y, z, voxels_as_points) )
 
                     # Debugging
-                    # compute_psf_imap(imap_args[0])
+                    # print("DEBUGGING")
+                    # print(compute_psf_imap(imap_args[0]))
                     # raise SystemExit
 
         # Note: multiprocessing was previously used for this step. -gschlafly
-        results = [compute_psf_imap(arg) for arg in imap_args]
-        
+        # Use multiprocessing
+        from tqdm import tqdm
+        if True:
+#             num_threads = 16 # Let the user decide through the calibration/optional tab
+            print('\tStarting multiprocessing pool with ', num_threads , ' worker processes.')
+            from multiprocessing import Pool
+            pool = Pool(processes=num_threads)
+            # # from IPython import embed; embed()
+            results = list(tqdm(pool.imap(compute_psf_imap, imap_args, chunksize=1), 'Computing PSFs', total=len(imap_args)))
+        else: # Or not
+            results = [compute_psf_imap(arg) for arg in tqdm(imap_args, 'Computing PSF')]
+
         #print results
         for idx,r in enumerate(results):
-            print(idx)
+            # print(idx)
             x = r[2]
             y = r[3]
             z = r[4]
@@ -658,7 +688,7 @@ class LensletArray(LfSensor):
             psf_db.max_coefficient = np.maximum(psf_db.max_coefficient, r[1].max())
 
             # Print status update
-            print('\t[%d %d] @ z = %d (%f um) -- psf diameter = %d lenslets  sum = %0.2f.  Kept %d / %d  nonzero coefficients (%0.1f%% pixels,  %0.2f%% intensity)' % (x, y, z, z_coords[z], num_lenslets_in_aperture, psf_sum, r[1].shape[0], num_nonzero, pct_pixels_retained, pct_intensity_retained))
+            # print('\t[%d %d] @ z = %d (%f um) -- psf diameter = %d lenslets  sum = %0.2f.  Kept %d / %d  nonzero coefficients (%0.1f%% pixels,  %0.2f%% intensity)' % (x, y, z, z_coords[z], num_lenslets_in_aperture, psf_sum, r[1].shape[0], num_nonzero, pct_pixels_retained, pct_intensity_retained))
 
                                
         print('light field psf calculation took', time.time() - tic ,'seconds.')

@@ -1,10 +1,17 @@
-import os, sys
+import os, sys, multiprocessing
 from qtpy.QtGui import QIcon
 
 currentdir = os.path.dirname(os.path.realpath(__file__))
 icon_img = os.path.join(currentdir, 'resources/icon.ico')
 logo_img = os.path.join(currentdir, 'resources/napari-LF_logo.png')
 LFAnalyze_logo_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_201_45px.png')
+LFAnalyze_logo_btn_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_btn_201_45px.png')
+LFAnalyze_logo_btn_hov_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_btn_hov_201_45px.png')
+LFAnalyze_logo_btn_act_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_btn_act_201_45px.png')
+NeuralNet_logo_img = os.path.join(currentdir, 'resources/NeuralNet_logo_201_45px.png')
+NeuralNet_logo_btn_img = os.path.join(currentdir, 'resources/NeuralNet_logo_btn_201_45px.png')
+NeuralNet_logo_btn_hov_img = os.path.join(currentdir, 'resources/NeuralNet_logo_btn_hov_201_45px.png')
+NeuralNet_logo_btn_act_img = os.path.join(currentdir, 'resources/NeuralNet_logo_btn_act_201_45px.png')
 loading_img = os.path.join(currentdir, 'resources/loading.gif')
 examples_folder = os.path.join(currentdir, 'examples/antleg')
 lfa_folder = os.path.join(currentdir, 'lfa')
@@ -17,6 +24,8 @@ SOLVER_OPTIONS = {
 
 IMAGE_EXTS = ["tif","png","jpg","bmp"]
 HDF5_EXTS = ["hdf", "h4", "hdf4", "h5", "hdf5", "he2", "he5", "lfc"]
+PROJ_EXTS = IMAGE_EXTS
+MODEL_EXTS = ["ckpt"]
 
 METHODS = ['PLUGIN','NAPARI','APP']
 SETTINGS_FILENAME = "settings.ini"
@@ -50,10 +59,10 @@ PLUGIN_ARGS = {
 			"label":"Available images","default":"","help":"List of available Images to view in the selected Project folder.","type":"sel","options":[""]
 		},
 		"metadata_file":{
-			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"str","enabled":True
+			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"str","enabled":True,"visible":dev_true
 		},
 		"comments":{
-			"default":"","label":"Comments","help":"Comments from Acquisition and Processing","type":"str","type":"text"
+			"default":"","prop":"--comments","label":"Comments","help":"Comments from Acquisition and Processing","type":"str","type":"text"
 		},
 		"presets":{
 			"default":"","label":"Presets","help":"Save/Load parameters from presets.","type":"sel","options":[""]
@@ -61,8 +70,14 @@ PLUGIN_ARGS = {
 		"status":{
 			"label":"STATUS:","value":"== IDLE ==","value_busy":"== BUSY ==","value_idle":"== IDLE ==","value_error":"== ERROR ==","type":"label","default":"== IDLE ==","exclude_from_settings":True
 		},
+		"NapariLF_ver_label":{
+			"label":"Napari-LF Plugin Ver:","default":"","help":"Napari-LF Plugin version.","type":"label","exclude_from_settings":True
+		},
 		"LFAnalyze_logo_label":{
-			"label":f'<a href="https://chanzuckerberg.com/science/programs-resources/imaging/napari/light-field-imaging-plugin/"><img src="{LFAnalyze_logo_img}"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
+			"label":f'<a href="https://graphics.stanford.edu/projects/lfmicroscope/"><img src="{LFAnalyze_logo_img}"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
+		},
+		"LFMNet_logo_label":{
+			"label":f'<a href="https://github.com/pvjosue/LFMNet"><img src="{NeuralNet_logo_img}"></a>',"help":"LFMNet About WebPage","type":"img_label","default":"","exclude_from_settings":True
 		},
 	},
 	"misc":{
@@ -214,7 +229,7 @@ PLUGIN_ARGS = {
 			"prop":"--skip-subpixel-alignment","action":"store_true","label":"Skip subpixel alignment","dest":"skip_subpixel_alignment","type":"bool","default":False,"help":"Skip subpixel alignment for determining lenslet centers.","group":"Other Options"
 		},
 		"num_threads":{
-			"prop":"--num-threads","label":"Number of CPU threads","dest":"num_threads","type":"int","default":10,"help":"Set the number of CPU threads to use when generating the raydb.","group":"Other Options"
+			"prop":"--num-threads","label":"Number of CPU threads","dest":"num_threads","type":"int","default":min(10,multiprocessing.cpu_count()),"help":"Set the number of CPU threads to use when generating the raydb.","group":"Other Options","max":multiprocessing.cpu_count(), "min":1
 		},
 		"pinhole_filename":{
 			"prop":"--pinhole","label":"Pinhole filename","dest":"pinhole_filename","type":"str","default":"","help":"After calibrating save the rectified light field as a rectified sub-aperture image.","group":"Other Options"
@@ -231,7 +246,7 @@ PLUGIN_ARGS = {
 	# ========== Rectify ============
 	# ===============================		
 		"input_file":{
-			"prop_short":"-i","prop":"--input_file","label":"Light field image","dest":"input_file","type":"sel","default":"light_field.png","options":["light_field.png"],"help":"Supply at least one light field image to rectify.","cat":"required","img_folder_file":True,"group":"Files"
+			"prop_short":"-i","prop":"--input_file","label":"Light field image","dest":"input_file","type":"sel","default":"light_field.png","options":["light_field.png"],"help":"Supply at least one light field image to rectify.","cat":"required","img_folder_file":True,"exclude_from_args":True,"group":"Files"
 		},
 		"calibration_file":{
 			"prop_short":"-c","prop":"--calibration-file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"calibration.lfc","options":["calibration.lfc"],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
@@ -340,28 +355,49 @@ PLUGIN_ARGS = {
 	# ===============================
 	# ======= Projections ============
 	# ===============================
+ 		"calibration_file":{
+			"prop_short":"-c","prop":"--calibration-file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"calibration.lfc","options":["calibration.lfc"],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Calibrations"
+		},
 		"input_file_volume":{
-			"prop":"input_file_volume","label":"Forward (volumes)","dest":"input_file_volume","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+			"prop":"input_file_volume","label":"Forward (volumes)","dest":"input_file_volume","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"img_folder_file":True,"group":"Forward Projections"
+		},
+		"output_filename_lightfield":{
+			"prop":"--output-filename-lightfield","label":"Output LF image","dest":"output_filename","type":"str","default":"output_proj_lf_img.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Forward Projections"
 		},
 		"input_file_volume_btn":{
-			"prop":"input_file_volume_btn","label":"Process","dest":"input_file_volume_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+			"prop":"input_file_volume_btn","label":"Process","dest":"input_file_volume_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Forward Projections"
 		},
 		"input_file_lightfield":{
-			"prop":"input_file_lightfield","label":"Backward (lightfields)","dest":"input_file_lightfield","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+			"prop":"input_file_lightfield","label":"Backward (lightfields)","dest":"input_file_lightfield","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"img_folder_file":True,"group":"Backward Projections"
+		},
+		"output_filename_volume":{
+			"prop":"--output-filename-volume","label":"Output volume stack","dest":"output_filename","type":"str","default":"output_proj_vol_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Backward Projections"
 		},
 		"input_file_lightfield_btn":{
-			"prop":"input_file_lightfield_btn","label":"Process","dest":"input_file_lightfield_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+			"prop":"input_file_lightfield_btn","label":"Process","dest":"input_file_lightfield_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Backward Projections"
 		}
 	},
 	"lfmnet":{
 	# ===============================
 	# ======= LFMNet ============
 	# ===============================
+		"input_file":{
+			"prop":"input_file","label":"Light field image","dest":"input_file","type":"sel","default":"","options":[""],"help":"Supply at least one light field image to rectify.","cat":"required","img_folder_file":True,"group":"Files"
+		},
+		"calibration_file":{
+			"prop":"calibration_file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"","options":[""],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
+		},
 		"input_model":{
 			"prop":"input_model","label":"Select Model","dest":"input_model","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
 		},
+		"input_model_prop_viewer":{
+			"prop":"input_model_prop_viewer","label":"Model Prop Viewer","dest":"input_model_prop_viewer","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files", "type":"text","group":"Network Model Inspector","exclude_from_settings":True,"exclude_from_args":True,"read_only":True,"no_label_layout_style":True
+		},
+		"output_filename":{
+			"prop":"output_file","label":"Output image stack","dest":"output_filename","type":"str","default":"output_network_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
+		},
 		"input_model_btn":{
-			"prop":"input_model_btn","label":"Process","dest":"input_model_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+			"prop":"input_model_btn","label":"Process","dest":"input_model_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files","visible":dev_true
 		}
 	}
 }

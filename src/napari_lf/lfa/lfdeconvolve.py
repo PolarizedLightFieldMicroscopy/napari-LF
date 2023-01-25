@@ -1,3 +1,10 @@
+# lflib imports
+import lflib
+from lflib.imageio import load_image, save_image
+from lflib.lightfield import LightField
+from lflib.calibration import LightFieldCalibration
+from lflib.util import ensure_path
+
 # major libraries
 import numpy as np
 import h5py
@@ -8,13 +15,6 @@ import tempfile
 import socket
 import argparse
 import sys
-
-# lflib imports
-import lflib
-from lflib.imageio import load_image, save_image
-from lflib.lightfield import LightField
-from lflib.calibration import LightFieldCalibration
-from lflib.util import ensure_path
 
 #----------------------------------------------------------------------------------
 
