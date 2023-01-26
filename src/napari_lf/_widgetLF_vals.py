@@ -4,14 +4,19 @@ from qtpy.QtGui import QIcon
 currentdir = os.path.dirname(os.path.realpath(__file__))
 icon_img = os.path.join(currentdir, 'resources/icon.ico')
 logo_img = os.path.join(currentdir, 'resources/napari-LF_logo.png')
+
+# Image processing logos
+# LF Analyze
 LFAnalyze_logo_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_201_45px.png')
-LFAnalyze_logo_btn_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_btn_201_45px.png')
-LFAnalyze_logo_btn_hov_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_btn_hov_201_45px.png')
-LFAnalyze_logo_btn_act_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_btn_act_201_45px.png')
+LFAnalyze_logo_btn_img = os.path.join(currentdir, 'resources/lfa_logo/buttons/half_res/LFA_logo_3D_inact_201_45px.png')
+LFAnalyze_logo_btn_hov_img = os.path.join(currentdir, 'resources/lfa_logo/buttons/half_res/LFA_logo_3D_hov_201_45px.png')
+LFAnalyze_logo_btn_act_img = os.path.join(currentdir, 'resources/lfa_logo/buttons/half_res/LFA_logo_3D_act_201_45px.png')
+# Neural Net
 NeuralNet_logo_img = os.path.join(currentdir, 'resources/NeuralNet_logo_201_45px.png')
-NeuralNet_logo_btn_img = os.path.join(currentdir, 'resources/NeuralNet_logo_btn_201_45px.png')
-NeuralNet_logo_btn_hov_img = os.path.join(currentdir, 'resources/NeuralNet_logo_btn_hov_201_45px.png')
-NeuralNet_logo_btn_act_img = os.path.join(currentdir, 'resources/NeuralNet_logo_btn_act_201_45px.png')
+NeuralNet_logo_btn_img = os.path.join(currentdir, 'resources/nn_logo/buttons/half_res/NN_logo_3D_inact_201_45px.png')
+NeuralNet_logo_btn_hov_img = os.path.join(currentdir, 'resources/nn_logo/buttons/half_res/NN_logo_3D_hov_201_45px.png')
+NeuralNet_logo_btn_act_img = os.path.join(currentdir, 'resources/nn_logo/buttons/half_res/NN_logo_3D_act_201_45px.png')
+
 loading_img = os.path.join(currentdir, 'resources/loading.gif')
 examples_folder = os.path.join(currentdir, 'examples/antleg')
 lfa_folder = os.path.join(currentdir, 'lfa')
