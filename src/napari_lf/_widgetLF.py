@@ -7,6 +7,10 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import *
 from magicgui.widgets import *
 
+# Fix for the QPixMap error
+# https://github.com/PolarizedLightFieldMicroscopy/napari-LF/issues/29
+app = QApplication([])
+
 try:
 	from napari_lf import _widgetLF_gui as LFgui
 	from napari_lf import _widgetLF_vals as LFvals
@@ -198,44 +202,54 @@ class LFQWidget(QWidget):
 		@self.gui.gui_elms["lfmnet"]["input_model"].changed.connect
 		def input_model_change_call():
 			#print("Button for LFMNet Model Change")
-			import torch
-
 			try:
-				from napari_lf.lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
-			except:
-				from lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
+				try:
+					import torch
+				except Exception as e:
+					print("torch could not be imported")
+					print(e)
+					print(traceback.format_exc())
+					return
+
+				try:
+					from napari_lf.lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
+				except:
+					from lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
+					
+				# Load calib file
+				if self.gui.gui_elms["lfmnet"]["calibration_file"].value == None:
+					return
+				calibFile_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["calibration_file"].value))
+				path = Path(calibFile_path)
+				if path.is_file():
+					import h5py
+					with h5py.File(calibFile_path, "r") as f:
+						lf = f['geometry']
+						LFshape = [lf.attrs['nu'], lf.attrs['nv'], lf.attrs['ns'], lf.attrs['nt']]
 				
-			# Load calib file
-			if self.gui.gui_elms["lfmnet"]["calibration_file"].value == None:
-				return
-			calibFile_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["calibration_file"].value))
-			path = Path(calibFile_path)
-			if path.is_file():
-				import h5py
-				with h5py.File(calibFile_path, "r") as f:
-					lf = f['geometry']
-					LFshape = [lf.attrs['nu'], lf.attrs['nv'], lf.attrs['ns'], lf.attrs['nt']]
-			
-			# LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
-			# VCDNet
-			if self.gui.gui_elms["lfmnet"]["input_model"].value == None:
-				return
-			checkpoint_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["input_model"].value))
-			# LFMNet
-			# checkpoint_path = '../checkpoints/*.ckpt'
-			# Load network based on checkpoint
-			#print(checkpoint_path)
-			#print(LFshape)
-			net = LFNeuralNetworkProto.load_network_from_file(checkpoint_path, LFshape)
-			
-			# Set network into evaluation mode (faster ode)
-			net.eval()
-			data_str = ""
-			for i in net.network_settings_dict:
-				data_str += i + ' : ' + str(net.network_settings_dict[i]) + '\n'
-			for i in net.training_settings_dict:
-				data_str += i + ' : ' + str(net.training_settings_dict[i]) + '\n'
-			self.gui.gui_elms["lfmnet"]["input_model_prop_viewer"].value = data_str
+				# LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
+				# VCDNet
+				if self.gui.gui_elms["lfmnet"]["input_model"].value == None:
+					return
+				checkpoint_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["input_model"].value))
+				# LFMNet
+				# checkpoint_path = '../checkpoints/*.ckpt'
+				# Load network based on checkpoint
+				#print(checkpoint_path)
+				#print(LFshape)
+				net = LFNeuralNetworkProto.load_network_from_file(checkpoint_path, LFshape)
+				
+				# Set network into evaluation mode (faster ode)
+				net.eval()
+				data_str = ""
+				for i in net.network_settings_dict:
+					data_str += i + ' : ' + str(net.network_settings_dict[i]) + '\n'
+				for i in net.training_settings_dict:
+					data_str += i + ' : ' + str(net.training_settings_dict[i]) + '\n'
+				self.gui.gui_elms["lfmnet"]["input_model_prop_viewer"].value = data_str
+			except Exception as e:
+				print(e)
+				print(traceback.format_exc())
 			
 		for section in ['calibrate','rectify','deconvolve','hw','misc','main']:
 			for prop in LFvals.PLUGIN_ARGS[section]:
@@ -770,7 +784,7 @@ def main(method):
 	elif method == LFvals.METHODS[2]: # Method 3: As stand-alone application
 		app = QApplication(sys.argv)
 		widget = LFQWidget(QWidget())
-		widget.setWindowTitle('LF Analyze')
+		widget.setWindowTitle('napari-LF')
 		widget.setWindowIcon(LFvals.q_icon_img)
 		widget.resize(500, 750)
 		widget.set_method(method)
