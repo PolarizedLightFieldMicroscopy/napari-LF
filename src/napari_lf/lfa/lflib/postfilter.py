@@ -8,7 +8,7 @@ def remove_light_field_grid(vol, supersample_factor):
     threshold = 3
 
     # Compute fourier spectra of each slice in the stack
-    spectrum = np.zeros(vol.shape, dtype=np.complex)
+    spectrum = np.zeros(vol.shape, dtype=complex)
     for i in range(vol.shape[2]):
         spectrum[:,:,i] = np.fft.fftshift(np.fft.fft2( vol[:,:,i] ))
 

@@ -277,7 +277,7 @@ def roundUp(value, multiple):
 
 class LightFieldProjection(object):
 
-    def __init__(self, rayspread_db = None, psf_db = None, disable_gpu = False, gpu_id = None, platform_id = 0, use_sing_prec=False):
+    def __init__(self, rayspread_db=None, psf_db=None, disable_gpu=False, gpu_id=None, platform_id=0, use_sing_prec=False):
 
         self.rayspread_db = rayspread_db
         self.psf_db = psf_db
@@ -286,10 +286,10 @@ class LightFieldProjection(object):
         else:
             db = self.rayspread_db
 
-        # Premultiplier is optionaly applied after forward
+        # Premultiplier is optionally applied after forward
         # projection, and before back projection.
         #
-        # Postmultiplier is optionaly applied before forward
+        # Postmultiplier is optionally applied before forward
         # projection, and after back projection.
         #
         self.premultiplier = None
@@ -580,7 +580,7 @@ class LightFieldProjection(object):
     #                          CPU IMPLEMENTATION
     # ----------------------------------------------------------------------------
 
-    def backproject_cpu ( self, light_field, zslice = None ):
+    def backproject_cpu(self, light_field, zslice=None, use_sing_prec=False):
         """
         Using the given rayspread database, compute focused images at the
         given depths z_depths.
@@ -588,6 +588,7 @@ class LightFieldProjection(object):
         Returns: A volume as a 3D numpy matrix that is indexed in [x,y,z]
         order.
         """
+        # TODO: make rayspread functionality exist
         rayspreads = self.rayspread_db.rayspreads
         z_coords = self.rayspread_db.z_coords
 
@@ -676,7 +677,7 @@ class LightFieldProjection(object):
 
         return volume
 
-    def project_cpu( self, volume, zslice = None ):
+    def project_cpu(self, volume, zslice=None, use_sing_prec=False):
         """
         Using the given rayspread database, compute a light field by
         projecting the volume using rayspreads.

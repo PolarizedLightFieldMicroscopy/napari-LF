@@ -656,7 +656,7 @@ class LensletArray(LfSensor):
         # Note: multiprocessing was previously used for this step. -gschlafly
         # Use multiprocessing
         from tqdm import tqdm
-        if True:
+        if False:
 #             num_threads = 16 # Let the user decide through the calibration/optional tab
             print('\tStarting multiprocessing pool with ', num_threads , ' worker processes.')
             from multiprocessing import Pool
