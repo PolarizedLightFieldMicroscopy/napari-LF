@@ -198,7 +198,7 @@ def propTF(u1,L,wavelength,z):
     return u2
 
 def fftpad(u1):
-    temp = np.zeros((u1.shape[0]*2, u1.shape[1]*2), dtype = np.complex)
+    temp = np.zeros((u1.shape[0]*2, u1.shape[1]*2), dtype = complex)
     temp[0:u1.shape[0],0:u1.shape[1]] = u1; # Zero pad the input
     return temp
 
@@ -305,7 +305,7 @@ def apsf_analytic(intensity, L, M, wavelength, objective_na, objective_mag, medi
     apsf_idxs = np.linspace(0, max_r+dx/2, M)
 
     # Compute the APSF for each element of the lookup table.
-    apsf_vals = np.zeros(apsf_idxs.shape, dtype=np.complex);
+    apsf_vals = np.zeros(apsf_idxs.shape, dtype=complex);
     for i in range(len(apsf_idxs)):
         v = k * apsf_idxs[i] * np.sin(alpha_o);
         u = 4 * k *  z * np.square(np.sin(alpha_o/2));
