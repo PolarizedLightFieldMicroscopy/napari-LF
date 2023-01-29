@@ -33,6 +33,7 @@ class LFQWidgetGui():
 		self.logo_label.native.setOpenExternalLinks(True)
 		self.logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		# size is controlled via html label height value, set to 60px
 
 		self.info_label = Label(label=f'<h2><center>LF Analyze</a></center></h2>')
 		dict = LFvals.PLUGIN_ARGS["main"]["img_folder"]
@@ -114,9 +115,10 @@ class LFQWidgetGui():
 		_cont_btn_right = Container(name='btn Right', widgets=[self.btn_stop], labels=False)
 		self._cont_btn_processing = Container(widgets=[_cont_btn_left, _cont_btn_right], labels=False, layout='horizontal')
 		self._cont_btn_processing.native.layout().setContentsMargins(0,0,0,0)
+		self._cont_btn_processing.native.layout().setSpacing(0)
 		
 		
-		self.btn_nn_proc = PushButton(label='Process')
+		self.btn_nn_proc = PushButton(label='Deconvolve')
 		self.btn_nn_proc.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.btn_nn_proc_prog = Label()
 		# self.btn_dec_prog.native.setFixedSize(20,20)
@@ -149,6 +151,8 @@ class LFQWidgetGui():
 		
 		
 		_QFormLayout = QFormLayout()
+		_QFormLayout.setContentsMargins(0,0,0,0)
+		_QFormLayout.setSpacing(0)
 		self.cont_btn_top = QWidget()
 		self.cont_btn_top.setLayout(_QFormLayout)
 		#_QFormLayout.setContentsMargins(1,1,1,1)
@@ -171,12 +175,16 @@ class LFQWidgetGui():
 			
 
 		self.LFAnalyze_btn = PicButton(QPixmap(LFvals.LFAnalyze_logo_btn_img), QPixmap(LFvals.LFAnalyze_logo_btn_hov_img), QPixmap(LFvals.LFAnalyze_logo_btn_act_img))
+		self.LFAnalyze_btn.setMaximumHeight(45)
+		self.LFAnalyze_btn.setMaximumHeight(200)
 		# self.LFAnalyze_btn.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.LFAnalyze_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.LFAnalyze_btn.clicked.connect(self.LFAnalyze_btn_call)
 		self.LFAnalyze_btn.toggle()
 		
 		self.NeuralNet_btn = PicButton(QPixmap(LFvals.NeuralNet_logo_btn_img),QPixmap(LFvals.NeuralNet_logo_btn_hov_img),QPixmap(LFvals.NeuralNet_logo_btn_act_img))
+		self.NeuralNet_btn.setMaximumHeight(45)
+		self.NeuralNet_btn.setMaximumHeight(200)
 		# self.NeuralNet_btn.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.NeuralNet_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.NeuralNet_btn.clicked.connect(self.NeuralNet_btn_call)
@@ -199,7 +207,8 @@ class LFQWidgetGui():
 		_QFormLayout2 = QFormLayout()
 		self.cont_btn_status = QWidget()
 		self.cont_btn_status.setLayout(_QFormLayout2)
-		_QFormLayout2.setContentsMargins(1,1,1,1)
+		_QFormLayout2.setContentsMargins(0,0,0,0)
+		_QFormLayout2.setSpacing(0)
 		
 		self.cont_btn_status_label = Label()
 		self.cont_btn_status_label.native.setStyleSheet("color: rgb(0, 128, 0)")
@@ -701,6 +710,8 @@ class LFQWidgetGui():
 						self.groupbox["projections"][dict["group"]].layout().addRow(wid_elm.native)
 					elif "no_label_layout_style" in dict and dict["no_label_layout_style"] == True:
 						self.groupbox["projections"][dict["group"]].layout().addRow(wid_elm.native)
+					elif "label_btn" in dict:
+						self.groupbox["projections"][dict["group"]].layout().addRow(dict["label_btn"], wid_elm.native)
 					else:
 						self.groupbox["projections"][dict["group"]].layout().addRow(wid_elm.label, wid_elm.native)
 			else:
@@ -1203,6 +1214,7 @@ class LFQWidgetGui():
 		self.scroll_bottom = QScrollArea()
 		self.scroll_bottom.setWidgetResizable(True)
 		self.scroll_bottom.setWidget(self.widget_main_bottom_comps_scroll.native)
+		# self.scroll_bottom.setMinimumHeight(400)
 		
 		if LFvals.dev_true:
 			self.widget_main_bottom_comps0.native.setStyleSheet("border: 1px dashed white;")
@@ -1477,6 +1489,9 @@ class LFQWidgetGui():
 		self.gui_elms["lfmnet"]["input_model"].choices = model_files
 		if len(model_files) == 0:
 			self.gui_elms["lfmnet"]["input_model_prop_viewer"].value = ""
+			self.btn_nn_proc.enabled = False
+		else:
+			self.btn_nn_proc.enabled = True
 		
 	def populate_img_list(self):
 		img_folder = str(self.gui_elms["main"]["img_folder"].value)
@@ -1505,6 +1520,13 @@ class LFQWidgetGui():
 				
 		if len(img_files) == 0:
 			self.gui_elms["calibrate"]["calibration_files_viewer"].value = ""
+			self.btn_rec.enabled = False
+			self.btn_dec.enabled = False
+			# self.btn_nn_proc.enabled = False
+		else:
+			self.btn_rec.enabled = True
+			self.btn_dec.enabled = True
+			# self.btn_nn_proc.enabled = True
 		
 		self.gui_elms["calibrate"]["calibration_files"].choices = img_files
 		self.gui_elms["rectify"]["calibration_file"].choices = img_files
@@ -1765,97 +1787,97 @@ def create_widget(props):
 	return widget
 	
 class CollapsibleBox(QWidget):
-    def __init__(self, title="", parent=None):
-        super(CollapsibleBox, self).__init__(parent)
+	def __init__(self, title="", parent=None):
+		super(CollapsibleBox, self).__init__(parent)
 
-        self.toggle_button = QToolButton(
-            text=title, checkable=True, checked=False
-        )
-        self.toggle_button.setStyleSheet("QToolButton { border: none; }")
-        self.toggle_button.setToolButtonStyle(
-            QtCore.Qt.ToolButtonTextBesideIcon
-        )
-        self.toggle_button.setArrowType(QtCore.Qt.RightArrow)
-        self.toggle_button.pressed.connect(self.on_pressed)
+		self.toggle_button = QToolButton(
+			text=title, checkable=True, checked=False
+		)
+		self.toggle_button.setStyleSheet("QToolButton { border: none; }")
+		self.toggle_button.setToolButtonStyle(
+			QtCore.Qt.ToolButtonTextBesideIcon
+		)
+		self.toggle_button.setArrowType(QtCore.Qt.RightArrow)
+		self.toggle_button.pressed.connect(self.on_pressed)
 
-        self.toggle_animation = QtCore.QParallelAnimationGroup(self)
+		self.toggle_animation = QtCore.QParallelAnimationGroup(self)
 
-        self.content_area = QScrollArea(maximumHeight=0, minimumHeight=0)
-        self.content_area.setSizePolicy(
-            QSizePolicy.Expanding, QSizePolicy.Fixed
-        )
-        self.content_area.setFrameShape(QFrame.NoFrame)
+		self.content_area = QScrollArea(maximumHeight=0, minimumHeight=0)
+		self.content_area.setSizePolicy(
+			QSizePolicy.Expanding, QSizePolicy.Fixed
+		)
+		self.content_area.setFrameShape(QFrame.NoFrame)
 
-        lay = QVBoxLayout(self)
-        lay.setSpacing(0)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.addWidget(self.toggle_button)
-        lay.addWidget(self.content_area)
+		lay = QVBoxLayout(self)
+		lay.setSpacing(0)
+		lay.setContentsMargins(0, 0, 0, 0)
+		lay.addWidget(self.toggle_button)
+		lay.addWidget(self.content_area)
 
-        self.toggle_animation.addAnimation(
-            QtCore.QPropertyAnimation(self, b"minimumHeight")
-        )
-        self.toggle_animation.addAnimation(
-            QtCore.QPropertyAnimation(self, b"maximumHeight")
-        )
-        self.toggle_animation.addAnimation(
-            QtCore.QPropertyAnimation(self.content_area, b"maximumHeight")
-        )
+		self.toggle_animation.addAnimation(
+			QtCore.QPropertyAnimation(self, b"minimumHeight")
+		)
+		self.toggle_animation.addAnimation(
+			QtCore.QPropertyAnimation(self, b"maximumHeight")
+		)
+		self.toggle_animation.addAnimation(
+			QtCore.QPropertyAnimation(self.content_area, b"maximumHeight")
+		)
 
-    # @QtCore.pyqtSlot()
-    def on_pressed(self):
-        checked = self.toggle_button.isChecked()
-        self.toggle_button.setArrowType(
-            QtCore.Qt.DownArrow if not checked else QtCore.Qt.RightArrow
-        )
-        self.toggle_animation.setDirection(
-            QtCore.QAbstractAnimation.Forward
-            if not checked
-            else QtCore.QAbstractAnimation.Backward
-        )
-        self.toggle_animation.start()
+	# @QtCore.pyqtSlot()
+	def on_pressed(self):
+		checked = self.toggle_button.isChecked()
+		self.toggle_button.setArrowType(
+			QtCore.Qt.DownArrow if not checked else QtCore.Qt.RightArrow
+		)
+		self.toggle_animation.setDirection(
+			QtCore.QAbstractAnimation.Forward
+			if not checked
+			else QtCore.QAbstractAnimation.Backward
+		)
+		self.toggle_animation.start()
 
-    def setContentLayout(self, layout):
-        lay = self.content_area.layout()
-        del lay
-        self.content_area.setLayout(layout)
-        collapsed_height = (
-            self.sizeHint().height() - self.content_area.maximumHeight()
-        )
-        content_height = layout.sizeHint().height()
-        for i in range(self.toggle_animation.animationCount()):
-            animation = self.toggle_animation.animationAt(i)
-            animation.setDuration(500)
-            animation.setStartValue(collapsed_height)
-            animation.setEndValue(collapsed_height + content_height)
+	def setContentLayout(self, layout):
+		lay = self.content_area.layout()
+		del lay
+		self.content_area.setLayout(layout)
+		collapsed_height = (
+			self.sizeHint().height() - self.content_area.maximumHeight()
+		)
+		content_height = layout.sizeHint().height()
+		for i in range(self.toggle_animation.animationCount()):
+			animation = self.toggle_animation.animationAt(i)
+			animation.setDuration(500)
+			animation.setStartValue(collapsed_height)
+			animation.setEndValue(collapsed_height + content_height)
 
-        content_animation = self.toggle_animation.animationAt(
-            self.toggle_animation.animationCount() - 1
-        )
-        content_animation.setDuration(500)
-        content_animation.setStartValue(0)
-        content_animation.setEndValue(content_height)
+		content_animation = self.toggle_animation.animationAt(
+			self.toggle_animation.animationCount() - 1
+		)
+		content_animation.setDuration(500)
+		content_animation.setStartValue(0)
+		content_animation.setEndValue(content_height)
 		
 class PicButton(QAbstractButton):
-    def __init__(self, pixmap, pixmap_hover, pixmap_pressed, parent=None):
-        super(PicButton, self).__init__(parent)
-        self.pixmap = pixmap
-        self.pixmap_hover = pixmap_hover
-        self.pixmap_pressed = pixmap_pressed
-        self.setCheckable(True)
+	def __init__(self, pixmap, pixmap_hover, pixmap_pressed, parent=None):
+		super(PicButton, self).__init__(parent)
+		self.pixmap = pixmap
+		self.pixmap_hover = pixmap_hover
+		self.pixmap_pressed = pixmap_pressed
+		self.setCheckable(True)
 
-    def paintEvent(self, event):
-        pix = self.pixmap_hover if self.underMouse() else self.pixmap
-        if self.isChecked():
-            pix = self.pixmap_pressed
-        painter = QPainter(self)
-        painter.drawPixmap(event.rect(), pix)
+	def paintEvent(self, event):
+		pix = self.pixmap_hover if self.underMouse() else self.pixmap
+		if self.isChecked():
+			pix = self.pixmap_pressed
+		painter = QPainter(self)
+		painter.drawPixmap(event.rect(), pix)
 
-    def enterEvent(self, event):
-        self.update()
+	def enterEvent(self, event):
+		self.update()
 
-    def leaveEvent(self, event):
-        self.update()
+	def leaveEvent(self, event):
+		self.update()
 
-    def sizeHint(self):
-        return self.pixmap.size()
+	def sizeHint(self):
+		return self.pixmap.size()

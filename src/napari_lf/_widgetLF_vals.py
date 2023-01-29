@@ -55,7 +55,7 @@ if develop_mode:
 PLUGIN_ARGS = {
 	"main":{
 		"logo_label":{
-			"label":f'<a href="https://chanzuckerberg.com/science/programs-resources/imaging/napari/light-field-imaging-plugin/"><img src="{logo_img}"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
+			"label":f'<a href="https://chanzuckerberg.com/science/programs-resources/imaging/napari/light-field-imaging-plugin/"><img src="{logo_img}" height="60"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
 		},
 		"img_folder":{
 			"label":"Project folder","default":examples_folder,"help":"Select your dataset folder containing the raw light field image(s).","type":"folder"
@@ -64,7 +64,7 @@ PLUGIN_ARGS = {
 			"label":"Available images","default":"","help":"List of available Images to view in the selected Project folder.","type":"sel","options":[""]
 		},
 		"metadata_file":{
-			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"str","enabled":True,"visible":dev_true
+			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"str","enabled":True,"visible":False
 		},
 		"comments":{
 			"default":"","prop":"--comments","label":"Comments","help":"Comments from Acquisition and Processing","type":"str","type":"text"
@@ -79,10 +79,10 @@ PLUGIN_ARGS = {
 			"label":"Napari-LF Plugin Ver:","default":"","help":"Napari-LF Plugin version.","type":"label","exclude_from_settings":True
 		},
 		"LFAnalyze_logo_label":{
-			"label":f'<a href="https://graphics.stanford.edu/projects/lfmicroscope/"><img src="{LFAnalyze_logo_img}"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
+			"label":f'<a href="https://graphics.stanford.edu/projects/lfmicroscope/"><img src="{LFAnalyze_logo_img}" height="50"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
 		},
 		"LFMNet_logo_label":{
-			"label":f'<a href="https://github.com/pvjosue/LFMNet"><img src="{NeuralNet_logo_img}"></a>',"help":"LFMNet About WebPage","type":"img_label","default":"","exclude_from_settings":True
+			"label":f'<a href="https://github.com/pvjosue/LFMNet"><img src="{NeuralNet_logo_img}" height="50"></a>',"help":"LFMNet About WebPage","type":"img_label","default":"","exclude_from_settings":True
 		},
 	},
 	"misc":{
@@ -105,7 +105,7 @@ PLUGIN_ARGS = {
 			"label":"External viewer","type":"file","default":{'linux':'','win32':'','darwin':''}[sys.platform],"help":"Chose your external viewer (executable file)."
 		},
 		"disable_mousewheel":{
-			"label":"Disable mousewheel on combobox and spinner widgets","type":"bool","default":False,"help":"Disable mousewheel on combobox and spinner widgets to avoid accidentally changing values."
+			"label":"Disable mousewheel on combobox and spinner widgets","type":"bool","default":True,"help":"Disable mousewheel on combobox and spinner widgets to avoid accidentally changing values."
 		}
 	},
 	"hw":{
@@ -370,7 +370,7 @@ PLUGIN_ARGS = {
 			"prop":"--output-filename-lightfield","label":"Output LF image","dest":"output_filename","type":"str","default":"output_proj_lf_img.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Forward Projections"
 		},
 		"input_file_volume_btn":{
-			"prop":"input_file_volume_btn","label":"Process","dest":"input_file_volume_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Forward Projections"
+			"prop":"input_file_volume_btn","label_btn":"Process", "label":"Project Volume", "dest":"input_file_volume_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Forward Projections", "height":45, "width":200
 		},
 		"input_file_lightfield":{
 			"prop":"input_file_lightfield","label":"Backward (lightfields)","dest":"input_file_lightfield","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"img_folder_file":True,"group":"Backward Projections"
@@ -379,7 +379,7 @@ PLUGIN_ARGS = {
 			"prop":"--output-filename-volume","label":"Output volume stack","dest":"output_filename","type":"str","default":"output_proj_vol_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Backward Projections"
 		},
 		"input_file_lightfield_btn":{
-			"prop":"input_file_lightfield_btn","label":"Process","dest":"input_file_lightfield_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Backward Projections"
+			"prop":"input_file_lightfield_btn","label_btn":"Process", "label":"Project Lightfield","dest":"input_file_lightfield_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Backward Projections", "height":45, "width":200
 		}
 	},
 	"lfmnet":{
@@ -402,7 +402,7 @@ PLUGIN_ARGS = {
 			"prop":"output_file","label":"Output image stack","dest":"output_filename","type":"str","default":"output_network_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
 		},
 		"input_model_btn":{
-			"prop":"input_model_btn","label":"Process","dest":"input_model_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files","visible":dev_true
+			"prop":"input_model_btn","label":"Deconvolve","dest":"input_model_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files","visible":dev_true
 		}
 	}
 }

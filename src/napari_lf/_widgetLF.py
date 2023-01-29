@@ -171,6 +171,11 @@ class LFQWidget(QWidget):
 			self.thread_worker.quit()
 			self.gui.set_btns_and_status(True, LFvals.PLUGIN_ARGS['main']['status']['value_idle'])
 			
+		@self.gui.btn_stop2.changed.connect
+		def btn_stop_call():
+			self.thread_worker.quit()
+			self.gui.set_btns_and_status(True, LFvals.PLUGIN_ARGS['main']['status']['value_idle'])
+			
 		@self.gui.gui_elms["projections"]["input_file_volume_btn"].changed.connect
 		def input_file_volume_btn_fnc():
 			#print("Button for Forward Projections Volume Processing")
@@ -269,7 +274,13 @@ class LFQWidget(QWidget):
 		self.layout().addWidget(self.gui.widget_main_top_comps.native)
 		self.layout().addWidget(self.gui.scroll_bottom)
 		self.layout().addWidget(self.gui.widget_main_proc_btn_comps.native)
+		self.layout().setAlignment(Qt.AlignTop)
+		self.layout().setContentsMargins(0,0,0,0)
+		self.layout().setSpacing(0)
+		
 		self.set_lfa_libs()
+		if LFvals.dev_true:
+			self.setStyleSheet("border : 1px dashed white;")
 		
 		# create the display widget
 		# set defaults
