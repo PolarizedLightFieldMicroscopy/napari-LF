@@ -202,7 +202,7 @@ class LFQWidgetGui():
 		_QFormLayout2.setContentsMargins(1,1,1,1)
 		
 		self.cont_btn_status_label = Label()
-		self.cont_btn_status_label.native.setStyleSheet("border:1px solid rgb(0, 255, 0);")
+		self.cont_btn_status_label.native.setStyleSheet("color: rgb(0, 128, 0)")
 		self.cont_btn_status_label.value = ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_idle']
 		
 		_QFormLayout2.addRow(self._cont_btn_processing2.native)
@@ -1394,11 +1394,11 @@ class LFQWidgetGui():
 		self.btn_dec.enabled = btn_enab_bool
 		
 		if status_txt == LFvals.PLUGIN_ARGS['main']['status']['value_error']:
-			self.cont_btn_status_label.native.setStyleSheet("border:1px solid rgb(255, 0, 0);")
+			self.cont_btn_status_label.native.setStyleSheet("color: rgb(255, 0, 0)")
 		elif status_txt == LFvals.PLUGIN_ARGS['main']['status']['value_busy']:
-			self.cont_btn_status_label.native.setStyleSheet("border:1px solid rgb(255, 255, 0);")
+			self.cont_btn_status_label.native.setStyleSheet("color: rgb(255, 255, 0)")
 		else:
-			self.cont_btn_status_label.native.setStyleSheet("border:1px solid rgb(0, 255, 0);")
+			self.cont_btn_status_label.native.setStyleSheet("color: rgb(0, 128, 0)")
 		self.cont_btn_status_label.native.update()
 
 	# ToDo - implement as directory change listener event

@@ -246,7 +246,7 @@ def geometric_calibration(calibration_image, pixel_size, lenslet_pitch, alignmen
         delta = lenslets[:, 2:] - projected_chiefrays
         calibration_residuals = np.zeros( (int(max(lenslets[:,3]) - 0.5)+1,
                                            int(max(lenslets[:,2]) - 0.5)+1),
-                                          dtype = np.complex)
+                                          dtype = complex)
         for c in range(lenslets.shape[0]):
             calibration_residuals[int(lenslets[c,3]-0.5), int(lenslets[c,2]-0.5)] = delta[c,0] + delta[c,1] * 1j
 
