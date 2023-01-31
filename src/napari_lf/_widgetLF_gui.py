@@ -1322,8 +1322,14 @@ class LFQWidgetGui():
 	def verify_existing_files(self):
 		
 		try:
-			# ensure the file check timer loop only checks when plugin is active
-			if self.widget_main_top_comps.visible == False:
+			try:
+				# ensure the file check timer loop only checks when plugin is active
+				if self.widget_main_top_comps.visible == False:
+					return
+			except:
+				# sort of hacky stop atm, ideally should be tied to napari close event but that is not being triggered
+				# https://github.com/napari/napari/issues/2670
+				self.timer.stop()
 				return
 		
 			_img_folder = str(self.gui_elms["main"]["img_folder"].value)
