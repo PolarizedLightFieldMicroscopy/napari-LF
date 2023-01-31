@@ -7,10 +7,6 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import *
 from magicgui.widgets import *
 
-# Fix for the QPixMap error
-# https://github.com/PolarizedLightFieldMicroscopy/napari-LF/issues/29
-app = QApplication([])
-
 try:
 	from napari_lf import _widgetLF_gui as LFgui
 	from napari_lf import _widgetLF_vals as LFvals
@@ -290,6 +286,11 @@ class LFQWidget(QWidget):
 		self.layout().setContentsMargins(0,0,0,0)
 		self.layout().setSpacing(0)
 		
+		for widget in self.children():
+			if isinstance(widget, Container):
+				if isinstance(widget.layout(), QFormLayout):
+					widget.layout().setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+		
 		self.set_lfa_libs()
 		if LFvals.dev_true:
 			self.setStyleSheet("border : 1px dashed white;")
@@ -332,12 +333,23 @@ class LFQWidget(QWidget):
 				print('LFA could not be loaded from:', self.gui.gui_elms["misc"]["lib_folder"].value)
 				self.gui.gui_elms["misc"]["lib_ver_label"].value = 'Error!'
 				print(traceback.format_exc())
-		
+	
 	def closeEvent(self, event):
 		self.gui.save_plugin_prefs()
+		if self.gui.timer is not None:
+			self.gui.timer.stop()
+		# print('closeEvent')
 			
 	def hideEvent(self, event):
 		self.gui.save_plugin_prefs()
+		if self.gui.timer is not None:
+			self.gui.timer.stop()
+		# print('hideEvent')
+		
+	def showEvent(self, event):
+		if self.gui.timer is not None:
+			self.gui.timer.start(500)
+		# print('showEvent')
 		
 	#Event Filter
 	def eventFilter(self, source, event):
@@ -695,6 +707,8 @@ class LFQWidget(QWidget):
 				print('\t--> specified gpu-id:{gpuid}'.format(gpuid=gpu_id))
 			
 			import torch
+			if '--disable-gpu' not in args:
+				print('\t--> cuda available:{gpu}'.format(gpu=torch.cuda.is_available()))
 			print("\t--> device: ","cuda:"+str(gpu_id) if torch.cuda.is_available() and not '--disable-gpu' in args else "cpu")
 			
 			try:
@@ -815,6 +829,3 @@ def main(method):
 		widget.set_method(method)
 		widget.show()
 		sys.exit(app.exec_())
-
-if __name__ == "__main__":
-	main(LFvals.METHODS[1])

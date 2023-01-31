@@ -169,6 +169,36 @@ class LFQWidgetGui():
 		
 		_QFormLayout.addRow(self.logo_label.native)
 		
+		self.LFAnalyze_btn = PicButton(QPixmap(LFvals.LFAnalyze_logo_btn_img), QPixmap(LFvals.LFAnalyze_logo_btn_hov_img), QPixmap(LFvals.LFAnalyze_logo_btn_act_img))
+		self.LFAnalyze_btn_cont = Container(name='LFAnalyze_btn', widgets=())
+		self.LFAnalyze_btn_cont.native.layout().addWidget(self.LFAnalyze_btn)
+		
+		self.LFAnalyze_btn.setMaximumHeight(45)
+		self.LFAnalyze_btn.setMaximumHeight(200)
+		# self.LFAnalyze_btn.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.LFAnalyze_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.LFAnalyze_btn.clicked.connect(self.LFAnalyze_btn_call)
+		
+		self.NeuralNet_btn = PicButton(QPixmap(LFvals.NeuralNet_logo_btn_img),QPixmap(LFvals.NeuralNet_logo_btn_hov_img),QPixmap(LFvals.NeuralNet_logo_btn_act_img))
+		self.NeuralNet_btn_cont = Container(name='NeuralNet_btn', widgets=())
+		self.NeuralNet_btn_cont.native.layout().addWidget(self.NeuralNet_btn)
+		
+		self.NeuralNet_btn.setMaximumHeight(45)
+		self.NeuralNet_btn.setMaximumHeight(200)
+		# self.NeuralNet_btn.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.NeuralNet_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+		self.NeuralNet_btn.clicked.connect(self.NeuralNet_btn_call)
+		self.NeuralNet_btn_cont.hide()
+		
+		_processing_methods = QWidget()
+		hBoxLayout = QHBoxLayout()
+		hBoxLayout.addWidget(self.LFAnalyze_btn_cont.native)
+		hBoxLayout.addWidget(self.NeuralNet_btn_cont.native)
+		_processing_methods.setLayout(hBoxLayout)
+		_processing_methods.layout().setAlignment(Qt.AlignCenter|Qt.AlignHCenter)
+		_processing_methods.layout().setContentsMargins(0,0,0,0)
+		_processing_methods.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+		
 		_QFormLayoutData = QFormLayout()
 		_QFormLayoutData.setContentsMargins(0,0,0,0)
 		_QFormLayoutData.setSpacing(0)
@@ -176,6 +206,7 @@ class LFQWidgetGui():
 		_widget_data.setLayout(_QFormLayoutData)
 		_QFormLayoutData.addRow(self.gui_elms["main"]["img_folder"].label, self.gui_elms["main"]["img_folder"].native)
 		_QFormLayoutData.addRow(_cont_img_list_btn.native)
+		_QFormLayoutData.addRow(_processing_methods)
 		if self.gui_elms["main"]["metadata_file"].visible:
 			_QFormLayoutData.addRow(self.gui_elms["main"]["metadata_file"].label, self.gui_elms["main"]["metadata_file"].native)
 			
@@ -188,13 +219,16 @@ class LFQWidgetGui():
 		self.qtab_widget_top.setTabBar(tabBar)
 		self.qtab_widget_top.setTabPosition(QTabWidget.West)
 		self.qtab_widget_top.setTabShape(QTabWidget.Triangular)
+		self.qtab_widget_top.setLayout(QFormLayout())
+		self.qtab_widget_top.layout().setContentsMargins(0,0,0,0)
+		self.qtab_widget_top.layout().setSpacing(0)
 		
 		self.data_tab = QWidget()
 		_data_tab_layout = QVBoxLayout()
 		_data_tab_layout.setAlignment(Qt.AlignTop)
 		self.data_tab.setLayout(_data_tab_layout)
 		self.data_tab.layout().addWidget(self.container_data.native)
-		self.qtab_widget_top.addTab(self.data_tab, 'Parameters')
+		self.qtab_widget_top.addTab(self.data_tab, 'Processing')
 		
 		self.hardware_tab = QWidget()
 		_hardware_tab_layout = QVBoxLayout()
@@ -261,40 +295,13 @@ class LFQWidgetGui():
 		
 		_QFormLayout.addRow(self.qtab_widget_top)
 
-		self.LFAnalyze_btn = PicButton(QPixmap(LFvals.LFAnalyze_logo_btn_img), QPixmap(LFvals.LFAnalyze_logo_btn_hov_img), QPixmap(LFvals.LFAnalyze_logo_btn_act_img))
-		self.LFAnalyze_btn_cont = Container(name='LFAnalyze_btn', widgets=())
-		self.LFAnalyze_btn_cont.native.layout().addWidget(self.LFAnalyze_btn)
 		
-		self.LFAnalyze_btn.setMaximumHeight(45)
-		self.LFAnalyze_btn.setMaximumHeight(200)
-		# self.LFAnalyze_btn.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
-		self.LFAnalyze_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-		self.LFAnalyze_btn.clicked.connect(self.LFAnalyze_btn_call)
-		
-		self.NeuralNet_btn = PicButton(QPixmap(LFvals.NeuralNet_logo_btn_img),QPixmap(LFvals.NeuralNet_logo_btn_hov_img),QPixmap(LFvals.NeuralNet_logo_btn_act_img))
-		self.NeuralNet_btn_cont = Container(name='NeuralNet_btn', widgets=())
-		self.NeuralNet_btn_cont.native.layout().addWidget(self.NeuralNet_btn)
-		
-		self.NeuralNet_btn.setMaximumHeight(45)
-		self.NeuralNet_btn.setMaximumHeight(200)
-		# self.NeuralNet_btn.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
-		self.NeuralNet_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-		self.NeuralNet_btn.clicked.connect(self.NeuralNet_btn_call)
-		self.NeuralNet_btn_cont.hide()
-		
-		_processing_methods = QWidget()
-		hBoxLayout = QHBoxLayout()
-		hBoxLayout.addWidget(self.LFAnalyze_btn_cont.native)
-		hBoxLayout.addWidget(self.NeuralNet_btn_cont.native)
-		_processing_methods.setLayout(hBoxLayout)
-		_processing_methods.layout().setAlignment(Qt.AlignCenter|Qt.AlignHCenter)
-		_processing_methods.layout().setContentsMargins(0,0,0,0)
 			
 		# _QFormLayout.addRow(self.gui_elms["main"]["presets"].label, _cont_preset_list_btn.native)
 		# _QFormLayout.addRow(self.gui_elms["main"]["comments"].label, self.commentsArea)
 		
-		_cont_preset_list_btn.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-		_QFormLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+		_cont_preset_list_btn.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+		# _QFormLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 		self.cont_btn_top.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		
 		_QFormLayout2 = QFormLayout()
@@ -307,8 +314,6 @@ class LFQWidgetGui():
 		self.cont_btn_status_label.native.setStyleSheet("color: rgb(0, 128, 0)")
 		self.cont_btn_status_label.value = ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_idle']
 		
-		_QFormLayout2.addRow(self._cont_btn_processing2.native)
-		_QFormLayout2.addRow(self._cont_btn_processing.native)
 		_QFormLayout2.addRow(self.cont_btn_status_label.native)
 		
 		self.cont_btn_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -1232,14 +1237,17 @@ class LFQWidgetGui():
 		# vlay.addStretch()
 		_preset_comments_expand = QWidget()
 		_preset_comments_expand.setLayout(vlay)
+		_preset_comments_expand.layout().setContentsMargins(0,0,0,0)
+		_preset_comments_expand.layout().setSpacing(0)
+		_preset_comments_expand.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		
 		self.widget_main_bottom_comps0 = Container(widgets=(), labels=True)
-		self.widget_main_bottom_comps0.native.layout().addWidget(_preset_comments_expand)
+		self.widget_main_bottom_comps0.native.layout().addWidget(_preset_comments_expand, Qt.AlignTop)
 		self.widget_main_bottom_comps0.native.layout().setContentsMargins(0,0,0,0)
 		self.widget_main_bottom_comps0.native.layout().setSpacing(0)
+		self.widget_main_bottom_comps0.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 			
-		self.container_data.native.layout().addWidget(_processing_methods)
-		self.container_data.native.layout().addWidget(self.widget_main_bottom_comps0.native)
+		self.container_data.native.layout().addWidget(self.widget_main_bottom_comps0.native, Qt.AlignTop)
 		
 		self.widget_main_bottom_comps1 = Container(widgets=(), labels=True)
 		self.widget_main_bottom_comps1.native.layout().addWidget(self.qtab_widget)
@@ -1256,7 +1264,19 @@ class LFQWidgetGui():
 		self.scroll_bottom = QScrollArea()
 		self.scroll_bottom.setWidgetResizable(True)
 		self.scroll_bottom.setWidget(self.widget_main_bottom_comps_scroll.native)
-		self.container_data.native.layout().addWidget(self.scroll_bottom)
+		self.container_data.native.layout().addWidget(self.scroll_bottom, Qt.AlignTop)
+		
+		_QFormLayout_proc_btns = QFormLayout()
+		_processing_btns = QWidget()
+		_processing_btns.setLayout(_QFormLayout_proc_btns)
+		_QFormLayout_proc_btns.setContentsMargins(0,0,0,0)
+		_QFormLayout_proc_btns.setSpacing(0)
+		_QFormLayout_proc_btns.addRow(self._cont_btn_processing2.native)
+		_QFormLayout_proc_btns.addRow(self._cont_btn_processing.native)
+		_QFormLayout_proc_btns.setAlignment(Qt.AlignBottom)
+		_processing_btns.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+		
+		self.container_data.native.layout().addWidget(_processing_btns, Qt.AlignBottom)
 		# self.scroll_bottom.setMinimumHeight(400)
 		
 		if LFvals.dev_true:
@@ -1322,15 +1342,7 @@ class LFQWidgetGui():
 	def verify_existing_files(self):
 		
 		try:
-			try:
-				# ensure the file check timer loop only checks when plugin is active
-				if self.widget_main_top_comps.visible == False:
-					return
-			except:
-				# sort of hacky stop atm, ideally should be tied to napari close event but that is not being triggered
-				# https://github.com/napari/napari/issues/2670
-				self.timer.stop()
-				return
+			# print('verify_existing_files thread running')
 		
 			_img_folder = str(self.gui_elms["main"]["img_folder"].value)
 			path = Path(_img_folder)

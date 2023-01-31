@@ -76,7 +76,7 @@ PLUGIN_ARGS = {
 			"label":"STATUS:","value":"== IDLE ==","value_busy":"== BUSY ==","value_idle":"== IDLE ==","value_error":"== ERROR ==","type":"label","default":"== IDLE ==","exclude_from_settings":True
 		},
 		"NapariLF_ver_label":{
-			"label":"Napari-LF Plugin Ver:","default":"","help":"Napari-LF Plugin version.","type":"label","exclude_from_settings":True
+			"label":"napari-LF Plugin Ver:","default":"","help":"napari-LF Plugin version.","type":"label","exclude_from_settings":True
 		},
 		"LFAnalyze_logo_label":{
 			"label":f'<a href="https://graphics.stanford.edu/projects/lfmicroscope/"><img src="{LFAnalyze_logo_img}" height="50"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
