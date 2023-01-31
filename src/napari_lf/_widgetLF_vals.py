@@ -55,7 +55,7 @@ if develop_mode:
 PLUGIN_ARGS = {
 	"main":{
 		"logo_label":{
-			"label":f'<a href="https://chanzuckerberg.com/science/programs-resources/imaging/napari/light-field-imaging-plugin/"><img src="{logo_img}" height="60"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
+			"label":f'<a href="https://chanzuckerberg.com/science/programs-resources/imaging/napari/light-field-imaging-plugin/"><img src="{logo_img}" height="60"></a>',"help":"napari-LF About WebPage","type":"img_label","default":"","exclude_from_settings":True
 		},
 		"img_folder":{
 			"label":"Project folder","default":examples_folder,"help":"Select your dataset folder containing the raw light field image(s).","type":"folder"

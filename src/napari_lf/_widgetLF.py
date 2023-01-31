@@ -266,13 +266,25 @@ class LFQWidget(QWidget):
 		self.gui.populate_cal_img_list()
 		self.gui.load_plugin_prefs()
 		
+		if "mode_choice" in self.gui.settings["main"] and self.gui.settings["main"]["mode_choice"] == 'NeuralNet':
+			self.gui.LFAnalyze_btn_cont.hide()
+			self.gui.NeuralNet_btn_cont.show()
+			self.gui.widget_main_bottom_comps0.hide()
+			self.gui.widget_main_bottom_comps1.hide()
+			self.gui.widget_main_bottom_comps2.show()
+			self.gui._cont_btn_processing.hide()
+			self.gui._cont_btn_processing2.show()
+			self.gui.NeuralNet_btn.toggle()
+		else:
+			self.gui.LFAnalyze_btn.toggle()
+		
 		#Layout
 		layout = QVBoxLayout()
 		self.setLayout(layout)
 		
 		self.setMinimumWidth(480)
 		self.layout().addWidget(self.gui.widget_main_top_comps.native)
-		self.layout().addWidget(self.gui.scroll_bottom)
+		self.layout().addWidget(self.gui.qtab_widget_top)
 		self.layout().addWidget(self.gui.widget_main_proc_btn_comps.native)
 		self.layout().setAlignment(Qt.AlignTop)
 		self.layout().setContentsMargins(0,0,0,0)
@@ -666,23 +678,25 @@ class LFQWidget(QWidget):
 	def run_lf_net(self, args):
 		try:
 			args += ['--solver','net']
-			gpu_id = 0
+			# torch_device = torch.device("cuda:1")
+			# torch_device = torch.device("cpu:1")
+			gpu_id = 1 #It seems that even when no GPU is selected, devices should be >=1 (Josué Page Vizcaíno)
 			try:
-				gpu_id = self.gui.gpu_choices.index(self.gui.gui_elms["hw"]["gpu_id"].value)
+				gpu_id = max(self.gui.gpu_choices.index(self.gui.gui_elms["hw"]["gpu_id"].value)+1,1)
 			except Exception as err:
 				pass
-			if self.gui.gui_elms["hw"]["disable_gpu"].value == True:
-				args += ['--disable_gpu']
-				args += ['--gpu_id', gpu_id]
-			else:
-				args += ['--gpu_id', gpu_id]
+
 			print(args)
-			print("LFMNet process")
+			print("Neural Net process")
 			
 			print('\t--> hostname:{host}'.format(host=lfdeconvolve.socket.gethostname()))
-			print('\t--> specified gpu-id:{gpuid}'.format(gpuid=gpu_id))
+			
+			if '--disable-gpu' not in args:
+				print('\t--> specified gpu-id:{gpuid}'.format(gpuid=gpu_id))
 			
 			import torch
+			print("\t--> device: ","cuda:"+str(gpu_id) if torch.cuda.is_available() and not '--disable-gpu' in args else "cpu")
+			
 			try:
 				from napari_lf.lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
 			except:
@@ -730,7 +744,7 @@ class LFQWidget(QWidget):
 			## Process image:
 			with torch.no_grad():
 				# Move network to device (GPU/CPU)
-				torch_device = torch.device("cuda:"+str(gpu_id) if torch.cuda.is_available() and not '--disable_gpu' in args else "cpu")
+				torch_device = torch.device("cuda:"+str(gpu_id) if torch.cuda.is_available() and not '--disable-gpu' in args else "cpu")
 				net = net.to(torch_device)   
 				# Prepare input to network
 				im_lenslet = lf.asimage(representation = lfdeconvolve.LightField.TILED_LENSLET)
