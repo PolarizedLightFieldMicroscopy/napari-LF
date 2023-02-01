@@ -286,11 +286,6 @@ class LFQWidget(QWidget):
 		self.layout().setContentsMargins(0,0,0,0)
 		self.layout().setSpacing(0)
 		
-		for widget in self.children():
-			if isinstance(widget, Container):
-				if isinstance(widget.layout(), QFormLayout):
-					widget.layout().setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
-		
 		self.set_lfa_libs()
 		if LFvals.dev_true:
 			self.setStyleSheet("border : 1px dashed white;")

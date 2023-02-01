@@ -202,6 +202,7 @@ class LFQWidgetGui():
 		_QFormLayoutData = QFormLayout()
 		_QFormLayoutData.setContentsMargins(0,0,0,0)
 		_QFormLayoutData.setSpacing(0)
+		_QFormLayoutData.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 		_widget_data = QWidget()
 		_widget_data.setLayout(_QFormLayoutData)
 		_QFormLayoutData.addRow(self.gui_elms["main"]["img_folder"].label, self.gui_elms["main"]["img_folder"].native)
@@ -247,6 +248,7 @@ class LFQWidgetGui():
 		self._about_tab = QWidget()
 		_about_tab_layout = QFormLayout()
 		_about_tab_layout.setAlignment(Qt.AlignTop)
+		_about_tab_layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 		self._about_tab.setLayout(_about_tab_layout)
 		
 		
@@ -301,7 +303,7 @@ class LFQWidgetGui():
 		# _QFormLayout.addRow(self.gui_elms["main"]["comments"].label, self.commentsArea)
 		
 		_cont_preset_list_btn.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-		# _QFormLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+		#_QFormLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 		self.cont_btn_top.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		
 		_QFormLayout2 = QFormLayout()
@@ -354,6 +356,7 @@ class LFQWidgetGui():
 						if "group" in dict and dict["group"] not in self.groupbox["calibrate"]["required"]:
 							self.groupbox["calibrate"]["required"][dict["group"]] = QGroupBox(dict["group"])
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_calibrate_req.append(self.groupbox["calibrate"]["required"][dict["group"]])
 							self.groupbox["calibrate"]["required"][dict["group"]].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -368,6 +371,7 @@ class LFQWidgetGui():
 						else:
 							self.groupbox["calibrate"]["required"]["misc"] = QGroupBox("Misc")
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_calibrate_req.append(self.groupbox["calibrate"]["required"]["misc"])
 							self.groupbox["calibrate"]["required"]["misc"].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -381,6 +385,7 @@ class LFQWidgetGui():
 						if "group" in dict and dict["group"] not in self.groupbox["calibrate"]["inspect"]:
 							self.groupbox["calibrate"]["inspect"][dict["group"]] = QGroupBox(dict["group"])
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_calibrate_ins.append(self.groupbox["calibrate"]["inspect"][dict["group"]])
 							self.groupbox["calibrate"]["inspect"][dict["group"]].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -397,6 +402,7 @@ class LFQWidgetGui():
 						else:
 							self.groupbox["calibrate"]["inspect"]["misc"] = QGroupBox("Misc")
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_calibrate_ins.append(self.groupbox["calibrate"]["inspect"]["misc"])
 							self.groupbox["calibrate"]["inspect"]["misc"].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -410,6 +416,7 @@ class LFQWidgetGui():
 						if "group" in dict and dict["group"] not in self.groupbox["calibrate"]["optional"]:
 							self.groupbox["calibrate"]["optional"][dict["group"]] = QGroupBox(dict["group"])
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_calibrate_opt.append(self.groupbox["calibrate"]["optional"][dict["group"]])
 							self.groupbox["calibrate"]["optional"][dict["group"]].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -424,6 +431,7 @@ class LFQWidgetGui():
 						else:
 							self.groupbox["calibrate"]["optional"]["misc"] = QGroupBox("Misc")
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_calibrate_opt.append(self.groupbox["calibrate"]["optional"]["misc"])
 							self.groupbox["calibrate"]["optional"]["misc"].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -522,6 +530,7 @@ class LFQWidgetGui():
 						if "group" in dict and dict["group"] not in self.groupbox["rectify"]["required"]:
 							self.groupbox["rectify"]["required"][dict["group"]] = QGroupBox(dict["group"])
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_rectify_req.append(self.groupbox["rectify"]["required"][dict["group"]])
 							self.groupbox["rectify"]["required"][dict["group"]].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -539,6 +548,7 @@ class LFQWidgetGui():
 						else:
 							self.groupbox["rectify"]["required"]["misc"] = QGroupBox("Misc")
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_rectify_req.append(self.groupbox["rectify"]["required"]["misc"])
 							self.groupbox["rectify"]["required"]["misc"].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -552,6 +562,7 @@ class LFQWidgetGui():
 						if "group" in dict and dict["group"] not in self.groupbox["rectify"]["optional"]:
 							self.groupbox["rectify"]["optional"][dict["group"]] = QGroupBox(dict["group"])
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_rectify_opt.append(self.groupbox["rectify"]["optional"][dict["group"]])
 							self.groupbox["rectify"]["optional"][dict["group"]].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -663,6 +674,7 @@ class LFQWidgetGui():
 						if "group" in dict and dict["group"] not in self.groupbox["deconvolve"]["required"]:
 							self.groupbox["deconvolve"]["required"][dict["group"]] = QGroupBox(dict["group"])
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_deconvolve_req.append(self.groupbox["deconvolve"]["required"][dict["group"]])
 							self.groupbox["deconvolve"]["required"][dict["group"]].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -680,6 +692,7 @@ class LFQWidgetGui():
 						else:
 							self.groupbox["deconvolve"]["required"]["misc"] = QGroupBox("Misc")
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_deconvolve_req.append(self.groupbox["deconvolve"]["required"]["misc"])
 							self.groupbox["deconvolve"]["required"]["misc"].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -693,6 +706,7 @@ class LFQWidgetGui():
 						if "group" in dict and dict["group"] not in self.groupbox["deconvolve"]["optional"]:
 							self.groupbox["deconvolve"]["optional"][dict["group"]] = QGroupBox(dict["group"])
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_deconvolve_opt.append(self.groupbox["deconvolve"]["optional"][dict["group"]])
 							self.groupbox["deconvolve"]["optional"][dict["group"]].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -710,6 +724,7 @@ class LFQWidgetGui():
 						else:
 							self.groupbox["deconvolve"]["optional"]["misc"] = QGroupBox("Misc")
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_deconvolve_opt.append(self.groupbox["deconvolve"]["optional"]["misc"])
 							self.groupbox["deconvolve"]["optional"]["misc"].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -794,6 +809,7 @@ class LFQWidgetGui():
 			if "group" in dict and dict["group"] not in self.groupbox["projections"] and self.lf_vals["misc"]["group_params"]["value"] == True:
 				self.groupbox["projections"][dict["group"]] = QGroupBox(dict["group"])
 				vbox = QFormLayout()
+				vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 				_widget_projections.append(self.groupbox["projections"][dict["group"]])
 				self.groupbox["projections"][dict["group"]].setLayout(vbox)
 			if "label" not in dict:
@@ -831,6 +847,7 @@ class LFQWidgetGui():
 			if "group" in dict and dict["group"] not in self.groupbox["lfmnet"] and self.lf_vals["misc"]["group_params"]["value"] == True:
 				self.groupbox["lfmnet"][dict["group"]] = QGroupBox(dict["group"])
 				vbox = QFormLayout()
+				vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 				_widget_lfmnet.append(self.groupbox["lfmnet"][dict["group"]])
 				self.groupbox["lfmnet"][dict["group"]].setLayout(vbox)
 			if "label" not in dict:
@@ -919,6 +936,7 @@ class LFQWidgetGui():
 
 		_misc_widget = QWidget()
 		_layout_misc = QFormLayout(_misc_widget)
+		_layout_misc.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 		_layout_misc.setLabelAlignment(Qt.AlignLeft)
 		_layout_misc.setFormAlignment(Qt.AlignRight)
 		
