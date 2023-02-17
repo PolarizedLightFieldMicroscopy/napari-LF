@@ -7,6 +7,10 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import *
 from magicgui.widgets import *
 
+# Fix for the QPixMap error
+# https://github.com/PolarizedLightFieldMicroscopy/napari-LF/issues/29
+app = QApplication([])
+
 try:
 	from napari_lf import _widgetLF_gui as LFgui
 	from napari_lf import _widgetLF_vals as LFvals
@@ -824,3 +828,6 @@ def main(method):
 		widget.set_method(method)
 		widget.show()
 		sys.exit(app.exec_())
+
+if __name__ == "__main__":
+	main(LFvals.METHODS[1])
