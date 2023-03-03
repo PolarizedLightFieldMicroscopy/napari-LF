@@ -220,28 +220,26 @@ class LFQWidget(QWidget):
 					from napari_lf.lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
 				except:
 					from lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
-					
+				
+				# Define input shape, and extract it either from a calib file or the stored checkpoint
+				LFshape = None
 				# Load calib file
 				if self.gui.gui_elms["lfmnet"]["calibration_file"].value == None:
-					return
-				calibFile_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["calibration_file"].value))
-				path = Path(calibFile_path)
-				if path.is_file():
-					import h5py
-					with h5py.File(calibFile_path, "r") as f:
-						lf = f['geometry']
-						LFshape = [lf.attrs['nu'], lf.attrs['nv'], lf.attrs['ns'], lf.attrs['nt']]
-				
-				# LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
-				# VCDNet
+					pass
+				else:
+					calibFile_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["calibration_file"].value))
+					path = Path(calibFile_path)
+					if path.is_file():
+						import h5py
+						with h5py.File(calibFile_path, "r") as f:
+							lf = f['geometry']
+							LFshape = [lf.attrs['nu'], lf.attrs['nv'], lf.attrs['ns'], lf.attrs['nt']]
+					
 				if self.gui.gui_elms["lfmnet"]["input_model"].value == None:
 					return
 				checkpoint_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["input_model"].value))
-				# LFMNet
-				# checkpoint_path = '../checkpoints/*.ckpt'
-				# Load network based on checkpoint
-				#print(checkpoint_path)
-				#print(LFshape)
+
+				# Load Network
 				net = LFNeuralNetworkProto.load_network_from_file(checkpoint_path, LFshape)
 				
 				# Set network into evaluation mode (faster ode)
@@ -712,48 +710,63 @@ class LFQWidget(QWidget):
 			
 			try:
 				from napari_lf.lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
+				from napari_lf.lfa.lflib.lightfield import LightField
 			except:
 				from lfa.neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
+				from lfa.lflib.lightfield import LightField
+
+
+			cal_present = False
 			# Load calib file
-			if self.gui.gui_elms["lfmnet"]["calibration_file"].value == None:
-				return
+			if self.gui.gui_elms["lfmnet"]["calibration_file"].value != None:
+				calibFile_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["calibration_file"].value))
+				path = Path(calibFile_path)
+				if path.is_file() != False:
+					# Loadim the calibration data
+					calibration_file = lfdeconvolve.retrieve_calibration_file(calibFile_path, id=str(gpu_id))
+					lfcal = lfdeconvolve.LightFieldCalibration.load(calibration_file)
+					print('\t--> loaded calibration file: %s' % (calibFile_path))
+
+				cal_present = True
 			
-			calibFile_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["calibration_file"].value))
-			path = Path(calibFile_path)
-			if path.is_file() == False:
-				return
-			# Loadim the calibration data
-			calibration_file = lfdeconvolve.retrieve_calibration_file(calibFile_path, id=str(gpu_id))
-			lfcal = lfdeconvolve.LightFieldCalibration.load(calibration_file)
-			print('\t--> loaded calibration file: %s' % (calibFile_path))
-			
+			# Check if input file selected
 			if self.gui.gui_elms["lfmnet"]["input_file"].value == None:
 				return
 			LF_File_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["input_file"].value))
+
 			#Import LF image
 			im = lfdeconvolve.load_image(LF_File_path, dtype=lfdeconvolve.np.float32, normalize = False)
 			print('\t--> loaded LF file: %s.  Pixel values range: [%d, %d]' % (LF_File_path, int(im.min()), int(im.max())))
 			
-			# Rectify the image
-			# skip-alignment parameter is set by calib file
-			print('\t--> skip_alignment: %s' % (lfcal.skip_alignment))
 			
-			lf = lfcal.rectify_lf(im)
-			LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
-			
-			# VCDNet
+			LFshape = None
+			if cal_present:
+				# Rectify the image
+				# skip-alignment parameter is set by calib file
+				print('\t--> skip_alignment: %s' % (lfcal.skip_alignment))
+				lf = lfcal.rectify_lf(im)
+				LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
+
+			# Network path present?
 			if self.gui.gui_elms["lfmnet"]["input_model"].value == None:
 				return
 			checkpoint_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["input_model"].value))
-			# LFMNet
-			# Load network based on checkpoint
 
+
+			# Load network based on checkpoint
 			net = LFNeuralNetworkProto.load_network_from_file(checkpoint_path, LFshape)
 			print('\t--> loaded model-checkpoint file: %s' % (checkpoint_path))
 			
 			# Set network into evaluation mode (faster ode)
 			net.eval()
 			
+			# If there was no calibration file, extract info about lightfield from network
+
+			if not cal_present: # Load LFshape from model
+				LFshape = net.LF_in_shape
+				print(LFshape)
+				lf = LightField(im, LFshape[0], LFshape[1], LFshape[2], LFshape[3],
+                                      representation = LightField.TILED_LENSLET)
 			## Process image:
 			with torch.no_grad():
 				# Move network to device (GPU/CPU)
