@@ -391,9 +391,9 @@ PLUGIN_ARGS = {
 		"input_file":{
 			"prop":"input_file","label":"Light field image","dest":"input_file","type":"sel","default":"","options":[""],"help":"Supply at least one light field image to rectify.","cat":"required","img_folder_file":True,"group":"Files"
 		},
-		"calibration_file":{
-			"prop":"calibration_file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"","options":[""],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
-		},
+		# "calibration_file":{
+		# 	"prop":"calibration_file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"","options":[""],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
+		# },
 		"input_model":{
 			"prop":"input_model","label":"Select Model","dest":"input_model","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
 		},

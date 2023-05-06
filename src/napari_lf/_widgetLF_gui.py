@@ -1629,7 +1629,7 @@ class LFQWidgetGui():
 		self.gui_elms["rectify"]["calibration_file"].choices = img_files
 		self.gui_elms["deconvolve"]["calibration_file"].choices = img_files
 		self.gui_elms["projections"]["calibration_file"].choices = img_files
-		self.gui_elms["lfmnet"]["calibration_file"].choices = img_files
+		# self.gui_elms["lfmnet"]["calibration_file"].choices = img_files
 		
 	def set_cal_img(self):
 		cal_file = self.gui_elms["calibrate"]["output_filename"].value

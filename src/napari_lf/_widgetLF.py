@@ -717,17 +717,17 @@ class LFQWidget(QWidget):
 
 
 			cal_present = False
-			# Load calib file
-			if self.gui.gui_elms["lfmnet"]["calibration_file"].value != None:
-				calibFile_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["calibration_file"].value))
-				path = Path(calibFile_path)
-				if path.is_file() != False:
-					# Loadim the calibration data
-					calibration_file = lfdeconvolve.retrieve_calibration_file(calibFile_path, id=str(gpu_id))
-					lfcal = lfdeconvolve.LightFieldCalibration.load(calibration_file)
-					print('\t--> loaded calibration file: %s' % (calibFile_path))
+			# # Load calib file
+			# if self.gui.gui_elms["lfmnet"]["calibration_file"].value != None:
+			# 	calibFile_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["calibration_file"].value))
+			# 	path = Path(calibFile_path)
+			# 	if path.is_file() != False:
+			# 		# Loadim the calibration data
+			# 		calibration_file = lfdeconvolve.retrieve_calibration_file(calibFile_path, id=str(gpu_id))
+			# 		lfcal = lfdeconvolve.LightFieldCalibration.load(calibration_file)
+			# 		print('\t--> loaded calibration file: %s' % (calibFile_path))
 
-				cal_present = True
+			# 	cal_present = True
 			
 			# Check if input file selected
 			if self.gui.gui_elms["lfmnet"]["input_file"].value == None:
@@ -740,12 +740,12 @@ class LFQWidget(QWidget):
 			
 			
 			LFshape = None
-			if cal_present:
-				# Rectify the image
-				# skip-alignment parameter is set by calib file
-				print('\t--> skip_alignment: %s' % (lfcal.skip_alignment))
-				lf = lfcal.rectify_lf(im)
-				LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
+			# if cal_present:
+			# 	# Rectify the image
+			# 	# skip-alignment parameter is set by calib file
+			# 	print('\t--> skip_alignment: %s' % (lfcal.skip_alignment))
+			# 	lf = lfcal.rectify_lf(im)
+			# 	LFshape = [lf.nu, lf.nv, lf.ns, lf.nt]
 
 			# Network path present?
 			if self.gui.gui_elms["lfmnet"]["input_model"].value == None:
