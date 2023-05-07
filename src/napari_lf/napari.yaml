@@ -43,7 +43,7 @@ contributions:
       key: unique_id.1 
   widgets:
     - command: napari-LF.make_lfqwidget
-      display_name: napari LF
+      display_name: Main Menu
     # - command: napari-LF.make_qwidget
       # display_name: Example QWidget
     # - command: napari-LF.make_magic_widget

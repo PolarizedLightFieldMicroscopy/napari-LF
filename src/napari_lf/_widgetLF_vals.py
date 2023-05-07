@@ -3,19 +3,21 @@ from qtpy.QtGui import QIcon
 
 currentdir = os.path.dirname(os.path.realpath(__file__))
 icon_img = os.path.join(currentdir, 'resources/icon.ico')
-logo_img = os.path.join(currentdir, 'resources/napari-LF_logo.png')
+logo_img = os.path.join(currentdir, 'resources/logos/napari-LF_logo.png')
 
 # Image processing logos
+# TODO: Only the active ("act") logos have had their font updated. The other logos
+# 	should be updated. They should also be in used or removed.
 # LF Analyze
 LFAnalyze_logo_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_201_45px.png')
 LFAnalyze_logo_btn_img = os.path.join(currentdir, 'resources/lfa_logo/buttons/half_res/LFA_logo_3D_inact_201_45px.png')
 LFAnalyze_logo_btn_hov_img = os.path.join(currentdir, 'resources/lfa_logo/buttons/half_res/LFA_logo_3D_hov_201_45px.png')
-LFAnalyze_logo_btn_act_img = os.path.join(currentdir, 'resources/lfa_logo/buttons/half_res/LFA_logo_3D_act_201_45px.png')
+LFAnalyze_logo_btn_act_img = os.path.join(currentdir, 'resources/logos/lfa_logo_3d_act.png')
 # Neural Net
 NeuralNet_logo_img = os.path.join(currentdir, 'resources/NeuralNet_logo_201_45px.png')
 NeuralNet_logo_btn_img = os.path.join(currentdir, 'resources/nn_logo/buttons/half_res/NN_logo_3D_inact_201_45px.png')
 NeuralNet_logo_btn_hov_img = os.path.join(currentdir, 'resources/nn_logo/buttons/half_res/NN_logo_3D_hov_201_45px.png')
-NeuralNet_logo_btn_act_img = os.path.join(currentdir, 'resources/nn_logo/buttons/half_res/NN_logo_3D_act_201_45px.png')
+NeuralNet_logo_btn_act_img = os.path.join(currentdir, 'resources/logos/nn_logo_3d_act.png')
 
 loading_img = os.path.join(currentdir, 'resources/loading.gif')
 examples_folder = os.path.join(currentdir, 'examples/antleg')
@@ -55,7 +57,7 @@ if develop_mode:
 PLUGIN_ARGS = {
 	"main":{
 		"logo_label":{
-			"label":f'<a href="https://chanzuckerberg.com/science/programs-resources/imaging/napari/light-field-imaging-plugin/"><img src="{logo_img}" height="60"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
+			"label":f'<a href="https://chanzuckerberg.com/science/programs-resources/imaging/napari/light-field-imaging-plugin/"><img src="{logo_img}" height="60"></a>',"help":"napari-LF About WebPage","type":"img_label","default":"","exclude_from_settings":True
 		},
 		"img_folder":{
 			"label":"Project folder","default":examples_folder,"help":"Select your dataset folder containing the raw light field image(s).","type":"folder"
@@ -76,7 +78,7 @@ PLUGIN_ARGS = {
 			"label":"STATUS:","value":"== IDLE ==","value_busy":"== BUSY ==","value_idle":"== IDLE ==","value_error":"== ERROR ==","type":"label","default":"== IDLE ==","exclude_from_settings":True
 		},
 		"NapariLF_ver_label":{
-			"label":"Napari-LF Plugin Ver:","default":"","help":"Napari-LF Plugin version.","type":"label","exclude_from_settings":True
+			"label":"napari-LF Plugin Ver:","default":"","help":"napari-LF Plugin version.","type":"label","exclude_from_settings":True
 		},
 		"LFAnalyze_logo_label":{
 			"label":f'<a href="https://graphics.stanford.edu/projects/lfmicroscope/"><img src="{LFAnalyze_logo_img}" height="50"></a>',"help":"LF Analyze About WebPage","type":"img_label","default":"","exclude_from_settings":True
@@ -389,9 +391,9 @@ PLUGIN_ARGS = {
 		"input_file":{
 			"prop":"input_file","label":"Light field image","dest":"input_file","type":"sel","default":"","options":[""],"help":"Supply at least one light field image to rectify.","cat":"required","img_folder_file":True,"group":"Files"
 		},
-		"calibration_file":{
-			"prop":"calibration_file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"","options":[""],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
-		},
+		# "calibration_file":{
+		# 	"prop":"calibration_file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"","options":[""],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
+		# },
 		"input_model":{
 			"prop":"input_model","label":"Select Model","dest":"input_model","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
 		},

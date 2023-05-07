@@ -102,7 +102,7 @@ class LFNeuralNetworkProto(pl.LightningModule):
     
 ############## Load a network from a checkpoint? Here
     @staticmethod
-    def load_network_from_file(file_name, LFshape):
+    def load_network_from_file(file_name, LFshape=None):
 
         # Extract which network to use from checkpoint file
         checkpoint_file = glob.glob(file_name)
@@ -129,7 +129,10 @@ class LFNeuralNetworkProto(pl.LightningModule):
         network_class = getattr(mod, network_name)
         
         # Check that hyperparameters and input data matches
-        assert np.all([network_hp['network_settings_dict']['LFshape'], LFshape]), f"Light field shape missmatch: Network used {network_hp['network_settings_dict']['LFshape']} and user provided {LFshape}"
+        if LFshape is not None:
+            assert np.all([network_hp['network_settings_dict']['LFshape'], LFshape]), f"Light field shape missmatch: Network used {network_hp['network_settings_dict']['LFshape']} and user provided {LFshape}"
+        else:
+            LFshape = network_hp['network_settings_dict']['LFshape']
         # Update input image shape
         network_hp['input_shape'] = [LFshape[0]*LFshape[2], LFshape[1]*LFshape[3]]
         # Create network with stored hyperparameters

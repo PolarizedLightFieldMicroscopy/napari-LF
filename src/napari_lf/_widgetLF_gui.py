@@ -2,7 +2,7 @@ import os, sys, glob, ntpath, subprocess, traceback, json, time
 from pathlib import Path
 from qtpy import QtCore, QtGui
 from qtpy.QtGui import QPixmap, QPainter
-from qtpy.QtCore import Qt, QTimer
+from qtpy.QtCore import Qt, QTimer, QSize
 from qtpy.QtWidgets import *
 from magicgui.widgets import *
 
@@ -35,7 +35,7 @@ class LFQWidgetGui():
 		self.logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		# size is controlled via html label height value, set to 60px
 
-		self.info_label = Label(label=f'<h2><center>LF Analyze</a></center></h2>')
+		self.info_label = Label(label=f'<h2><center>napari-LF</a></center></h2>')
 		dict = LFvals.PLUGIN_ARGS["main"]["img_folder"]
 		self.gui_elms["main"]["img_folder"] = create_widget(dict)
 		
@@ -168,40 +168,142 @@ class LFQWidgetGui():
 			self._cont_btn_processing2.native.setStyleSheet("border: 1px dashed white;")
 		
 		_QFormLayout.addRow(self.logo_label.native)
-		_QFormLayout.addRow(self.gui_elms["main"]["img_folder"].label, self.gui_elms["main"]["img_folder"].native)
-		_QFormLayout.addRow(_cont_img_list_btn.native)
-		if self.gui_elms["main"]["metadata_file"].visible:
-			_QFormLayout.addRow(self.gui_elms["main"]["metadata_file"].label, self.gui_elms["main"]["metadata_file"].native)
-			
-
+		
 		self.LFAnalyze_btn = PicButton(QPixmap(LFvals.LFAnalyze_logo_btn_img), QPixmap(LFvals.LFAnalyze_logo_btn_hov_img), QPixmap(LFvals.LFAnalyze_logo_btn_act_img))
+		self.LFAnalyze_btn_cont = Container(name='LFAnalyze_btn', widgets=())
+		self.LFAnalyze_btn_cont.native.layout().addWidget(self.LFAnalyze_btn)
+		
 		self.LFAnalyze_btn.setMaximumHeight(45)
 		self.LFAnalyze_btn.setMaximumHeight(200)
 		# self.LFAnalyze_btn.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.LFAnalyze_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.LFAnalyze_btn.clicked.connect(self.LFAnalyze_btn_call)
-		self.LFAnalyze_btn.toggle()
 		
 		self.NeuralNet_btn = PicButton(QPixmap(LFvals.NeuralNet_logo_btn_img),QPixmap(LFvals.NeuralNet_logo_btn_hov_img),QPixmap(LFvals.NeuralNet_logo_btn_act_img))
+		self.NeuralNet_btn_cont = Container(name='NeuralNet_btn', widgets=())
+		self.NeuralNet_btn_cont.native.layout().addWidget(self.NeuralNet_btn)
+		
 		self.NeuralNet_btn.setMaximumHeight(45)
 		self.NeuralNet_btn.setMaximumHeight(200)
 		# self.NeuralNet_btn.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.NeuralNet_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.NeuralNet_btn.clicked.connect(self.NeuralNet_btn_call)
+		self.NeuralNet_btn_cont.hide()
 		
 		_processing_methods = QWidget()
 		hBoxLayout = QHBoxLayout()
-		hBoxLayout.addWidget(self.LFAnalyze_btn)
-		hBoxLayout.addWidget(self.NeuralNet_btn)
+		hBoxLayout.addWidget(self.LFAnalyze_btn_cont.native)
+		hBoxLayout.addWidget(self.NeuralNet_btn_cont.native)
 		_processing_methods.setLayout(hBoxLayout)
+		_processing_methods.layout().setAlignment(Qt.AlignCenter|Qt.AlignHCenter)
 		_processing_methods.layout().setContentsMargins(0,0,0,0)
-		_QFormLayout.addRow(_processing_methods)
+		_processing_methods.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+		
+		_QFormLayoutData = QFormLayout()
+		_QFormLayoutData.setContentsMargins(0,0,0,0)
+		_QFormLayoutData.setSpacing(0)
+		_QFormLayoutData.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+		_widget_data = QWidget()
+		_widget_data.setLayout(_QFormLayoutData)
+		_QFormLayoutData.addRow(self.gui_elms["main"]["img_folder"].label, self.gui_elms["main"]["img_folder"].native)
+		_QFormLayoutData.addRow(_cont_img_list_btn.native)
+		_QFormLayoutData.addRow(_processing_methods)
+		if self.gui_elms["main"]["metadata_file"].visible:
+			_QFormLayoutData.addRow(self.gui_elms["main"]["metadata_file"].label, self.gui_elms["main"]["metadata_file"].native)
+			
+		self.container_data = Container(name='Data', widgets=())
+		self.container_data.native.layout().addWidget(_widget_data)
+		
+		self.qtab_widget_top = QTabWidget()
+		tabBar = TabBar()
+		tabBar.setDrawBase(False)
+		self.qtab_widget_top.setTabBar(tabBar)
+		self.qtab_widget_top.setTabPosition(QTabWidget.West)
+		self.qtab_widget_top.setTabShape(QTabWidget.Triangular)
+		self.qtab_widget_top.setLayout(QFormLayout())
+		self.qtab_widget_top.layout().setContentsMargins(0,0,0,0)
+		self.qtab_widget_top.layout().setSpacing(0)
+		
+		self.data_tab = QWidget()
+		_data_tab_layout = QVBoxLayout()
+		_data_tab_layout.setAlignment(Qt.AlignTop)
+		self.data_tab.setLayout(_data_tab_layout)
+		self.data_tab.layout().addWidget(self.container_data.native)
+		self.qtab_widget_top.addTab(self.data_tab, 'Processing')
+		
+		self.hardware_tab = QWidget()
+		_hardware_tab_layout = QVBoxLayout()
+		_hardware_tab_layout.setAlignment(Qt.AlignTop)
+		self.hardware_tab.setLayout(_hardware_tab_layout)
+		
+		self.qtab_widget_top.addTab(self.hardware_tab, 'Hardware')
+		
+		self.lfa_lib_tab = QWidget()
+		_lfa_lib_tab_layout = QVBoxLayout()
+		_lfa_lib_tab_layout.setAlignment(Qt.AlignTop)
+		self.lfa_lib_tab.setLayout(_lfa_lib_tab_layout)
+		
+		self.qtab_widget_top.addTab(self.lfa_lib_tab, 'Misc')
+		
+		self._about_tab = QWidget()
+		_about_tab_layout = QFormLayout()
+		_about_tab_layout.setAlignment(Qt.AlignTop)
+		_about_tab_layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+		self._about_tab.setLayout(_about_tab_layout)
+		
+		
+		_line = QFrame()
+		_line.setMinimumWidth(1)
+		_line.setFixedHeight(2)
+		_line.setFrameShape(QFrame.HLine)
+		_line.setFrameShadow(QFrame.Sunken)
+		_line.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+		_line.setStyleSheet("margin:1px; padding:2px; border:1px solid rgb(128,128,128); border-width: 1px;")
+		
+		_line2 = QFrame()
+		_line2.setMinimumWidth(1)
+		_line2.setFixedHeight(2)
+		_line2.setFrameShape(QFrame.HLine)
+		_line2.setFrameShadow(QFrame.Sunken)
+		_line2.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+		_line2.setStyleSheet("margin:1px; padding:2px; border:1px solid rgb(128,128,128); border-width: 1px;")
+		
+		try:
+			from ._version import version as __version__
+		except ImportError:
+			__version__ = "unknown"
+		
+		self.NapariLF_ver_label = Label(value=LFvals.PLUGIN_ARGS['main']['NapariLF_ver_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['NapariLF_ver_label']['help'])
+		self.NapariLF_ver_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.NapariLF_ver_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		
+		self.LFAnalyze_logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['help'])
+		self.LFAnalyze_logo_label.native.setOpenExternalLinks(True)
+		self.LFAnalyze_logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.LFAnalyze_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		
+		self.LFMNet_logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['LFMNet_logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['LFMNet_logo_label']['help'])
+		self.LFMNet_logo_label.native.setOpenExternalLinks(True)
+		self.LFMNet_logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+		self.LFMNet_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		
+		self.NapariLF_ver_label.native.setText(LFvals.PLUGIN_ARGS["main"]["NapariLF_ver_label"]["label"] + __version__)
+		_about_tab_layout.addRow(self.NapariLF_ver_label.native)
+		_about_tab_layout.addRow(_line)
+		_about_tab_layout.addRow(self.LFAnalyze_logo_label.native)
+		_about_tab_layout.addRow(self.LFMNet_logo_label.native)
+		_about_tab_layout.addRow(_line2)
+		self.qtab_widget_top.addTab(self._about_tab, 'About')
+		
+		_QFormLayout.addRow(self.qtab_widget_top)
+
+		
 			
 		# _QFormLayout.addRow(self.gui_elms["main"]["presets"].label, _cont_preset_list_btn.native)
 		# _QFormLayout.addRow(self.gui_elms["main"]["comments"].label, self.commentsArea)
 		
-		_cont_preset_list_btn.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-		_QFormLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+		_cont_preset_list_btn.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+		#_QFormLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 		self.cont_btn_top.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		
 		_QFormLayout2 = QFormLayout()
@@ -214,8 +316,6 @@ class LFQWidgetGui():
 		self.cont_btn_status_label.native.setStyleSheet("color: rgb(0, 128, 0)")
 		self.cont_btn_status_label.value = ':STATUS: ' + LFvals.PLUGIN_ARGS['main']['status']['value_idle']
 		
-		_QFormLayout2.addRow(self._cont_btn_processing2.native)
-		_QFormLayout2.addRow(self._cont_btn_processing.native)
 		_QFormLayout2.addRow(self.cont_btn_status_label.native)
 		
 		self.cont_btn_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -256,6 +356,7 @@ class LFQWidgetGui():
 						if "group" in dict and dict["group"] not in self.groupbox["calibrate"]["required"]:
 							self.groupbox["calibrate"]["required"][dict["group"]] = QGroupBox(dict["group"])
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_calibrate_req.append(self.groupbox["calibrate"]["required"][dict["group"]])
 							self.groupbox["calibrate"]["required"][dict["group"]].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -270,6 +371,7 @@ class LFQWidgetGui():
 						else:
 							self.groupbox["calibrate"]["required"]["misc"] = QGroupBox("Misc")
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_calibrate_req.append(self.groupbox["calibrate"]["required"]["misc"])
 							self.groupbox["calibrate"]["required"]["misc"].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -283,6 +385,7 @@ class LFQWidgetGui():
 						if "group" in dict and dict["group"] not in self.groupbox["calibrate"]["inspect"]:
 							self.groupbox["calibrate"]["inspect"][dict["group"]] = QGroupBox(dict["group"])
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_calibrate_ins.append(self.groupbox["calibrate"]["inspect"][dict["group"]])
 							self.groupbox["calibrate"]["inspect"][dict["group"]].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -299,6 +402,7 @@ class LFQWidgetGui():
 						else:
 							self.groupbox["calibrate"]["inspect"]["misc"] = QGroupBox("Misc")
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_calibrate_ins.append(self.groupbox["calibrate"]["inspect"]["misc"])
 							self.groupbox["calibrate"]["inspect"]["misc"].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -312,6 +416,7 @@ class LFQWidgetGui():
 						if "group" in dict and dict["group"] not in self.groupbox["calibrate"]["optional"]:
 							self.groupbox["calibrate"]["optional"][dict["group"]] = QGroupBox(dict["group"])
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_calibrate_opt.append(self.groupbox["calibrate"]["optional"][dict["group"]])
 							self.groupbox["calibrate"]["optional"][dict["group"]].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -326,6 +431,7 @@ class LFQWidgetGui():
 						else:
 							self.groupbox["calibrate"]["optional"]["misc"] = QGroupBox("Misc")
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_calibrate_opt.append(self.groupbox["calibrate"]["optional"]["misc"])
 							self.groupbox["calibrate"]["optional"]["misc"].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -424,6 +530,7 @@ class LFQWidgetGui():
 						if "group" in dict and dict["group"] not in self.groupbox["rectify"]["required"]:
 							self.groupbox["rectify"]["required"][dict["group"]] = QGroupBox(dict["group"])
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_rectify_req.append(self.groupbox["rectify"]["required"][dict["group"]])
 							self.groupbox["rectify"]["required"][dict["group"]].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -441,6 +548,7 @@ class LFQWidgetGui():
 						else:
 							self.groupbox["rectify"]["required"]["misc"] = QGroupBox("Misc")
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_rectify_req.append(self.groupbox["rectify"]["required"]["misc"])
 							self.groupbox["rectify"]["required"]["misc"].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -454,6 +562,7 @@ class LFQWidgetGui():
 						if "group" in dict and dict["group"] not in self.groupbox["rectify"]["optional"]:
 							self.groupbox["rectify"]["optional"][dict["group"]] = QGroupBox(dict["group"])
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_rectify_opt.append(self.groupbox["rectify"]["optional"][dict["group"]])
 							self.groupbox["rectify"]["optional"][dict["group"]].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -565,6 +674,7 @@ class LFQWidgetGui():
 						if "group" in dict and dict["group"] not in self.groupbox["deconvolve"]["required"]:
 							self.groupbox["deconvolve"]["required"][dict["group"]] = QGroupBox(dict["group"])
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_deconvolve_req.append(self.groupbox["deconvolve"]["required"][dict["group"]])
 							self.groupbox["deconvolve"]["required"][dict["group"]].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -582,6 +692,7 @@ class LFQWidgetGui():
 						else:
 							self.groupbox["deconvolve"]["required"]["misc"] = QGroupBox("Misc")
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_deconvolve_req.append(self.groupbox["deconvolve"]["required"]["misc"])
 							self.groupbox["deconvolve"]["required"]["misc"].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -595,6 +706,7 @@ class LFQWidgetGui():
 						if "group" in dict and dict["group"] not in self.groupbox["deconvolve"]["optional"]:
 							self.groupbox["deconvolve"]["optional"][dict["group"]] = QGroupBox(dict["group"])
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_deconvolve_opt.append(self.groupbox["deconvolve"]["optional"][dict["group"]])
 							self.groupbox["deconvolve"]["optional"][dict["group"]].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -612,6 +724,7 @@ class LFQWidgetGui():
 						else:
 							self.groupbox["deconvolve"]["optional"]["misc"] = QGroupBox("Misc")
 							vbox = QFormLayout()
+							vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 							_widget_deconvolve_opt.append(self.groupbox["deconvolve"]["optional"]["misc"])
 							self.groupbox["deconvolve"]["optional"]["misc"].setLayout(vbox)
 							if dict["type"] == "bool":
@@ -696,6 +809,7 @@ class LFQWidgetGui():
 			if "group" in dict and dict["group"] not in self.groupbox["projections"] and self.lf_vals["misc"]["group_params"]["value"] == True:
 				self.groupbox["projections"][dict["group"]] = QGroupBox(dict["group"])
 				vbox = QFormLayout()
+				vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 				_widget_projections.append(self.groupbox["projections"][dict["group"]])
 				self.groupbox["projections"][dict["group"]].setLayout(vbox)
 			if "label" not in dict:
@@ -733,6 +847,7 @@ class LFQWidgetGui():
 			if "group" in dict and dict["group"] not in self.groupbox["lfmnet"] and self.lf_vals["misc"]["group_params"]["value"] == True:
 				self.groupbox["lfmnet"][dict["group"]] = QGroupBox(dict["group"])
 				vbox = QFormLayout()
+				vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 				_widget_lfmnet.append(self.groupbox["lfmnet"][dict["group"]])
 				self.groupbox["lfmnet"][dict["group"]].setLayout(vbox)
 			if "label" not in dict:
@@ -812,6 +927,8 @@ class LFQWidgetGui():
 		_widget_hw.append(self.btn_hw_def)
 			
 		self.container_hw = Container(name='HW', widgets=_widget_hw)
+		self.hardware_tab.layout().addWidget(self.container_hw.native)
+		
 			
 		# == MISC ==
 		self.gui_elms["misc"] = {}
@@ -819,6 +936,7 @@ class LFQWidgetGui():
 
 		_misc_widget = QWidget()
 		_layout_misc = QFormLayout(_misc_widget)
+		_layout_misc.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
 		_layout_misc.setLabelAlignment(Qt.AlignLeft)
 		_layout_misc.setFormAlignment(Qt.AlignRight)
 		
@@ -902,20 +1020,9 @@ class LFQWidgetGui():
 		_layout_misc.addRow(self.btn_all_def.native)
 		
 		self.container_lfa = _misc_widget
+		self.lfa_lib_tab.layout().addWidget(self.container_lfa)
 		
-		self.NapariLF_ver_label = Label(value=LFvals.PLUGIN_ARGS['main']['NapariLF_ver_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['NapariLF_ver_label']['help'])
-		self.NapariLF_ver_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
-		self.NapariLF_ver_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		
-		self.LFAnalyze_logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['LFAnalyze_logo_label']['help'])
-		self.LFAnalyze_logo_label.native.setOpenExternalLinks(True)
-		self.LFAnalyze_logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
-		self.LFAnalyze_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-		
-		self.LFMNet_logo_label = Label(value=LFvals.PLUGIN_ARGS['main']['LFMNet_logo_label']['label'], tooltip=LFvals.PLUGIN_ARGS['main']['LFMNet_logo_label']['help'])
-		self.LFMNet_logo_label.native.setOpenExternalLinks(True)
-		self.LFMNet_logo_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
-		self.LFMNet_logo_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		
 		# bind values between props
 		# @self.gui_elms["calibrate"]["ulens_focal_length"].changed.connect
@@ -1116,53 +1223,7 @@ class LFQWidgetGui():
 		self.lfmnet_tab.layout().addWidget(self.container_lfmnet.native)
 		# self.qtab_widget.addTab(self.lfmnet_tab, 'Neural Net')
 		
-		self.hardware_tab = QWidget()
-		_hardware_tab_layout = QVBoxLayout()
-		_hardware_tab_layout.setAlignment(Qt.AlignTop)
-		self.hardware_tab.setLayout(_hardware_tab_layout)
-		self.hardware_tab.layout().addWidget(self.container_hw.native)
-		self.qtab_widget.addTab(self.hardware_tab, 'Hardware')
 		
-		self.lfa_lib_tab = QWidget()
-		_lfa_lib_tab_layout = QVBoxLayout()
-		_lfa_lib_tab_layout.setAlignment(Qt.AlignTop)
-		self.lfa_lib_tab.setLayout(_lfa_lib_tab_layout)
-		self.lfa_lib_tab.layout().addWidget(self.container_lfa)
-		self.qtab_widget.addTab(self.lfa_lib_tab, 'Misc')
-		
-		self._about_tab = QWidget()
-		_about_tab_layout = QFormLayout()
-		_about_tab_layout.setAlignment(Qt.AlignTop)
-		self._about_tab.setLayout(_about_tab_layout)
-		
-		_line = QFrame()
-		_line.setMinimumWidth(1)
-		_line.setFixedHeight(2)
-		_line.setFrameShape(QFrame.HLine)
-		_line.setFrameShadow(QFrame.Sunken)
-		_line.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
-		_line.setStyleSheet("margin:1px; padding:2px; border:1px solid rgb(128,128,128); border-width: 1px;")
-		
-		_line2 = QFrame()
-		_line2.setMinimumWidth(1)
-		_line2.setFixedHeight(2)
-		_line2.setFrameShape(QFrame.HLine)
-		_line2.setFrameShadow(QFrame.Sunken)
-		_line2.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
-		_line2.setStyleSheet("margin:1px; padding:2px; border:1px solid rgb(128,128,128); border-width: 1px;")
-		
-		try:
-			from ._version import version as __version__
-		except ImportError:
-			__version__ = "unknown"
-		
-		self.NapariLF_ver_label.native.setText(LFvals.PLUGIN_ARGS["main"]["NapariLF_ver_label"]["label"] + __version__)
-		_about_tab_layout.addRow(self.NapariLF_ver_label.native)
-		_about_tab_layout.addRow(_line)
-		_about_tab_layout.addRow(self.LFAnalyze_logo_label.native)
-		_about_tab_layout.addRow(self.LFMNet_logo_label.native)
-		_about_tab_layout.addRow(_line2)
-		self.qtab_widget.addTab(self._about_tab, 'About')
 		
 		# self.calib_tab = QWidget()
 		# _calib_tab_layout = QVBoxLayout()
@@ -1176,7 +1237,11 @@ class LFQWidgetGui():
 		#APP
 		self.widget_main_top_comps = Container(widgets=(), labels=True)
 		self.widget_main_top_comps.native.layout().addWidget(self.cont_btn_top)
-		
+		self.widget_main_top_comps.native.layout().setContentsMargins(0,0,0,0)
+		self.widget_main_top_comps.native.layout().setSpacing(0)
+		if LFvals.dev_true:
+			self.widget_main_top_comps.native.setStyleSheet("border : 1px dashed white;")
+			
 		#self.gui_elms["main"]["comments"].parent.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
 
 		vlay = QVBoxLayout()		
@@ -1190,14 +1255,17 @@ class LFQWidgetGui():
 		# vlay.addStretch()
 		_preset_comments_expand = QWidget()
 		_preset_comments_expand.setLayout(vlay)
+		_preset_comments_expand.layout().setContentsMargins(0,0,0,0)
+		_preset_comments_expand.layout().setSpacing(0)
+		_preset_comments_expand.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		
 		self.widget_main_bottom_comps0 = Container(widgets=(), labels=True)
-		self.widget_main_bottom_comps0.native.layout().addWidget(_preset_comments_expand)
+		self.widget_main_bottom_comps0.native.layout().addWidget(_preset_comments_expand, Qt.AlignTop)
 		self.widget_main_bottom_comps0.native.layout().setContentsMargins(0,0,0,0)
-		self.widget_main_top_comps.native.layout().addWidget(self.widget_main_bottom_comps0.native)
-		self.widget_main_top_comps.native.layout().setContentsMargins(0,0,0,0)
-		if LFvals.dev_true:
-			self.widget_main_top_comps.native.setStyleSheet("border : 1px dashed white;")
+		self.widget_main_bottom_comps0.native.layout().setSpacing(0)
+		self.widget_main_bottom_comps0.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+			
+		self.container_data.native.layout().addWidget(self.widget_main_bottom_comps0.native, Qt.AlignTop)
 		
 		self.widget_main_bottom_comps1 = Container(widgets=(), labels=True)
 		self.widget_main_bottom_comps1.native.layout().addWidget(self.qtab_widget)
@@ -1214,6 +1282,19 @@ class LFQWidgetGui():
 		self.scroll_bottom = QScrollArea()
 		self.scroll_bottom.setWidgetResizable(True)
 		self.scroll_bottom.setWidget(self.widget_main_bottom_comps_scroll.native)
+		self.container_data.native.layout().addWidget(self.scroll_bottom, Qt.AlignTop)
+		
+		_QFormLayout_proc_btns = QFormLayout()
+		_processing_btns = QWidget()
+		_processing_btns.setLayout(_QFormLayout_proc_btns)
+		_QFormLayout_proc_btns.setContentsMargins(0,0,0,0)
+		_QFormLayout_proc_btns.setSpacing(0)
+		_QFormLayout_proc_btns.addRow(self._cont_btn_processing2.native)
+		_QFormLayout_proc_btns.addRow(self._cont_btn_processing.native)
+		_QFormLayout_proc_btns.setAlignment(Qt.AlignBottom)
+		_processing_btns.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+		
+		self.container_data.native.layout().addWidget(_processing_btns, Qt.AlignBottom)
 		# self.scroll_bottom.setMinimumHeight(400)
 		
 		if LFvals.dev_true:
@@ -1238,13 +1319,20 @@ class LFQWidgetGui():
 			self.widget_main_bottom_comps2.visible = False
 			self._cont_btn_processing.visible = True
 			self._cont_btn_processing2.visible = False
+			self.LFAnalyze_btn_cont.visible = True
+			self.NeuralNet_btn_cont.visible = False
+			self.settings["main"]["mode_choice"] = 'LFAnalyze'
 		else:
 			self.widget_main_bottom_comps0.visible = False
 			self.widget_main_bottom_comps1.visible = False
 			self.widget_main_bottom_comps2.visible = True
 			self._cont_btn_processing.visible = False
 			self._cont_btn_processing2.visible = True
+			self.LFAnalyze_btn_cont.visible = False
+			self.NeuralNet_btn_cont.visible = True
+			self.settings["main"]["mode_choice"] = 'NeuralNet'
 		self.NeuralNet_btn.toggle()
+		self.save_plugin_prefs()
 			
 	def NeuralNet_btn_call(self):
 		# print("NeuralNet_btn_call")
@@ -1254,17 +1342,26 @@ class LFQWidgetGui():
 			self.widget_main_bottom_comps2.visible = True
 			self._cont_btn_processing.visible = False
 			self._cont_btn_processing2.visible = True
+			self.LFAnalyze_btn_cont.visible = False
+			self.NeuralNet_btn_cont.visible = True
+			self.settings["main"]["mode_choice"] = 'NeuralNet'
 		else:
 			self.widget_main_bottom_comps0.visible = True
 			self.widget_main_bottom_comps1.visible = True
 			self.widget_main_bottom_comps2.visible = False
 			self._cont_btn_processing.visible = True
 			self._cont_btn_processing2.visible = False
+			self.LFAnalyze_btn_cont.visible = True
+			self.NeuralNet_btn_cont.visible = False
+			self.settings["main"]["mode_choice"] = 'LFAnalyze'
 		self.LFAnalyze_btn.toggle()
+		self.save_plugin_prefs()
 		
 	def verify_existing_files(self):
 		
 		try:
+			# print('verify_existing_files thread running')
+		
 			_img_folder = str(self.gui_elms["main"]["img_folder"].value)
 			path = Path(_img_folder)
 			if path.is_dir():
@@ -1532,7 +1629,7 @@ class LFQWidgetGui():
 		self.gui_elms["rectify"]["calibration_file"].choices = img_files
 		self.gui_elms["deconvolve"]["calibration_file"].choices = img_files
 		self.gui_elms["projections"]["calibration_file"].choices = img_files
-		self.gui_elms["lfmnet"]["calibration_file"].choices = img_files
+		# self.gui_elms["lfmnet"]["calibration_file"].choices = img_files
 		
 	def set_cal_img(self):
 		cal_file = self.gui_elms["calibrate"]["output_filename"].value
@@ -1569,7 +1666,8 @@ class LFQWidgetGui():
 		
 	def save_plugin_prefs(self):
 		for section in LFvals.PLUGIN_ARGS:
-			self.settings[section] = {}
+			if section not in self.settings:
+				self.settings[section] = {}
 			for prop in LFvals.PLUGIN_ARGS[section]:
 				if "exclude_from_settings" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_settings"] == True:
 					pass
@@ -1865,6 +1963,7 @@ class PicButton(QAbstractButton):
 		self.pixmap_hover = pixmap_hover
 		self.pixmap_pressed = pixmap_pressed
 		self.setCheckable(True)
+		self.setVisible(True)
 
 	def paintEvent(self, event):
 		pix = self.pixmap_hover if self.underMouse() else self.pixmap
@@ -1881,3 +1980,9 @@ class PicButton(QAbstractButton):
 
 	def sizeHint(self):
 		return self.pixmap.size()
+
+# https://stackoverflow.com/questions/46007131/make-every-tab-the-same-width-and-also-expandable
+class TabBar(QTabBar):
+	def tabSizeHint(self, index):
+		size = QTabBar.tabSizeHint(self, index)
+		return QSize(size.width(), 100)
