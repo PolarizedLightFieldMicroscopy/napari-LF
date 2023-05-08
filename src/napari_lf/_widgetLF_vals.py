@@ -395,7 +395,7 @@ PLUGIN_ARGS = {
 		# 	"prop":"calibration_file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"","options":[""],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
 		# },
 		"input_model":{
-			"prop":"input_model","label":"Select Model","dest":"input_model","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+			"prop":"input_model","label":"Neural net model","dest":"input_model","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
 		},
 		"input_model_prop_viewer":{
 			"prop":"input_model_prop_viewer","label":"Model Prop Viewer","dest":"input_model_prop_viewer","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files", "type":"text","group":"Network Model Inspector","exclude_from_settings":True,"exclude_from_args":True,"read_only":True,"no_label_layout_style":True
