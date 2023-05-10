@@ -1,0 +1,7 @@
+h5py
+napari
+pyopencl
+opencv-python
+torch
+torchvision
+pytorch_lightning
