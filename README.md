@@ -5,6 +5,7 @@
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-LF.svg?color=green)](https://python.org)
 [![tests](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/workflows/tests/badge.svg)](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/actions)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-LF)](https://napari-hub.org/plugins/napari-LF)
+[![Downloads](https://static.pepy.tech/badge/napari-lf)](https://pepy.tech/project/napari-lf)
 <!-- [![codecov](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF/branch/main/graph/badge.svg)](https://codecov.io/gh/PolarizedLightFieldMicroscopy/napari-LF) -->
 
 Light field imaging plugin for napari
@@ -13,9 +14,12 @@ Light field imaging plugin for napari
 
 Deconvolves a 4D light field image into a full 3D focus stack reconstruction
 
-https://user-images.githubusercontent.com/23206511/180571940-9500dd19-119b-4d0d-8b33-5ab1705e9b6f.mov
+https://user-images.githubusercontent.com/23206511/236919283-d53ca97a-9bdd-4598-b553-34996f688237.mp4
 
-napari-LF provides three basic processes to Calibrate, Rectify, and Deconvolve light field images:
+napari-LF contains an analytic and neural net analysis methods for light field images.
+
+### LF Analyze
+**LF Analyze**, the analytic method, provides three basic processes to Calibrate, Rectify, and Deconvolve light field images:
 
 The **Calibrate** process generates a calibration file that represents the optical setup that was used to record the light field images. The same calibration file can be used to rectify and deconvolve all light field images that were recorded with the same optical setup, usually the same microscope and light field camera. The Calibrate process requires as input the radiometry frame, dark frame, optical parameters, and volume parameters to generate the calibration file, which is subsequently used to rectify and deconvolve related light field images. The calibration file includes a point spread function (PSF) derived from the optical and volume parameters and is stored in HDF5 file format.
 
@@ -25,24 +29,34 @@ The **Deconvolve** process uses the PSF and a wave optics model to iteratively d
 
 The **Parameter** panels, located in the lower half of the napari-LF widget, allows the user to specify settings for the reconstruction process. Once the appropriate parameters are selected, the Calibrate button followed by the Deconvolve button can be pushed to complete the reconstruction.
 
+### Neural Net
+**Neural Net** provides a method of applying a trained neural net model to deconvolve a light field image.
+
 ## Quickstart
 1. Install the napari-LF plugin into your napari environment, as described below under **Installation**.
-1. From the napari Plugins menu, select the napari-LF plugin to install its widget into the napari viewer
+1. From the napari Plugins menu, select the napari-LF plugin to install its widget into the napari viewer.
+### LF Analyze
 1. Near the top of the widget, select your project folder containing the following images: light field, radiometry, and dark frame.
-1. Write the name of the metadata file you want for recording your reconstruction settings, e.g. metadata.txt. This file will be updated each time a calibration process is started.
 1. Calibration
-    - In the parameters panel, navigate to **Calibrate, Required** (top tab **Calibrate**, bottom tab **Required**), which is the default selection.
-    - Select **radiometry** and **dark frame** images from pull down menus.
-    - Write the name of the **calibration file** you would like to produce, e.g. calibration.lfc.
-    - Enter the appropriate **optical parameters** according to your microscope and sample material.
-    - Enter the **volume parameters** you would like for your 3D reconstuction.
-    - Push the `Calibrate` button.
+    1. In the processing panel, navigate to **Calibrate, Required** (top tab **Calibrate**, bottom tab **Required**), which is the default selection.
+    1. Select **radiometry** and **dark frame** images from pull down menus.
+    1. Write the name of the **calibration file** you would like to produce, e.g. calibration.lfc.
+    1. Enter the appropriate **optical parameters** according to your microscope and sample material.
+    1. Enter the **volume parameters** you would like for your 3D reconstuction.
+    1. Push the `Calibrate` button.
 1. Deconvolution
-    - In the parameters panel, navigate to **Deconvolve, Required**.
-    - Select **light field** image and **calibration file** from pull down menus.
-    - Write the name of the **output image stack** you would like to produce, e.g. output_stack.tif.
-    - Push the `Deconvolve` button.
-3D focal stack reconstruction will display in the napari viewer and be saved in your original project folder.
+    1. In the processing panel, navigate to **Deconvolve, Required**.
+    1. Select **light field** image and **calibration file** from pull down menus.
+    1. Write the name of the **output image stack** you would like to produce, e.g. output_stack.tif.
+    1. Push the `Deconvolve` button.
+The 3D focal stack reconstruction will display in the napari viewer and be saved in your original project folder.
+### Neural Net
+1. Click on the **LF Analyze** logo to toggle to the **Neural Net** mode.
+1. Near the top of the widget, select your project folder containing the light field image and the trained neural net. If you do not already have a trained model, you can train a model using this [Jupyter notebook](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/blob/main/src/napari_lf/lfa/main_train_neural_net.ipynb).
+1. In the processing panel, select your **light field image** and **neural net model**.
+1. Write the name of the **output image stack** you would like to produce, e.g. output_stack.tif.
+1. Push the `Deconvolve` button.
+The 3D focal stack reconstruction will display in the napari viewer and be saved in your original project folder.
 
 ## Getting Help
 For details about each parameter, hover over each parameter textbox to read the tooltip description.
@@ -76,13 +90,13 @@ Lastly, to access the installed plugin, open napari from the command line:
 
     napari
 
-From the napari menu, select **Plugins > napari-LF: LF-Analyze**. Note that you may need to close and reopen napari for the `napari-LF` to appear.
+From the napari menu, select **Plugins > Main Menu (napari-LF)**. Note that you may need to close and reopen napari for the `napari-LF` to appear.
 
 ### Installation for developers
 
 Create a virtual environment from the command line for napari with the python libraries necessary for the light field plugin:
 
-    conda create --name napari-lf python==3.9 h5py pyopencl napari git -c conda-forge
+    conda create --name napari-lf python==3.9
     conda activate napari-lf
 
 Clone the github repository:
