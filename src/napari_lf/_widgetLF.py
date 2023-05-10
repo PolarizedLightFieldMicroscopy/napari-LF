@@ -687,11 +687,9 @@ class LFQWidget(QWidget):
 	def run_lf_net(self, args):
 		try:
 			args += ['--solver','net']
-			# torch_device = torch.device("cuda:1")
-			# torch_device = torch.device("cpu:1")
-			gpu_id = 1 #It seems that even when no GPU is selected, devices should be >=1 (Josué Page Vizcaíno)
+			gpu_id = 0 #It seems that even when no GPU is selected, devices should be >=1 (Josué Page Vizcaíno) 
 			try:
-				gpu_id = max(self.gui.gpu_choices.index(self.gui.gui_elms["hw"]["gpu_id"].value)+1,1)
+				gpu_id = self.gui.gpu_choices.index(self.gui.gui_elms["hw"]["gpu_id"].value)
 			except Exception as err:
 				pass
 
@@ -770,7 +768,7 @@ class LFQWidget(QWidget):
 			## Process image:
 			with torch.no_grad():
 				# Move network to device (GPU/CPU)
-				torch_device = torch.device("cuda:"+str(gpu_id) if torch.cuda.is_available() and not '--disable-gpu' in args else "cpu")
+				torch_device = torch.device(gpu_id)
 				net = net.to(torch_device)   
 				# Prepare input to network
 				im_lenslet = lf.asimage(representation = lfdeconvolve.LightField.TILED_LENSLET)
