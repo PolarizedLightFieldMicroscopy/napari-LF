@@ -30,7 +30,7 @@ The **Deconvolve** process uses the PSF and a wave optics model to iteratively d
 The **Parameter** panels, located in the lower half of the napari-LF widget, allows the user to specify settings for the reconstruction process. Once the appropriate parameters are selected, the Calibrate button followed by the Deconvolve button can be pushed to complete the reconstruction.
 
 ### Neural Net
-**Neural Net** provides a method of applying a trained neural net model to deconvolve a light field image.
+**Neural Net** provides a method of applying a trained neural net model to deconvolve a light field image. Based on Pytorch Lightning and a provided [base class](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/blob/main/src/napari_lf/lfa/neural_nets/LFNeuralNetworkProto.py), you can either create your own network, or use the pre-shipped networks (LFMNet, VCDNet, ...).
 
 ## Quickstart
 1. Install the napari-LF plugin into your napari environment, as described below under **Installation**.
