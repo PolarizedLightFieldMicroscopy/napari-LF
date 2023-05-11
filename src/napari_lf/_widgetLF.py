@@ -223,17 +223,17 @@ class LFQWidget(QWidget):
 				
 				# Define input shape, and extract it either from a calib file or the stored checkpoint
 				LFshape = None
-				# Load calib file
-				if self.gui.gui_elms["lfmnet"]["calibration_file"].value == None:
-					pass
-				else:
-					calibFile_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["calibration_file"].value))
-					path = Path(calibFile_path)
-					if path.is_file():
-						import h5py
-						with h5py.File(calibFile_path, "r") as f:
-							lf = f['geometry']
-							LFshape = [lf.attrs['nu'], lf.attrs['nv'], lf.attrs['ns'], lf.attrs['nt']]
+				# # Load calib file
+				# if self.gui.gui_elms["lfmnet"]["calibration_file"].value == None:
+				# 	pass
+				# else:
+				# 	calibFile_path = str(os.path.join(str(self.gui.gui_elms["main"]["img_folder"].value), self.gui.gui_elms["lfmnet"]["calibration_file"].value))
+				# 	path = Path(calibFile_path)
+				# 	if path.is_file():
+				# 		import h5py
+				# 		with h5py.File(calibFile_path, "r") as f:
+				# 			lf = f['geometry']
+				# 			LFshape = [lf.attrs['nu'], lf.attrs['nv'], lf.attrs['ns'], lf.attrs['nt']]
 					
 				if self.gui.gui_elms["lfmnet"]["input_model"].value == None:
 					return

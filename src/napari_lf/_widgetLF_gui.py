@@ -189,7 +189,17 @@ class LFQWidgetGui():
 		self.NeuralNet_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.NeuralNet_btn.clicked.connect(self.NeuralNet_btn_call)
 		self.NeuralNet_btn_cont.hide()
-		
+
+
+		_toggle_instructions = QWidget()
+		mylabel = QLabel()
+		mylabel.setText("Click the button below to toggle between analysis methods.")
+		mylabel.setAlignment(Qt.AlignCenter)
+		vbox = QVBoxLayout()
+		vbox.addWidget(mylabel)
+		_toggle_instructions.setLayout(vbox)
+		_toggle_instructions.layout().setContentsMargins(0,0,0,0)
+
 		_processing_methods = QWidget()
 		hBoxLayout = QHBoxLayout()
 		hBoxLayout.addWidget(self.LFAnalyze_btn_cont.native)
@@ -207,6 +217,7 @@ class LFQWidgetGui():
 		_widget_data.setLayout(_QFormLayoutData)
 		_QFormLayoutData.addRow(self.gui_elms["main"]["img_folder"].label, self.gui_elms["main"]["img_folder"].native)
 		_QFormLayoutData.addRow(_cont_img_list_btn.native)
+		_QFormLayoutData.addRow(_toggle_instructions)
 		_QFormLayoutData.addRow(_processing_methods)
 		if self.gui_elms["main"]["metadata_file"].visible:
 			_QFormLayoutData.addRow(self.gui_elms["main"]["metadata_file"].label, self.gui_elms["main"]["metadata_file"].native)
