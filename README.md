@@ -16,7 +16,7 @@ Deconvolves a 4D light field image into a full 3D focus stack reconstruction
 
 https://user-images.githubusercontent.com/23206511/236919283-d53ca97a-9bdd-4598-b553-34996f688237.mp4
 
-napari-LF contains an analytic and neural net analysis methods for light field images.
+napari-LF contains an analytic and neural net analysis methods for light field images. To download example light field images, see our repository [napari-LF-docs-samples](https://github.com/PolarizedLightFieldMicroscopy/napari-LF-docs-samples).
 
 ### LF Analyze
 **LF Analyze**, the analytic method, provides three basic processes to Calibrate, Rectify, and Deconvolve light field images:
