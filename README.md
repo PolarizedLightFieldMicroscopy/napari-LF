@@ -50,6 +50,7 @@ The **Parameter** panels, located in the lower half of the napari-LF widget, all
     1. Write the name of the **output image stack** you would like to produce, e.g. output_stack.tif.
     1. Push the `Deconvolve` button.
 The 3D focal stack reconstruction will display in the napari viewer and be saved in your original project folder.
+
 ### Neural Net
 1. Click on the **LF Analyze** logo to toggle to the **Neural Net** mode.
 1. Near the top of the widget, select your project folder containing the light field image and the trained neural net. If you do not already have a trained model, you can train a model using this [Jupyter notebook](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/blob/main/src/napari_lf/lfa/main_train_neural_net.ipynb).
@@ -60,7 +61,7 @@ The 3D focal stack reconstruction will display in the napari viewer and be saved
 
 ## Getting Help
 For details about each parameter, hover over each parameter textbox to read the tooltip description.
-For additional information about the reconstruction process, see our [User Guide](docs/napari-LF_UserGuide_5July2022.docx).
+For additional information about the reconstruction process, see our [User Guide](docs/napari-LF_UserGuide_12May2023.pdf).
 
 ## Installation
 

@@ -6,17 +6,15 @@ icon_img = os.path.join(currentdir, 'resources/icon.ico')
 logo_img = os.path.join(currentdir, 'resources/logos/napari-LF_logo.png')
 
 # Image processing logos
-# TODO: Only the active ("act") logos have had their font updated. The other logos
-# 	should be updated. They should also be in used or removed.
 # LF Analyze
-LFAnalyze_logo_img = os.path.join(currentdir, 'resources/LFAnalyze_logo_201_45px.png')
-LFAnalyze_logo_btn_img = os.path.join(currentdir, 'resources/lfa_logo/buttons/half_res/LFA_logo_3D_inact_201_45px.png')
-LFAnalyze_logo_btn_hov_img = os.path.join(currentdir, 'resources/lfa_logo/buttons/half_res/LFA_logo_3D_hov_201_45px.png')
+LFAnalyze_logo_img = os.path.join(currentdir, 'resources/LFAnalyze_logo.png')
+LFAnalyze_logo_btn_img = os.path.join(currentdir, 'resources/logos/hover/LFAnalyze_hover_201_45px.png')
+LFAnalyze_logo_btn_hov_img = os.path.join(currentdir, 'resources/logos/hover/LFAnalyze_hover.png')
 LFAnalyze_logo_btn_act_img = os.path.join(currentdir, 'resources/logos/lfa_logo_3d_act.png')
 # Neural Net
-NeuralNet_logo_img = os.path.join(currentdir, 'resources/NeuralNet_logo_201_45px.png')
-NeuralNet_logo_btn_img = os.path.join(currentdir, 'resources/nn_logo/buttons/half_res/NN_logo_3D_inact_201_45px.png')
-NeuralNet_logo_btn_hov_img = os.path.join(currentdir, 'resources/nn_logo/buttons/half_res/NN_logo_3D_hov_201_45px.png')
+NeuralNet_logo_img = os.path.join(currentdir, 'resources/NeuralNet_logo.png')
+NeuralNet_logo_btn_img = os.path.join(currentdir, 'resources/logos/hover/NeuralNet_hover_201_45px.png')
+NeuralNet_logo_btn_hov_img = os.path.join(currentdir, 'resources/logos/hover/NeuralNet_hover.png')
 NeuralNet_logo_btn_act_img = os.path.join(currentdir, 'resources/logos/nn_logo_3d_act.png')
 
 loading_img = os.path.join(currentdir, 'resources/loading.gif')
