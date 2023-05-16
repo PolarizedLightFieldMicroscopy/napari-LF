@@ -1,10 +1,11 @@
 import os, sys, glob, ntpath, subprocess, traceback, json, time
 from pathlib import Path
 from qtpy import QtCore, QtGui
-from qtpy.QtGui import QPixmap, QPainter
+from qtpy.QtGui import QPixmap, QPainter, QCursor
 from qtpy.QtCore import Qt, QTimer, QSize
 from qtpy.QtWidgets import *
 from magicgui.widgets import *
+from napari.qt.threading import thread_worker
 
 try:
 	from napari_lf import _widgetLF_vals as LFvals
@@ -172,12 +173,13 @@ class LFQWidgetGui():
 		self.LFAnalyze_btn = PicButton(QPixmap(LFvals.LFAnalyze_logo_btn_img), QPixmap(LFvals.LFAnalyze_logo_btn_hov_img), QPixmap(LFvals.LFAnalyze_logo_btn_act_img))
 		self.LFAnalyze_btn_cont = Container(name='LFAnalyze_btn', widgets=())
 		self.LFAnalyze_btn_cont.native.layout().addWidget(self.LFAnalyze_btn)
-		
+
 		self.LFAnalyze_btn.setMaximumHeight(45)
 		self.LFAnalyze_btn.setMaximumHeight(200)
 		# self.LFAnalyze_btn.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.LFAnalyze_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.LFAnalyze_btn.clicked.connect(self.LFAnalyze_btn_call)
+		self.LFAnalyze_btn.isButtonActive = True
 		
 		self.NeuralNet_btn = PicButton(QPixmap(LFvals.NeuralNet_logo_btn_img),QPixmap(LFvals.NeuralNet_logo_btn_hov_img),QPixmap(LFvals.NeuralNet_logo_btn_act_img))
 		self.NeuralNet_btn_cont = Container(name='NeuralNet_btn', widgets=())
@@ -188,8 +190,11 @@ class LFQWidgetGui():
 		# self.NeuralNet_btn.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 		self.NeuralNet_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 		self.NeuralNet_btn.clicked.connect(self.NeuralNet_btn_call)
+		self.NeuralNet_btn.isButtonActive = False
 		self.NeuralNet_btn_cont.hide()
-
+		
+		#self.LFAnalyze_btn.toggle()
+		#self.NeuralNet_btn.toggle()
 
 		_toggle_instructions = QWidget()
 		mylabel = QLabel()
@@ -333,7 +338,7 @@ class LFQWidgetGui():
 		self.cont_btn_status_label.native.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		self.cont_btn_status_label.native.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
 
-		self.groupbox = {"calibrate":{"required":{},"optional":{},"inspect":{}},"rectify":{"required":{},"optional":{}},"deconvolve":{"required":{},"optional":{}}, "projections":{}, "lfmnet":{}}
+		self.groupbox = {"calibrate":{"required":{},"optional":{},"inspect":{}},"rectify":{"required":{},"optional":{}},"deconvolve":{"required":{},"optional":{}}, "projections":{}, "lfmnet":{"deconvolve":{},"training":{}}}
 		
 		# == CALIBATE ==
 		_widget_calibrate_req = []
@@ -454,7 +459,7 @@ class LFQWidgetGui():
 		@self.btn_cal_req_def.changed.connect
 		def btn_cal_req_defaults():
 			qm = QMessageBox
-			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			ret = qm.question(self.logo_label.native, 'napari-LF', "Reset Values to Default ?", qm.Yes | qm.No)
 			if ret == qm.Yes:
 				for key in self.lf_vals["calibrate"]:
 					dict = self.lf_vals["calibrate"][key]
@@ -479,7 +484,7 @@ class LFQWidgetGui():
 		@self.btn_cal_opt_def.changed.connect
 		def btn_cal_opt_defaults():
 			qm = QMessageBox
-			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			ret = qm.question(self.logo_label.native, 'napari-LF', "Reset Values to Default ?", qm.Yes | qm.No)
 			if ret == qm.Yes:
 				for key in self.lf_vals["calibrate"]:
 					dict = self.lf_vals["calibrate"][key]
@@ -602,7 +607,7 @@ class LFQWidgetGui():
 		@self.btn_rec_req_def.changed.connect
 		def btn_rec_req_defaults():
 			qm = QMessageBox
-			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			ret = qm.question(self.logo_label.native, 'napari-LF', "Reset Values to Default ?", qm.Yes | qm.No)
 			if ret == qm.Yes:
 				for key in self.lf_vals["rectify"]:
 					dict = self.lf_vals["rectify"][key]
@@ -627,7 +632,7 @@ class LFQWidgetGui():
 		@self.btn_rec_opt_def.changed.connect
 		def btn_rec_opt_defaults():
 			qm = QMessageBox
-			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			ret = qm.question(self.logo_label.native, 'napari-LF', "Reset Values to Default ?", qm.Yes | qm.No)
 			if ret == qm.Yes:
 				for key in self.lf_vals["rectify"]:
 					dict = self.lf_vals["rectify"][key]
@@ -747,7 +752,7 @@ class LFQWidgetGui():
 		@self.btn_dec_req_def.changed.connect
 		def btn_dec_req_defaults():
 			qm = QMessageBox
-			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			ret = qm.question(self.logo_label.native, 'napari-LF', "Reset Values to Default ?", qm.Yes | qm.No)
 			if ret == qm.Yes:
 				for key in self.lf_vals["deconvolve"]:
 					dict = self.lf_vals["deconvolve"][key]
@@ -772,7 +777,7 @@ class LFQWidgetGui():
 		@self.btn_dec_opt_def.changed.connect
 		def btn_dec_opt_defaults():
 			qm = QMessageBox
-			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			ret = qm.question(self.logo_label.native, 'napari-LF', "Reset Values to Default ?", qm.Yes | qm.No)
 			if ret == qm.Yes:
 				for key in self.lf_vals["deconvolve"]:
 					dict = self.lf_vals["deconvolve"][key]
@@ -851,42 +856,75 @@ class LFQWidgetGui():
 		
 		# == LFMNET ==
 		self.gui_elms["lfmnet"] = {}
-		self.groupbox["lfmnet"] = {}
 		_widget_lfmnet = []
+		_widget_lfmnet_train = []
 		for key in LFvals.PLUGIN_ARGS['lfmnet']:
 			dict = LFvals.PLUGIN_ARGS["lfmnet"][key]
-			if "group" in dict and dict["group"] not in self.groupbox["lfmnet"] and self.lf_vals["misc"]["group_params"]["value"] == True:
-				self.groupbox["lfmnet"][dict["group"]] = QGroupBox(dict["group"])
-				vbox = QFormLayout()
-				vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
-				_widget_lfmnet.append(self.groupbox["lfmnet"][dict["group"]])
-				self.groupbox["lfmnet"][dict["group"]].setLayout(vbox)
-			if "label" not in dict:
-				dict["label"] = dict["dest"]
-			wid_elm = create_widget(dict)
-			self.gui_elms["lfmnet"][key] = wid_elm
-			if "group" in dict:
-				if self.lf_vals["misc"]["group_params"]["value"] == False:
-					_widget_lfmnet.append(wid_elm)
-				else:
-					if "visible" in dict and dict["visible"] == False:
-						pass
+			
+			if "cat" in dict and dict["cat"] == "deconvolve":			
+				if "group" in dict and dict["group"] not in self.groupbox["lfmnet"]["deconvolve"] and self.lf_vals["misc"]["group_params"]["value"] == True:
+					self.groupbox["lfmnet"]["deconvolve"][dict["group"]] = QGroupBox(dict["group"])
+					vbox = QFormLayout()
+					vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+					_widget_lfmnet.append(self.groupbox["lfmnet"]["deconvolve"][dict["group"]])
+					self.groupbox["lfmnet"]["deconvolve"][dict["group"]].setLayout(vbox)
+				if "label" not in dict:
+					dict["label"] = dict["dest"]
+				wid_elm = create_widget(dict)
+				self.gui_elms["lfmnet"][key] = wid_elm
+				if "group" in dict:
+					if self.lf_vals["misc"]["group_params"]["value"] == False:
+						_widget_lfmnet.append(wid_elm)
 					else:
-						if dict["type"] == "bool":
-							self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.native)
-						elif "no_label_layout_style" in dict and dict["no_label_layout_style"] == True:
-							self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.native)
+						if "visible" in dict and dict["visible"] == False:
+							pass
 						else:
-							self.groupbox["lfmnet"][dict["group"]].layout().addRow(wid_elm.label, wid_elm.native)
-			else:
-				_widget_lfmnet.append(wid_elm)
+							if dict["type"] == "bool":
+								self.groupbox["lfmnet"]["deconvolve"][dict["group"]].layout().addRow(wid_elm.native)
+							elif "no_label_layout_style" in dict and dict["no_label_layout_style"] == True:
+								self.groupbox["lfmnet"]["deconvolve"][dict["group"]].layout().addRow(wid_elm.native)
+							else:
+								self.groupbox["lfmnet"]["deconvolve"][dict["group"]].layout().addRow(wid_elm.label, wid_elm.native)
+				else:
+					_widget_lfmnet.append(wid_elm)
+			elif "cat" in dict and dict["cat"] == "training":			
+				if "group" in dict and dict["group"] not in self.groupbox["lfmnet"]["training"] and self.lf_vals["misc"]["group_params"]["value"] == True:
+					self.groupbox["lfmnet"]["training"][dict["group"]] = QGroupBox(dict["group"])
+					vbox = QFormLayout()
+					vbox.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+					_widget_lfmnet_train.append(self.groupbox["lfmnet"]["training"][dict["group"]])
+					self.groupbox["lfmnet"]["training"][dict["group"]].setLayout(vbox)
+				if "label" not in dict:
+					dict["label"] = dict["dest"]
+				wid_elm = create_widget(dict)
+				self.gui_elms["lfmnet"][key] = wid_elm
+				if "group" in dict:
+					if self.lf_vals["misc"]["group_params"]["value"] == False:
+						_widget_lfmnet_train.append(wid_elm)
+					else:
+						if "visible" in dict and dict["visible"] == False:
+							pass
+						else:
+							if dict["type"] == "bool":
+								self.groupbox["lfmnet"]["training"][dict["group"]].layout().addRow(wid_elm.native)
+							elif "no_label_layout_style" in dict and dict["no_label_layout_style"] == True:
+								self.groupbox["lfmnet"]["training"][dict["group"]].layout().addRow(wid_elm.native)
+							else:
+								self.groupbox["lfmnet"]["training"][dict["group"]].layout().addRow(wid_elm.label, wid_elm.native)
+				else:
+					_widget_lfmnet_train.append(wid_elm)
+			
 				
 		if self.lf_vals["misc"]["group_params"]["value"] == False:	
 			self.container_lfmnet = Container(name='LFM-NET', widgets=_widget_lfmnet)
+			self.container_lfmnet_train = Container(name='LFM-NET-Train', widgets=_widget_lfmnet_train)
 		else:		
 			self.container_lfmnet = Container(name='LFM-NET', widgets=())
+			self.container_lfmnet_train = Container(name='LFM-NET', widgets=())
 			for wid_elm in _widget_lfmnet:
 				self.container_lfmnet.native.layout().addWidget(wid_elm)
+			for wid_elm in _widget_lfmnet_train:
+				self.container_lfmnet_train.native.layout().addWidget(wid_elm.native)
 
 		
 		# == HARDWARE ==
@@ -908,7 +946,7 @@ class LFQWidgetGui():
 		@self.btn_hw_def.changed.connect
 		def btn_hw_defaults():
 			qm = QMessageBox
-			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			ret = qm.question(self.logo_label.native, 'napari-LF', "Reset Values to Default ?", qm.Yes | qm.No)
 			if ret == qm.Yes:
 				for key in self.lf_vals["hw"]:
 					dict = self.lf_vals["hw"][key]
@@ -966,13 +1004,26 @@ class LFQWidgetGui():
 		def btn_misc_cls():
 			os.system('cls' if os.name == 'nt' else 'clear')
 			
+		@self.gui_elms['lfmnet']['training_btn'].changed.connect
+		def btn_NN_train():
+			os.system('jupyter notebook stop')
+			os.system('cls' if os.name == 'nt' else 'clear')
+			worker = btn_NN_train_run()  # create "worker" object
+			worker.start()  # start the thread!
+			
+		@thread_worker
+		def btn_NN_train_run():
+			training_JNB = str(os.path.join(str(self.gui_elms["misc"]["lib_folder"].value), 'main_train_neural_net.ipynb'))
+			print('Opening jupyter notebook file: ', training_JNB)
+			os.system('jupyter notebook ' + training_JNB)
+			
 		_layout_misc.addRow(self.btn_misc_cls.native)
 				
 		self.btn_misc_def = PushButton(name='RTD', label='Reset to Defaults')
 		@self.btn_misc_def.changed.connect
 		def btn_misc_defaults():
 			qm = QMessageBox
-			ret = qm.question(QWidget(),'', "Reset Values to Default ?", qm.Yes | qm.No)
+			ret = qm.question(self.logo_label.native, 'napari-LF', "Reset Values to Default ?", qm.Yes | qm.No)
 			if ret == qm.Yes:
 				for key in self.lf_vals["misc"]:
 					dict = self.lf_vals["misc"][key]
@@ -1002,11 +1053,19 @@ class LFQWidgetGui():
 				
 		_layout_misc.addRow(self.btn_misc_def.native)
 		
+		self.btn_proj_def = PushButton(name='RTD', label='Reset Project Directory to Default Examples')
+		@self.btn_proj_def.changed.connect
+		def btn_proj_defaults():
+			qm = QMessageBox
+			ret = qm.question(self.logo_label.native, 'napari-LF', "Reset Project Directory to Default Examples ?", qm.Yes | qm.No)
+			if ret == qm.Yes:
+				self.gui_elms["main"]["img_folder"].value = LFvals.examples_folder
+				
 		self.btn_all_def = PushButton(name='RTD', label='Reset ALL Settings to Defaults')
 		@self.btn_all_def.changed.connect
 		def btn_all_defaults():
 			qm = QMessageBox
-			ret = qm.question(QWidget(),'', "Reset ALL Values to Default ?", qm.Yes | qm.No)
+			ret = qm.question(self.logo_label.native, 'napari-LF', "Reset ALL Values to Default ?", qm.Yes | qm.No)
 			if ret == qm.Yes:
 				btn_cal_req_defaults()
 				btn_cal_opt_defaults()
@@ -1023,11 +1082,22 @@ class LFQWidgetGui():
 		_line.setMinimumWidth(1)
 		_line.setFixedHeight(2)
 		_line.setFrameShape(QFrame.HLine)
-		_line.setFrameShadow(QFrame.Sunken)
+		_line.setFrameShadow(QFrame.Plain)
 		_line.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
 		_line.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(128,128,128); border-width: 1px;")
 		
+		_line2 = QFrame()
+		_line2.setMinimumWidth(1)
+		_line2.setFixedHeight(4)
+		_line2.setFrameShape(QFrame.HLine)
+		_line2.setFrameShadow(QFrame.Sunken)
+		_line2.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+		_line2.setStyleSheet("margin:4px; padding:4px; border:4px solid rgb(128,128,128); border-width: 4px;")
+		
 		_layout_misc.addRow(_line)
+		_layout_misc.addRow(self.btn_proj_def.native)
+		
+		_layout_misc.addRow(_line2)
 		_layout_misc.addRow(self.btn_all_def.native)
 		
 		self.container_lfa = _misc_widget
@@ -1232,6 +1302,18 @@ class LFQWidgetGui():
 		_lfmnet_tab_layout.setAlignment(Qt.AlignTop)
 		self.lfmnet_tab.setLayout(_lfmnet_tab_layout)
 		self.lfmnet_tab.layout().addWidget(self.container_lfmnet.native)
+		
+		self.lfmnet_tab2 = QWidget()
+		_lfmnet_tab_layout = QVBoxLayout()
+		_lfmnet_tab_layout.setAlignment(Qt.AlignTop)
+		self.lfmnet_tab2.setLayout(_lfmnet_tab_layout)
+		self.lfmnet_tab2.layout().addWidget(self.container_lfmnet_train.native)
+		
+		self.qtab_NNet_tabWidget = QTabWidget()
+		self.qtab_NNet_tabWidget.setTabPosition(QTabWidget.North)
+		self.qtab_NNet_tabWidget.addTab(self.lfmnet_tab, 'Deconvolve')
+		self.qtab_NNet_tabWidget.addTab(self.lfmnet_tab2, 'Training')
+		
 		# self.qtab_widget.addTab(self.lfmnet_tab, 'Neural Net')
 		
 		
@@ -1257,6 +1339,7 @@ class LFQWidgetGui():
 
 		vlay = QVBoxLayout()		
 		box = CollapsibleBox("Presets && Comments")
+		box.tooltip = LFvals.PLUGIN_ARGS['main']['presets']['help']
 		vlay.addWidget(box)
 		lay = QVBoxLayout()
 		lay.addWidget(_cont_preset_list_btn.native)
@@ -1265,6 +1348,7 @@ class LFQWidgetGui():
 		box.setContentLayout(lay)
 		# vlay.addStretch()
 		_preset_comments_expand = QWidget()
+		_preset_comments_expand.tooltip = LFvals.PLUGIN_ARGS['main']['presets']['help']
 		_preset_comments_expand.setLayout(vlay)
 		_preset_comments_expand.layout().setContentsMargins(0,0,0,0)
 		_preset_comments_expand.layout().setSpacing(0)
@@ -1282,7 +1366,7 @@ class LFQWidgetGui():
 		self.widget_main_bottom_comps1.native.layout().addWidget(self.qtab_widget)
 		
 		self.widget_main_bottom_comps2 = Container(widgets=(), labels=True)
-		self.widget_main_bottom_comps2.native.layout().addWidget(self.lfmnet_tab)
+		self.widget_main_bottom_comps2.native.layout().addWidget(self.qtab_NNet_tabWidget)
 		self.widget_main_bottom_comps2.visible = False
 		self._cont_btn_processing2.visible = False
 		
@@ -1324,7 +1408,9 @@ class LFQWidgetGui():
 		
 	def LFAnalyze_btn_call(self):
 		# print("LFAnalyze_btn_call")
-		if self.LFAnalyze_btn.isChecked() == True:
+		self.LFAnalyze_btn.isButtonActive = not self.LFAnalyze_btn.isButtonActive
+		self.NeuralNet_btn.isButtonActive = not self.NeuralNet_btn.isButtonActive
+		if self.LFAnalyze_btn.isButtonActive == True:
 			self.widget_main_bottom_comps0.visible = True
 			self.widget_main_bottom_comps1.visible = True
 			self.widget_main_bottom_comps2.visible = False
@@ -1342,12 +1428,15 @@ class LFQWidgetGui():
 			self.LFAnalyze_btn_cont.visible = False
 			self.NeuralNet_btn_cont.visible = True
 			self.settings["main"]["mode_choice"] = 'NeuralNet'
-		self.NeuralNet_btn.toggle()
+		#self.NeuralNet_btn.toggle()
+		#self.LFAnalyze_btn.toggle()
 		self.save_plugin_prefs()
 			
 	def NeuralNet_btn_call(self):
 		# print("NeuralNet_btn_call")
-		if self.NeuralNet_btn.isChecked() == True:
+		self.LFAnalyze_btn.isButtonActive = not self.LFAnalyze_btn.isButtonActive
+		self.NeuralNet_btn.isButtonActive = not self.NeuralNet_btn.isButtonActive
+		if self.NeuralNet_btn.isButtonActive == True:
 			self.widget_main_bottom_comps0.visible = False
 			self.widget_main_bottom_comps1.visible = False
 			self.widget_main_bottom_comps2.visible = True
@@ -1365,7 +1454,8 @@ class LFQWidgetGui():
 			self.LFAnalyze_btn_cont.visible = True
 			self.NeuralNet_btn_cont.visible = False
 			self.settings["main"]["mode_choice"] = 'LFAnalyze'
-		self.LFAnalyze_btn.toggle()
+		#self.LFAnalyze_btn.toggle()
+		#self.NeuralNet_btn.toggle()
 		self.save_plugin_prefs()
 		
 	def verify_existing_files(self):
@@ -1383,7 +1473,7 @@ class LFQWidgetGui():
 					{"section":"deconvolve","out_file":"output_filename", "sub_section":"required", "group":LFvals.PLUGIN_ARGS['deconvolve']['output_filename']['group']},
 					{"section":"projections","out_file":"output_filename_lightfield", "group":LFvals.PLUGIN_ARGS['projections']['output_filename_lightfield']['group']},
 					{"section":"projections","out_file":"output_filename_volume", "group":LFvals.PLUGIN_ARGS['projections']['output_filename_volume']['group']},
-					{"section":"lfmnet","out_file":"output_filename", "group":LFvals.PLUGIN_ARGS['lfmnet']['output_filename']['group']}
+					{"section":"lfmnet","out_file":"output_filename", "sub_section":"deconvolve", "group":LFvals.PLUGIN_ARGS['lfmnet']['output_filename']['group']}
 				]
 				
 				_alert_symbol = ' ⚠'
@@ -1747,7 +1837,7 @@ class LFQWidgetGui():
 			for section in ['calibrate','rectify','deconvolve','hw']:
 				meta_data[section] = {}
 				for prop in LFvals.PLUGIN_ARGS[section]:
-					if ("exclude_from_settings" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_settings"] == True) or ("exclude_from_settings" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_settings"] == True):
+					if ("exclude_from_settings" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_settings"] == True):
 						pass
 					else:
 						if LFvals.PLUGIN_ARGS[section][prop]["type"] in ["file","folder","str"]:
@@ -1773,16 +1863,19 @@ class LFQWidgetGui():
 					for prop in meta_data[section]:
 						if prop in self.gui_elms[section] and prop in meta_data[section]:
 							try:
-								if self.gui_elms[section][prop].widget_type == "ComboBox":
-									if meta_data[section][prop] in self.gui_elms[section][prop].choices:
-										self.gui_elms[section][prop].value = meta_data[section][prop]
-									elif len(self.gui_elms[section][prop].choices) == 0:
-										#self.gui_elms[section][prop].value = ""
-										pass
-									else:
-										self.gui_elms[section][prop].value = self.gui_elms[section][prop].choices[0]
+								if ("exclude_from_settings" in LFvals.PLUGIN_ARGS[section][prop] and LFvals.PLUGIN_ARGS[section][prop]["exclude_from_settings"] == True):
+									pass
 								else:
-									self.gui_elms[section][prop].value = meta_data[section][prop]
+									if self.gui_elms[section][prop].widget_type == "ComboBox":
+										if meta_data[section][prop] in self.gui_elms[section][prop].choices:
+											self.gui_elms[section][prop].value = meta_data[section][prop]
+										elif len(self.gui_elms[section][prop].choices) == 0:
+											#self.gui_elms[section][prop].value = ""
+											pass
+										else:
+											self.gui_elms[section][prop].value = self.gui_elms[section][prop].choices[0]
+									else:
+										self.gui_elms[section][prop].value = meta_data[section][prop]
 							except Exception as e:
 								print(self.gui_elms[section][prop].widget_type)
 								print(e)
@@ -1797,14 +1890,14 @@ class LFQWidgetGui():
 			return False
 			
 	def get_preset_name(self):
-		text, ok = QInputDialog.getText(QWidget(), 'Input Dialog', 'Enter preset name:')
+		text, ok = QInputDialog.getText(self.logo_label.native, 'Input Dialog', 'Enter preset name:')
 		
 		if ok:
 			if "preset_choices" in self.settings:
 				for preset in self.settings["preset_choices"]:
 					if preset == text:
 						qm = QMessageBox
-						ret = qm.question(QWidget(),'', "Preset name already exists, overwirte ?", qm.Yes | qm.No)
+						ret = qm.question(self.logo_label.native, 'napari-LF', "Preset name already exists, overwirte ?", qm.Yes | qm.No)
 						if ret == qm.Yes:
 							return (str(text))
 						else:
@@ -1872,6 +1965,9 @@ def create_widget(props):
 			if widget.widget_type == "LineEdit":
 				widget.min_width = 100
 				widget.native.setStyleSheet("background-color:black;")
+				
+			if widget.widget_type == "TextEdit":
+				widget.native.setPlaceholderText(props['label'])
 				
 			if widget.widget_type == "SpinBox":
 				if "max" in props:
@@ -1968,13 +2064,18 @@ class CollapsibleBox(QWidget):
 		content_animation.setEndValue(content_height)
 		
 class PicButton(QAbstractButton):
-	def __init__(self, pixmap, pixmap_hover, pixmap_pressed, parent=None):
+	def __init__(self, pixmap, pixmap_hover, pixmap_pressed, parent=None, use_as_toggle=False):
 		super(PicButton, self).__init__(parent)
 		self.pixmap = pixmap
-		self.pixmap_hover = pixmap_hover
+		self.pixmap_hover = pixmap_pressed if not use_as_toggle else pixmap_hover
 		self.pixmap_pressed = pixmap_pressed
-		self.setCheckable(True)
+		if use_as_toggle:
+			self.setCheckable(True)
+		else:
+			self.setCheckable(False)
 		self.setVisible(True)
+		self.isButtonActive = False
+		self.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
 
 	def paintEvent(self, event):
 		pix = self.pixmap_hover if self.underMouse() else self.pixmap

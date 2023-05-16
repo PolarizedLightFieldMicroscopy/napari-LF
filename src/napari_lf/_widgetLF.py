@@ -9,7 +9,7 @@ from magicgui.widgets import *
 
 # Fix for the QPixMap error
 # https://github.com/PolarizedLightFieldMicroscopy/napari-LF/issues/29
-app = QApplication([])
+# app = QApplication([])
 
 try:
 	from napari_lf import _widgetLF_gui as LFgui
@@ -267,14 +267,17 @@ class LFQWidget(QWidget):
 		if "mode_choice" in self.gui.settings["main"] and self.gui.settings["main"]["mode_choice"] == 'NeuralNet':
 			self.gui.LFAnalyze_btn_cont.hide()
 			self.gui.NeuralNet_btn_cont.show()
+			self.gui.NeuralNet_btn.isButtonActive = True
+			self.gui.LFAnalyze_btn.isButtonActive = False
 			self.gui.widget_main_bottom_comps0.hide()
 			self.gui.widget_main_bottom_comps1.hide()
 			self.gui.widget_main_bottom_comps2.show()
 			self.gui._cont_btn_processing.hide()
 			self.gui._cont_btn_processing2.show()
-			self.gui.NeuralNet_btn.toggle()
+			#self.gui.NeuralNet_btn.toggle()
 		else:
-			self.gui.LFAnalyze_btn.toggle()
+			pass
+			#self.gui.LFAnalyze_btn.toggle()
 		
 		#Layout
 		layout = QVBoxLayout()

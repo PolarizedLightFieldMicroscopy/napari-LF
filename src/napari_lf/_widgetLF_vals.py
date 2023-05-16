@@ -18,7 +18,7 @@ NeuralNet_logo_btn_hov_img = os.path.join(currentdir, 'resources/logos/hover/Neu
 NeuralNet_logo_btn_act_img = os.path.join(currentdir, 'resources/logos/nn_logo_3d_act.png')
 
 loading_img = os.path.join(currentdir, 'resources/loading.gif')
-examples_folder = os.path.join(currentdir, 'examples/antleg')
+examples_folder = os.path.join(currentdir, 'examples/GUVExperim1')
 lfa_folder = os.path.join(currentdir, 'lfa')
 
 q_icon_img = QIcon(icon_img)
@@ -67,7 +67,7 @@ PLUGIN_ARGS = {
 			"default":"metadata.txt","label":"Metadata file","help":"Select the name of the metadata file that will be produced for the dataset.","type":"str","enabled":True,"visible":False
 		},
 		"comments":{
-			"default":"","prop":"--comments","label":"Comments","help":"Comments from Acquisition and Processing","type":"str","type":"text"
+			"default":"","prop":"--comments","label":"Comments from Acquisition and Processing","help":"Comments from Acquisition and Processing","type":"str","type":"text"
 		},
 		"presets":{
 			"default":"","label":"Presets","help":"Save/Load parameters from presets.","type":"sel","options":[""]
@@ -116,7 +116,7 @@ PLUGIN_ARGS = {
 			"prop":"--platform-id","label":"Select platform","dest":"platform_id","type":"int","default":0,"help":"Force lfdeconvolve to use a specific OpenCL Platform on your system."
 		},
 		"use_single_prec":{
-			"prop":"--use-single-precision","label":"Use single precision","action":"store_true","dest":"use_sing_prec","type":"bool","default":False,"help":"Use single precision float instead of double."
+			"prop":"--use-single-precision","label":"Use single precision","action":"store_true","dest":"use_sing_prec","type":"bool","default":True,"help":"Use single precision float instead of double."
 		},
 		"disable_gpu":{
 			"prop":"--disable-gpu","action":"store_true","label":"Disable GPU","dest":"disable_gpu","type":"bool","default":False,"help":"Disable GPU deconvolution and use software implementation instead."
@@ -234,7 +234,7 @@ PLUGIN_ARGS = {
 			"prop":"--skip-subpixel-alignment","action":"store_true","label":"Skip subpixel alignment","dest":"skip_subpixel_alignment","type":"bool","default":False,"help":"Skip subpixel alignment for determining lenslet centers.","group":"Other Options"
 		},
 		"num_threads":{
-			"prop":"--num-threads","label":"Number of CPU threads","dest":"num_threads","type":"int","default":min(10,multiprocessing.cpu_count()),"help":"Set the number of CPU threads to use when generating the raydb.","group":"Other Options","max":multiprocessing.cpu_count(), "min":1
+			"prop":"--num-threads","label":"Number of CPU threads","dest":"num_threads","type":"int","default":min(10,multiprocessing.cpu_count()),"help":"Set the number of CPU threads to use when generating the raydb.","group":"Other Options","max":multiprocessing.cpu_count(), "min":1, "exclude_from_settings":True
 		},
 		"pinhole_filename":{
 			"prop":"--pinhole","label":"Pinhole filename","dest":"pinhole_filename","type":"str","default":"","help":"After calibrating save the rectified light field as a rectified sub-aperture image.","group":"Other Options"
@@ -387,22 +387,28 @@ PLUGIN_ARGS = {
 	# ======= LFMNet ============
 	# ===============================
 		"input_file":{
-			"prop":"input_file","label":"Light field image","dest":"input_file","type":"sel","default":"","options":[""],"help":"Supply at least one light field image to rectify.","cat":"required","img_folder_file":True,"group":"Files"
+			"prop":"input_file","label":"Light field image","dest":"input_file","type":"sel","default":"","options":[""],"help":"Supply at least one light field image to rectify.","cat":"required","img_folder_file":True,"group":"Files","cat":"deconvolve"
 		},
-		# "calibration_file":{
-		# 	"prop":"calibration_file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"","options":[""],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files"
-		# },
+		#"calibration_file":{
+		#	"prop":"calibration_file","label":"Calibration file","dest":"calibration_file","type":"sel","default":"","options":[""],"help":"Specify the calibration file to use for rectification.","cat":"required","img_folder_file":True,"group":"Files","cat":"deconvolve"
+		#},
 		"input_model":{
-			"prop":"input_model","label":"Neural net model","dest":"input_model","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files"
+			"prop":"input_model","label":"Select Model","dest":"input_model","type":"sel","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files","cat":"deconvolve"
 		},
 		"input_model_prop_viewer":{
-			"prop":"input_model_prop_viewer","label":"Model Prop Viewer","dest":"input_model_prop_viewer","default":"","options":[""],"help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files", "type":"text","group":"Network Model Inspector","exclude_from_settings":True,"exclude_from_args":True,"read_only":True,"no_label_layout_style":True
+			"prop":"input_model_prop_viewer","label":"","dest":"input_model_prop_viewer","default":"","options":[""],"help":"Model Prop Viewer","exclude_from_args":True,"exclude_from_settings":True,"group":"Files", "type":"text","group":"Network Model Inspector","exclude_from_settings":True,"exclude_from_args":True,"read_only":True,"no_label_layout_style":True,"cat":"deconvolve"
 		},
 		"output_filename":{
-			"prop":"output_file","label":"Output image stack","dest":"output_filename","type":"str","default":"output_network_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files"
+			"prop":"output_file","label":"Output image stack","dest":"output_filename","type":"str","default":"output_network_stack.tif","help":"Specify the output filename.","cat":"required","img_folder_file":True,"group":"Files","cat":"deconvolve"
 		},
 		"input_model_btn":{
-			"prop":"input_model_btn","label":"Deconvolve","dest":"input_model_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files","visible":dev_true
+			"prop":"input_model_btn","label":"Deconvolve","dest":"input_model_btn","type":"PushButton","help":"","exclude_from_args":True,"exclude_from_settings":True,"group":"Files","visible":False,"cat":"deconvolve"
+		},
+		"training_label":{
+			"prop":"training_label","label":"Neural network training for Napari-LF\n\nNapari-LF neural net integration relies on Pytorch-lightning (PL) workflow. Which provides general functions for loading data, training, inference, etc. That can be used with any neural network. This Jupyter Notebook is intended for preparing a network to use with Napari-LF.","default":"","help":"Neural Net Training text","type":"text","exclude_from_settings":True,"cat":"training","enabled":False
+		},
+		"training_btn":{
+			"prop":"training_btn","label":"Start Neural Net (Jupyter Notebook)","dest":"training_btn","type":"PushButton","help":"Start Neural Net (Jupyter Notebook)","exclude_from_args":True,"exclude_from_settings":True,"cat":"training"
 		}
 	}
 }
