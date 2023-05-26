@@ -97,7 +97,7 @@ From the napari menu, select **Plugins > Main Menu (napari-LF)**. Note that you 
 
 Create a virtual environment from the command line for napari with the python libraries necessary for the light field plugin:
 
-    conda create --name napari-lf python==3.9
+    conda create -y -n napari-lf -c conda-forge python==3.9
     conda activate napari-lf
 
 Clone the github repository:
@@ -106,6 +106,10 @@ Clone the github repository:
     git clone https://github.com/PolarizedLightFieldMicroscopy/napari-LF.git
     cd napari-LF
     pip install -e .
+
+The necessary dependencies should be installed automatically with `napari-LF`. If for some reason `pyopencl` does not get installed properly, try installing with conda:
+
+    conda install -c conda-forge pyopencl
 
 ## Contributing
 

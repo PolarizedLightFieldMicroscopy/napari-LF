@@ -1312,7 +1312,7 @@ class LFQWidgetGui():
 		self.qtab_NNet_tabWidget = QTabWidget()
 		self.qtab_NNet_tabWidget.setTabPosition(QTabWidget.North)
 		self.qtab_NNet_tabWidget.addTab(self.lfmnet_tab, 'Deconvolve')
-		self.qtab_NNet_tabWidget.addTab(self.lfmnet_tab2, 'Training')
+		self.qtab_NNet_tabWidget.addTab(self.lfmnet_tab2, 'Train')
 		
 		# self.qtab_widget.addTab(self.lfmnet_tab, 'Neural Net')
 		
