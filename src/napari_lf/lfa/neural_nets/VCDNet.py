@@ -2,7 +2,6 @@ import pytorch_lightning as pl
 import torch
 from torch.utils import data
 import torch.nn as nn
-import torchvision as tv
 from neural_nets.util.LFUtil import *
 from neural_nets.util.convNd import convNd
 from neural_nets.LFNeuralNetworkProto import LFNeuralNetworkProto
@@ -48,8 +47,8 @@ class VCDNet(LFNeuralNetworkProto):
         # Create Encoder
         pyramid_channels = [128,256,512,512]
         self.encoder_layers = [
-            nn.Sequential(nn.Conv2d(channels_interp, 64, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(64),
+            nn.Sequential(nn.Conv2d(channels_interp, self.n_Depths, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(self.n_Depths),
             nn.ReLU())
         ]
         previous_nc = self.n_Depths
@@ -165,4 +164,4 @@ class VCDNet(LFNeuralNetworkProto):
         # store these as nn.Parameter so the network storesthem in a checkpoint
         self.max_LF_train = nn.Parameter(torch.tensor(float(temp_max_LF_train)))
         self.max_vol_train = nn.Parameter(torch.tensor(float(temp_max_vol_train)))
-        self.save_hyperparameters()
+        # self.save_hyperparameters()

@@ -77,14 +77,14 @@ class Dataset(object):
             paddedLFSize = self.LFShape[:2] + tuple([self.LFShape[2]+2*startOffset,self.LFShape[3]+2*startOffset])
             paddedVolSize = tuple([self.volShape[0]+2*neighShapeHalf*self.LFShape[0],self.volShape[1]+2*neighShapeHalf*self.LFShape[1],self.volShape[2]])
         
-        self.LFFull = torch.zeros(paddedLFSize+tuple([self.nImagesToUse]),dtype=torch.uint8)
-        self.VolFull = torch.zeros(paddedVolSize+tuple([self.nImagesToUse]),dtype=torch.uint8)
+        self.LFFull = torch.zeros(paddedLFSize+tuple([self.nImagesToUse]),dtype=torch.float)
+        self.VolFull = torch.zeros(paddedVolSize+tuple([self.nImagesToUse]),dtype=torch.float)
 
         
         for nImg,imgIx in tqdm(enumerate(self.img_indices), "Loading images", total=len(self.img_indices)):
             # Load data from database
-            currLF = torch.tensor(self.h5_container['LFData'][:,:,:,:,imgIx], dtype=torch.uint8)
-            currVol = torch.tensor(self.h5_container['volData'][:,:,:,imgIx], dtype=torch.uint8)
+            currLF = torch.tensor(self.h5_container['LFData'][:,:,:,:,imgIx], dtype=torch.float)
+            currVol = torch.tensor(self.h5_container['volData'][:,:,:,imgIx], dtype=torch.float)
             currLF = currLF[:,:,LF_ix_y,:]
             currLF = currLF[:,:,:,LF_ix_x]
             currVol = currVol[vol_ix_y,:,:]
