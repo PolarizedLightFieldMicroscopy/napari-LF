@@ -1,5 +1,6 @@
 # napari-LF
 
+[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.14155430-blue.svg)](https://doi.org/10.5281/zenodo.14155430)
 [![License](https://img.shields.io/pypi/l/napari-LF.svg?color=green)](https://github.com/PolarizedLightFieldMicroscopy/napari-LF/raw/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/napari-LF.svg?color=green)](https://pypi.org/project/napari-LF)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-LF.svg?color=green)](https://python.org)
@@ -142,3 +143,27 @@ If you encounter any problems, please [file an issue] along with a detailed desc
 [tox]: https://tox.readthedocs.io/en/latest/
 [pip]: https://pypi.org/project/pip/
 [PyPI]: https://pypi.org/
+
+## How to Cite
+
+If you use `napari-LF` in your work, please cite it as follows:
+
+**APA**
+
+Anderberg, G., Verma, A., Vizcaíno, J. P., & Oldenbourg, R. (2023). napari-LF: A Plugin for Analyzing Light Field Microscopy Images. Zenodo. https://doi.org/10.5281/zenodo.14155430
+
+**BibTeX**
+
+    @software{anderberg2023,
+    author       = {Anderberg, Geneva and
+                    Verma, Amitabh and
+                    Vizcaíno, Josué Page and
+                    Oldenbourg, Rudolf},
+    title        = {{napari-LF: A Plugin for Analyzing Light Field 
+                    Microscopy Images}},
+    month        = May,
+    year         = 2023,
+    publisher    = {Zenodo},
+    doi          = {10.5281/zenodo.14155430},
+    url          = {https://doi.org/10.5281/zenodo.14155430}
+    }
