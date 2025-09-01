@@ -4,5 +4,7 @@ try:
 except ImportError:
     __version__ = "unknown"
 
-
-from ._widgetLF import LFQWidget
+try:
+    from ._widgetLF import LFQWidget
+except Exception:
+    LFQWidget = None
