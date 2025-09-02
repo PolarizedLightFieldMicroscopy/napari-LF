@@ -427,24 +427,26 @@ class LightFieldProjection(object):
                     coords = psf_coordinates[(x,y,z)]
                     coefficients = psf_coefficients[(x,y,z)]
 
-                    # Extract the sorted coordinates. Copy here ensure
-                    # "single segment" memory buffer, which seems to
-                    # be required by cl.Buffer() below.
-                    u_coords = coords[:,0].copy()
-                    v_coords = coords[:,1].copy()
-                    s_coords = coords[:,2].copy()
-                    t_coords = coords[:,3].copy()
+                    # --- enforce kernel dtypes & sanitize ---
+                    u_coords = np.asarray(coords[:,0], dtype=np.int32, order='C')
+                    v_coords = np.asarray(coords[:,1], dtype=np.int32, order='C')
+                    s_coords = np.asarray(coords[:,2], dtype=np.int32, order='C')
+                    t_coords = np.asarray(coords[:,3], dtype=np.int32, order='C')
+                    coefs_f32 = np.asarray(coefficients, dtype=np.float32, order='C')
+                    # Replace NaN/Inf
+                    coefs_f32 = np.nan_to_num(coefs_f32, nan=0.0, posinf=0.0, neginf=0.0)
 
-                    u_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
-                                             hostbuf = u_coords)
-                    v_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
-                                             hostbuf = v_coords)
-                    s_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
-                                             hostbuf = s_coords)
-                    t_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
-                                             hostbuf = t_coords)
-                    coefficients_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
-                                                 hostbuf=coefficients)
+                    # Wavespread is an intensity map
+                    neg = coefs_f32 < 0
+                    if neg.any():
+                        print(f"\t    [warn] psf coefficients negatives: {neg.sum()} / {coefs_f32.size}. Clamping to 0.")
+                        coefs_f32[neg] = 0.0
+
+                    u_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=u_coords)
+                    v_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=v_coords)
+                    s_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=s_coords)
+                    t_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=t_coords)
+                    coefficients_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=coefs_f32)
 
                     kern.set_arg(0, vol_slices[z])
                     kern.set_arg(2, u_coords_buf)
@@ -553,24 +555,26 @@ class LightFieldProjection(object):
                     coords = psf_coordinates[(x,y,z)]
                     coefficients = psf_coefficients[(x,y,z)]
 
-                    # Extract the sorted coordinates. Copy here ensure
-                    # "single segment" memory buffer, which seems to
-                    # be required by cl.Buffer() below.
-                    u_coords = coords[:,0].copy()
-                    v_coords = coords[:,1].copy()
-                    s_coords = coords[:,2].copy()
-                    t_coords = coords[:,3].copy()
-                    
-                    u_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
-                                             hostbuf = u_coords)
-                    v_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
-                                             hostbuf = v_coords)
-                    s_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
-                                             hostbuf = s_coords)
-                    t_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
-                                             hostbuf = t_coords)
-                    coefficients_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
-                                                 hostbuf=coefficients)
+                    # --- enforce kernel dtypes & sanitize ---
+                    u_coords = np.asarray(coords[:,0], dtype=np.int32, order='C')
+                    v_coords = np.asarray(coords[:,1], dtype=np.int32, order='C')
+                    s_coords = np.asarray(coords[:,2], dtype=np.int32, order='C')
+                    t_coords = np.asarray(coords[:,3], dtype=np.int32, order='C')
+                    coefs_f32 = np.asarray(coefficients, dtype=np.float32, order='C')
+                    # Replace NaN/Inf
+                    coefs_f32 = np.nan_to_num(coefs_f32, nan=0.0, posinf=0.0, neginf=0.0)
+
+                    # Wavespread is an intensity map
+                    neg = coefs_f32 < 0
+                    if neg.any():
+                        print(f"\t    [warn] psf coefficients negatives: {neg.sum()} / {coefs_f32.size}. Clamping to 0.")
+                        coefs_f32[neg] = 0.0
+
+                    u_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=u_coords)
+                    v_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=v_coords)
+                    s_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=s_coords)
+                    t_coords_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=t_coords)
+                    coefficients_buf = cl.Buffer(self.cl_ctx, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=coefs_f32)
 
                     kern.set_arg(2, u_coords_buf)
                     kern.set_arg(3, v_coords_buf)
