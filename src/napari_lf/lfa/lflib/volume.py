@@ -508,7 +508,9 @@ class LightFieldProjection(object):
 
         # Optionally apply radiometry correction
         if self.premultiplier is not None:
-            light_field_im = light_field.asimage(LightField.TILED_LENSLET) * self.premultiplier
+            light_field_im = light_field.asimage(LightField.TILED_LENSLET)
+            light_field_im = np.nan_to_num(light_field_im, nan=0.0, posinf=0.0, neginf=0.0)
+            light_field_im = light_field_im * self.premultiplier
             light_field = LightField(light_field_im, nu, nv, ns, nt,
                                      representation = LightField.TILED_LENSLET)
 
