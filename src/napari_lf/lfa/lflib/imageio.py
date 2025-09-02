@@ -78,5 +78,4 @@ def save_image(filename, image, dtype = None):
     # We can remove this later when we switch to z,y,x.
     if len(image.shape) >2:
         image = np.moveaxis(image,2,0)
-    tifffile.imsave(filename,image)
-
+    tifffile.imwrite(filename, image)

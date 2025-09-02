@@ -20,8 +20,7 @@ def build_grid(putative_centers, expected_lenslet_size, adjacency_tolerance, b_e
         rand_centers = putative_centers[rand_indicies, :]
         rotation_samples = []
         for rc in rand_centers:
-            diff = np.cast['float32'](putative_centers-np.tile(rc,
-                                                               (putative_centers.shape[0],1)))
+            diff = np.asarray(putative_centers-np.tile(rc, (putative_centers.shape[0],1)), dtype=np.float32)
             dist = np.abs(np.sqrt(np.sum(diff**2,1))-expected_lenslet_size)
             adj = np.nonzero(dist < adjacency_tolerance)[0]
             for a in adj:
@@ -85,8 +84,8 @@ def build_grid(putative_centers, expected_lenslet_size, adjacency_tolerance, b_e
         lenslets.append((current_center[0], current_center[1], r, c))
 
         # Now find the neighbors of this lenslet, and add them to the pending queue.
-        diff = np.cast['float32'](putative_centers-np.tile(current_center,
-                                                           (putative_centers.shape[0],1)))
+        diff = np.asarray(putative_centers-np.tile(current_center,
+                                                           (putative_centers.shape[0],1)), dtype=np.float32)
         dist = np.abs(np.sqrt(np.sum(diff**2,1))-expected_lenslet_size)
         matches = np.nonzero(dist < adjacency_tolerance)[0]
         for m in matches:
