@@ -238,6 +238,8 @@ def do_deconvolve(args):
     At1 = A_operator.rmatvec(ones_r)
     _stats("A*1", Ax1)
     _stats("A^T*1", At1)
+    # If the wavespread truly models intensity, A^T*1 should be >0 everywhere, otherwise RL is not the right solver
+    print("A^T*1 quantiles:", np.quantile(At1, [0, .5, .99, .999, 1.0]))
 
     # 3) Very small random vector
     rng = np.random.default_rng(0)
