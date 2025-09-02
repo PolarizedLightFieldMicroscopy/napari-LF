@@ -169,8 +169,30 @@ def do_deconvolve(args):
     lfproj = LightFieldProjection(lfcal.rayspread_db, lfcal.psf_db,
                                   disable_gpu = args.disable_gpu, gpu_id = args.gpu_id, platform_id = args.platform_id, use_sing_prec=args.use_sing_prec)
 
+    # ---- Sanitize radiometric correction (premultiplier) ----
+    pm = np.array(lfcal.radiometric_correction, dtype=np.float32, copy=True)
+    # Replace NaN/Inf with 0 to avoid 0*inf -> NaN in volume.py:471
+    bad = ~np.isfinite(pm)
+    if bad.any():
+        print(f"\t    [warn] radiometric_correction non-finite: {bad.sum()} / {pm.size}. Replacing with 0.")
+        pm[bad] = 0.0
+    # Clamp negatives to 0 (weights should be non-negative)
+    neg = pm < 0
+    if neg.any():
+        print(f"\t    [warn] radiometric_correction negatives: {neg.sum()} / {pm.size}. Clamping to 0.")
+        pm[neg] = 0.0
+    # Optionally cap extremes to avoid enormous normalization (tune the percentile if needed)
+    finite_pm = pm[np.isfinite(pm)]
+    if finite_pm.size:
+        cap = np.percentile(finite_pm, 99.9)
+        if np.isfinite(cap) and cap > 0:
+            pm = np.clip(pm, 0.0, cap)
+    
+    ## To verify that the premultiplier is sane, we set it to 1.
+    # pm = np.ones_like(pm)
+
     # Enable radiometry correction
-    lfproj.set_premultiplier(lfcal.radiometric_correction)
+    lfproj.set_premultiplier(pm)
 
     print('-------------------------------------------------------------------')
     print('Computing light field tomographic reconstruction of:', filename)
@@ -193,14 +215,68 @@ def do_deconvolve(args):
     A_lfop = LightFieldOperator(lfproj, db, args.use_sing_prec)
     A_operator = A_lfop.as_linear_operator(nrays, nvoxels)
 
+    # --- Operator Health Checks ---
+    def _stats(name, arr):
+        print(f"\t    {name}: finite={np.isfinite(arr).all()}, "
+            f"min={np.nanmin(arr):.3g}, max={np.nanmax(arr):.3g}, "
+            f"nan={(~np.isfinite(arr) & np.isnan(arr)).sum()}, "
+            f"inf={np.isinf(arr).sum()}")
+
+    nrays = A_operator.shape[0]
+    nvoxels = A_operator.shape[1]
+
+    # 1) Probing A*0 and A^T*0 should be exactly 0 (and finite)
+    zv = np.zeros(nvoxels, dtype=np.float32)
+    zr = np.zeros(nrays, dtype=np.float32)
+    _stats("A*0", A_operator.matvec(zv))
+    _stats("A^T*0", A_operator.rmatvec(zr))
+
+    # 2) A*1 and A^T*1 must be finite and nonnegative
+    ones_v = np.ones(nvoxels, dtype=np.float32)
+    ones_r = np.ones(nrays, dtype=np.float32)
+    Ax1 = A_operator.matvec(ones_v)
+    At1 = A_operator.rmatvec(ones_r)
+    _stats("A*1", Ax1)
+    _stats("A^T*1", At1)
+
+    # 3) Very small random vector
+    rng = np.random.default_rng(0)
+    xs = rng.random(nvoxels, dtype=np.float32) * 1e-6
+    _stats("A*x_small", A_operator.matvec(xs))
+
+
+    def dot_test(A, nvox, nray, seed=0, dtype=np.float32):
+        rng = np.random.default_rng(seed)
+        x = rng.standard_normal(nvox).astype(dtype)
+        y = rng.standard_normal(nray).astype(dtype)
+        Ax = A.matvec(x)
+        ATy = A.rmatvec(y)
+        lhs = np.dot(Ax, y)           # <A x, y>
+        rhs = np.dot(x, ATy)          # <x, A^T y>
+        rel = abs(lhs - rhs) / max(1.0, abs(lhs), abs(rhs))
+        print(f"[DOT TEST] <Ax,y>={lhs:.6e}, <x,ATy>={rhs:.6e}, rel_err={rel:.3e}")
+        return rel
+
+    dot_test(A_operator, nvoxels, nrays, dtype=np.float32)
+
+
     # Trim out entries in the light field that we are ignoring because
     # they are too close to the edge of the NA of the lenslet.  This
     # make our residuals more accurate below.
     lf = lfcal.mask_trimmed_angles(lf)
 
+    im_subaperture = lf.asimage(representation=LightField.TILED_SUBAPERTURE)
+
+    # NEW: sanitize the data that becomes 'b'
+    im_subaperture = np.nan_to_num(im_subaperture, nan=0.0, posinf=0.0, neginf=0.0)
+    im_subaperture[im_subaperture < 0] = 0.0  # RL expects nonnegative counts
+
+    finite_mask = np.isfinite(im_subaperture)
+    print(f"\t--> invalid pixels in b: {(~finite_mask).sum()} of {finite_mask.size}")
+    print(f"\t--> negatives in b: {(im_subaperture < 0).sum()}")
+
     # Generate the b vector, which contains the observed lightfield;
     # and the initial volume x containing all zeros.
-    im_subaperture = lf.asimage(representation = LightField.TILED_SUBAPERTURE)
     b_vec = np.reshape(im_subaperture, np.prod(im_subaperture.shape))
 
     if lf_zeros:
@@ -276,6 +352,18 @@ def do_deconvolve(args):
     elif args.solver == 'rl':
         from lflib.solvers.richardson_lucy import richardson_lucy_reconstruction
         if args.conv_thresh == 0: args.conv_thresh = 1e-6
+        # Probe the operator itself
+        ones_nvox = np.ones(nvoxels, dtype=np.float32)
+        ones_nrays = np.ones(nrays, dtype=np.float32)
+
+        Ax_ones = A_operator.matvec(ones_nvox)
+        print(f"\t    Check A*1: finite={np.isfinite(Ax_ones).all()}, "
+            f"min={np.nanmin(Ax_ones):.3g}, max={np.nanmax(Ax_ones):.3g}")
+
+        At_ones = A_operator.rmatvec(ones_nrays)
+        print(f"\t    Check A^T*1: finite={np.isfinite(At_ones).all()}, "
+            f"min={np.nanmin(At_ones):.3g}, max={np.nanmax(At_ones):.3g}")
+
         x_vec = richardson_lucy_reconstruction(A_operator, b_vec,
                                                Rtol = args.conv_thresh,
                                                max_iter = args.max_iter,

@@ -350,7 +350,11 @@ class LightFieldProjection(object):
                 self.project = self.project_cpu
 
     def set_premultiplier(self, premultiplier):
-        self.premultiplier = premultiplier
+        if premultiplier is None:
+            self.premultiplier = None
+        else:
+            # Sanitize radiometry to avoid NaNs/Infs propagating during multiply
+            self.premultiplier = np.nan_to_num(premultiplier, nan=0.0, posinf=0.0, neginf=0.0)
 
     def set_postmultiplier(self, postmultiplier):
         self.postmultiplier = postmultiplier
@@ -392,7 +396,11 @@ class LightFieldProjection(object):
         vol_slices = {}
         samp = cl.Sampler(self.cl_ctx, False, cl.addressing_mode.CLAMP, cl.filter_mode.NEAREST)
         for z in range(vol.shape[2]):
-            vol_slice = vol[:,:,z].astype(np.float32)
+            # Clamp and sanitize volume slice before casting to float32
+            vol_slice = vol[:,:,z]
+            vol_slice = np.nan_to_num(vol_slice, nan=0.0, posinf=0.0, neginf=0.0)
+            f32_max = np.finfo(np.float32).max
+            vol_slice = np.clip(vol_slice, -f32_max, f32_max).astype(np.float32)
             vol_slices[z] = cl.image_from_array(self.cl_ctx, vol_slice.copy(), 1, 'r')
  
         # Create a set of empty subaperture images to accumulate data into
@@ -460,7 +468,16 @@ class LightFieldProjection(object):
                         representation = LightField.TILED_SUBAPERTURE)
 
         if self.premultiplier is not None:
-            light_field_im = lf.asimage(LightField.TILED_LENSLET) * self.premultiplier
+            light_field_im = lf.asimage(LightField.TILED_LENSLET)
+
+            # Initialize uninitialized buffers and sanitize in-place
+            if not np.isfinite(light_field_im).all():
+                # Replace NaN/Inf with 0 to avoid invalid 0*Inf and NaN propagation
+                np.copyto(light_field_im, 0.0, where=~np.isfinite(light_field_im))
+
+            # Now multiply (no global np.seterr active here)
+            light_field_im = light_field_im * self.premultiplier
+
             lf = LightField(light_field_im, nu, nv, ns, nt,
                             representation = LightField.TILED_LENSLET)
 

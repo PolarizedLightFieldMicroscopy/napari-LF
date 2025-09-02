@@ -55,9 +55,24 @@ def richardson_lucy_reconstruction(A, b, x0 = None,
     nrays = A.shape[0]
     nvoxels = A.shape[1]
 
+    # Include read-noise variance offset here so b_norm is consistent
+    b = np.nan_to_num(b, nan=0.0, posinf=0.0, neginf=0.0)
+    b[b < 0] = 0.0
+    if sigmaSq > 0:
+        b = b + sigmaSq * np.ones(nrays, dtype=b.dtype)
+
     # Pre-compute some values for use in stopping criteria below
     b_norm = np.linalg.norm(b)
-    trAb = A.rmatvec(b)
+    if not np.isfinite(b_norm) or b_norm == 0:
+        print("[DEBUG] b_norm non-finite or zero; forcing to 1.0 for scaling")
+        b_norm = 1.0
+
+    with np.errstate(all='ignore'):
+        trAb = A.rmatvec(b)
+    if not np.isfinite(trAb).all():
+        bad = np.count_nonzero(~np.isfinite(trAb))
+        raise FloatingPointError(f"A^T b produced {bad} non-finite values; operator is unhealthy.")
+
     # Variables defined below is not used.
     # trAb_norm = np.linalg.norm(trAb)
 
@@ -67,34 +82,55 @@ def richardson_lucy_reconstruction(A, b, x0 = None,
     else:
         x = trAb
 
-    Rnrm = np.zeros(max_iter+1);
-    Xnrm = np.zeros(max_iter+1);
-    NE_Rnrm = np.zeros(max_iter+1);
+    Rnrm = np.zeros(max_iter+1)
+    Xnrm = np.zeros(max_iter+1)
+    NE_Rnrm = np.zeros(max_iter+1)
 
     eps = np.spacing(1)
-    tau = np.sqrt(eps);
-    sigsq = tau;
+    tau = np.sqrt(eps)
+    sigsq = tau
     minx = x.min()
 
     # If initial guess has negative values, compensate
     if minx < 0:
-        x = x - min(0,minx) + sigsq;
+        x = x - min(0,minx) + sigsq
 
-    normalization = A.rmatvec(np.ones(nrays)) + 1
-    print(normalization.min(), normalization.max())
-    c = A.matvec(x) + beta*np.ones(nrays) + sigmaSq*np.ones(nrays);
-    b = b + sigmaSq*np.ones(nrays);
+    with np.errstate(all='ignore'):
+        normalization = A.rmatvec(np.ones(nrays)) + 1
+    # Guard against division by zero in normalization
+    normalization = np.maximum(normalization, tau)
+    print(f"[DEBUG] Normalization: min={normalization.min()}, max={normalization.max()}")
+    q = np.quantile(normalization, [0, 1e-6, 1e-4, 1e-2, 0.5, 0.98, 0.999, 0.9999, 1.0])
+    print("\t    Normalization quantiles:", ", ".join(f"{v:.3g}" for v in q))
+
+    # Initialize c; keep it strictly positive and finite
+    with np.errstate(all='ignore'):
+        c = A.matvec(x) + beta*np.ones(nrays) + sigmaSq*np.ones(nrays)
+    c = np.where(np.isfinite(c), c, 0.0)
+    c = np.maximum(c, tau)
 
     for i in range(max_iter):
         tic = time.time()
-        x_prev = x
+        x_prev = x.copy()
 
         # STEP 1: RL Update step
-        v = A.rmatvec(b / c)
+        ratio_b_to_c = b / c
+        # Sanitize ratio to keep v finite
+        ratio_b_to_c = np.where(np.isfinite(ratio_b_to_c), ratio_b_to_c, 0.0)
+        with np.errstate(all='ignore'):
+            v = A.rmatvec(ratio_b_to_c)
+        if not np.isfinite(v).all():
+            raise FloatingPointError("A^T (b/c) returned non-finite values; operator unhealthy.")
         x = (x * v) / normalization
-        Ax = A.matvec(x)
+        with np.errstate(all='ignore'):
+            Ax = A.matvec(x)
+        if not np.isfinite(Ax).all():
+            raise FloatingPointError("A*x returned non-finite values; operator unhealthy.")
         residual = b - Ax
-        c = Ax + beta*np.ones(nrays) + sigmaSq*np.ones(nrays);
+        c = Ax + beta*np.ones(nrays) + sigmaSq*np.ones(nrays)
+        # Keep c strictly positive and finite to avoid non-finite values
+        c = np.where(np.isfinite(c), c, 0.0)
+        c = np.maximum(c, tau)
 
         # STEP 2: Compute residuals and check stopping criteria
         Rnrm[i] = np.linalg.norm(residual) / b_norm
