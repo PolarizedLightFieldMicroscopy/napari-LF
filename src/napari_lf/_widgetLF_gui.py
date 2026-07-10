@@ -1488,24 +1488,20 @@ class LFQWidgetGui():
 						self.gui_elms[out["section"]][out["out_file"]].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(255, 255, 0); border-width: 1px;")
 						if self.lf_vals["misc"]["group_params"]["value"] == True:
 							if "sub_section" in out:
-								i, j = self.groupbox[out["section"]][out["sub_section"]][out["group"]].layout().getWidgetPosition(self.gui_elms[out["section"]][out["out_file"]].native)
-								widget_item = self.groupbox[out["section"]][out["sub_section"]][out["group"]].layout().itemAt(i, j-1)
+								layout = self.groupbox[out["section"]][out["sub_section"]][out["group"]].layout()
 							else:
-								i, j = self.groupbox[out["section"]][out["group"]].layout().getWidgetPosition(self.gui_elms[out["section"]][out["out_file"]].native)
-								widget_item = self.groupbox[out["section"]][out["group"]].layout().itemAt(i, j-1)
-							widget = widget_item.widget()
+								layout = self.groupbox[out["section"]][out["group"]].layout()
+							widget = layout.labelForField(self.gui_elms[out["section"]][out["out_file"]].native)
 							widget.setText(self.gui_elms[out["section"]][out["out_file"]].label + _alert_symbol)
 							widget.setToolTip("A filed named '{out_file}' already exists in this folder!\nYou can continue but it will overwrite the existing file.".format(out_file = self.gui_elms[out["section"]][out["out_file"]].value))			
 					else:
 						self.gui_elms[out["section"]][out["out_file"]].native.setStyleSheet("margin:1px; padding:1px; border:1px solid rgb(0, 0, 0); border-width: 1px;")
 						if self.lf_vals["misc"]["group_params"]["value"] == True:
 							if "sub_section" in out:
-								i, j = self.groupbox[out["section"]][out["sub_section"]][out["group"]].layout().getWidgetPosition(self.gui_elms[out["section"]][out["out_file"]].native)
-								widget_item = self.groupbox[out["section"]][out["sub_section"]][out["group"]].layout().itemAt(i, j-1)
+								layout = self.groupbox[out["section"]][out["sub_section"]][out["group"]].layout()
 							else:
-								i, j = self.groupbox[out["section"]][out["group"]].layout().getWidgetPosition(self.gui_elms[out["section"]][out["out_file"]].native)
-								widget_item = self.groupbox[out["section"]][out["group"]].layout().itemAt(i, j-1)
-							widget = widget_item.widget()
+								layout = self.groupbox[out["section"]][out["group"]].layout()
+							widget = layout.labelForField(self.gui_elms[out["section"]][out["out_file"]].native)
 							widget.setText(self.gui_elms[out["section"]][out["out_file"]].label + _space_char)
 							widget.setToolTip("")
 							
