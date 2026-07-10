@@ -252,14 +252,14 @@ class LightFieldCalibration(object):
 
             import pickle
             try:
-                instance.rayspread_db = pickle.loads(rayspread_group['rayspread_db'][...].tostring())
+                instance.rayspread_db = pickle.loads(rayspread_group['rayspread_db'][...].tobytes())
             except:
                 import traceback
                 #print 'Caught exception loading rayspread_db:' 
                 #print traceback.format_exc()
                 instance.rayspread_db = None
             try:
-                instance.psf_db = pickle.loads(psf_group['psf_db'][...].tostring())
+                instance.psf_db = pickle.loads(psf_group['psf_db'][...].tobytes())
             except:
                 import traceback
                 #print 'Caught exception loading psf_db:' 
@@ -363,13 +363,13 @@ class LightFieldCalibration(object):
             import pickle
             if self.rayspread_db is not None:
                 rayspread_group.create_dataset('rayspread_db',
-                                               data = np.fromstring(pickle.dumps(self.rayspread_db),
+                                               data = np.frombuffer(pickle.dumps(self.rayspread_db),
                                                                     dtype='uint8'),
                                                compression = 'gzip')
 
             if self.psf_db is not None:
                 psf_group.create_dataset('psf_db',
-                                         data = np.fromstring(pickle.dumps(self.psf_db), dtype='uint8'),
+                                         data = np.frombuffer(pickle.dumps(self.psf_db), dtype='uint8'),
                                          compression = 'gzip')
         
         calibration_file.close()
